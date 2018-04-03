@@ -1,3 +1,5 @@
+# Dependency library
+fftw3/lib
 
 # Built application files
 *.apk
