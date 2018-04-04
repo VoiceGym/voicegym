@@ -10,6 +10,7 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
+        val test: FourierExecutorWrapper = FourierExecutorWrapper(1024)
         // Example of a call to a native method
         sample_text.text = stringFromJNI()
     }
