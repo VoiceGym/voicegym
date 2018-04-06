@@ -2,6 +2,7 @@ package de.voicegym.voicegym.SoundFiles
 
 import java.io.File
 import java.io.FileInputStream
+import java.io.InputStream
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 
@@ -28,9 +29,7 @@ var bitPerSample: Short        // 2 bytes at byte 34; littleEndian
 var dataChunkSize: Int         // 4 byte at byte 40; littleEndian
 // followed by the data in littleEndian Format
 -------------------------------------------------------------------*/
-class WavFile(val file: File) {
-
-    private val stream: FileInputStream = FileInputStream(file)
+class WavFile(private val stream: InputStream) {
     private val riffHeader = "RIFF"
     private val riffChunkSize: Int
     private val riffType = "WAVE"
@@ -49,40 +48,34 @@ class WavFile(val file: File) {
     init {
         val data = ByteArray(44)
         stream.read(data)
-
         if (!checkStringAtPosition(riffHeader, 0, data)) {
             throw RuntimeException("Error File Format Not Supported")
         }
-
         if (!checkStringAtPosition(riffType + fmtHeader, 8, data)) {
             throw RuntimeException("Error File Format Not Supported")
         }
-
         if (!checkStringAtPosition(dataHeader, 36, data)) {
             throw RuntimeException("Error File Format Not Supported")
         }
-
-        val byteBuffer = ByteBuffer.wrap(data);
+        val byteBuffer = ByteBuffer.wrap(data)
         byteBuffer.order(ByteOrder.LITTLE_ENDIAN)
-
-        riffChunkSize = byteBuffer.getInt(4) // 4 bytes at byte  4; littleEndian
-        fmtChunkSize = byteBuffer.getInt(16) // 4 bytes at byte 16; littleEndian
-        audioFormat = byteBuffer.getShort(20) // 2 bytes at byte 20; littleEndian
-        numChannels = byteBuffer.getShort(22) // 2 bytes at byte 22; littleEndian
-        sampleRate = byteBuffer.getInt(24) // 4 bytes at byte 24; littleEndian
-        byteRate = byteBuffer.getInt(28) // 4 bytes at byte 28; littleEndian
-        blockAlign = byteBuffer.getShort(32) // 2 bytes at byte 32; littleEndian
-        bitPerSample = byteBuffer.getShort(34) // 2 bytes at byte 34; littleEndian
-        dataChunkSize = byteBuffer.getInt(40) // 4 byte at byte 40; littleEndian
-
-        // sanity check
+        riffChunkSize = byteBuffer.getInt(4)
+        fmtChunkSize = byteBuffer.getInt(16)
+        audioFormat = byteBuffer.getShort(20)
+        numChannels = byteBuffer.getShort(22)
+        sampleRate = byteBuffer.getInt(24)
+        byteRate = byteBuffer.getInt(28)
+        blockAlign = byteBuffer.getShort(32)
+        bitPerSample = byteBuffer.getShort(34)
+        dataChunkSize = byteBuffer.getInt(40)
         if ((bitPerSample / 8) != byteRate / sampleRate) throw RuntimeException("Wav file corrupt")
-
-
         stream.mark(44)
-        outBuffer = ByteBuffer.allocate(bitPerSample / 8);
+        outBuffer = ByteBuffer.allocate(bitPerSample / 8)
         outBuffer.order(ByteOrder.LITTLE_ENDIAN)
     }
+
+    constructor(file: File) : this(FileInputStream(file))
+
 
     private fun checkStringAtPosition(str: String, startPosition: Int, data: ByteArray) =
             str.toCharArray().filterIndexed { i, char ->
@@ -127,7 +120,7 @@ class WavFile(val file: File) {
     }
 
     fun getNumberOfPCMSamples(): Int =
-        this.dataChunkSize / (this.bitPerSample / 8)
+            this.dataChunkSize / (this.bitPerSample / 8)
 
 
     override fun toString(): String {
@@ -147,4 +140,5 @@ class WavFile(val file: File) {
                 |  dataHeader='$dataHeader'
                 |)""".trimMargin()
     }
+
 }
