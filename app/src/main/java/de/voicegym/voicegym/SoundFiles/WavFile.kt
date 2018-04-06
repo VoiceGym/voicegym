@@ -28,25 +28,25 @@ var bitPerSample: Short        // 2 bytes at byte 34; littleEndian
 var dataChunkSize: Int         // 4 byte at byte 40; littleEndian
 // followed by the data in littleEndian Format
 -------------------------------------------------------------------*/
-class WavFile {
-    private val stream: FileInputStream
+class WavFile(val file: File) {
+
+    private val stream: FileInputStream = FileInputStream(file)
     private val riffHeader = "RIFF"
-    val riffChunkSize: Int
+    private val riffChunkSize: Int
     private val riffType = "WAVE"
     private val fmtHeader = "fmt "
-    val fmtChunkSize: Int
-    val audioFormat: Short
-    val numChannels: Short
-    val sampleRate: Int
-    val byteRate: Int
-    val blockAlign: Short
-    val bitPerSample: Short
+    private val fmtChunkSize: Int
+    private val audioFormat: Short
+    private val numChannels: Short
+    private val sampleRate: Int
+    private val byteRate: Int
+    private val blockAlign: Short
+    private val bitPerSample: Short
     private val dataHeader = "data"
-    val dataChunkSize: Int
+    private val dataChunkSize: Int
     private val outBuffer: ByteBuffer
 
-    constructor(file: File) {
-        stream = FileInputStream(file)
+    init {
         val data = ByteArray(44)
         stream.read(data)
 
@@ -84,9 +84,9 @@ class WavFile {
         outBuffer.order(ByteOrder.LITTLE_ENDIAN)
     }
 
-    fun checkStringAtPosition(str: String, startPosition: Int, data: ByteArray) =
+    private fun checkStringAtPosition(str: String, startPosition: Int, data: ByteArray) =
             str.toCharArray().filterIndexed { i, char ->
-                !(char == data[startPosition + i].toChar())
+                char != data[startPosition + i].toChar()
             }.isEmpty()
 
     fun getNextPCMSample(): Short {
@@ -97,7 +97,6 @@ class WavFile {
         } else {
             throw RuntimeException("Cannot retrieve 16bit frame from not 16bit wave file")
         }
-
     }
 
     /**
