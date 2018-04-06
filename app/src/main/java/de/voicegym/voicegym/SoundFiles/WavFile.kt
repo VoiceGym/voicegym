@@ -66,8 +66,6 @@ class WavFile {
         byteBuffer.order(ByteOrder.LITTLE_ENDIAN)
 
         riffChunkSize = byteBuffer.getInt(4) // 4 bytes at byte  4; littleEndian
-
-
         fmtChunkSize = byteBuffer.getInt(16) // 4 bytes at byte 16; littleEndian
         audioFormat = byteBuffer.getShort(20) // 2 bytes at byte 20; littleEndian
         numChannels = byteBuffer.getShort(22) // 2 bytes at byte 22; littleEndian
@@ -76,6 +74,11 @@ class WavFile {
         blockAlign = byteBuffer.getShort(32) // 2 bytes at byte 32; littleEndian
         bitPerSample = byteBuffer.getShort(34) // 2 bytes at byte 34; littleEndian
         dataChunkSize = byteBuffer.getInt(40) // 4 byte at byte 40; littleEndian
+
+        // sanity check
+        if ((bitPerSample / 8) != byteRate / sampleRate) throw RuntimeException("Wav file corrupt")
+
+
         stream.mark(44)
         outBuffer = ByteBuffer.allocate(bitPerSample / 8);
         outBuffer.order(ByteOrder.LITTLE_ENDIAN)
@@ -98,13 +101,26 @@ class WavFile {
     }
 
     /**
-     * returns a timeframe of length t (in ms)
+     * returns a timeframe of length t (in ms), starting from last mark
      */
     fun getTimeFrame(t: Int): ShortArray {
-        var array = ShortArray(sampleRate / (t / 1000))
-        // TODO implement
-        throw NotImplementedError()
-        return array
+        val samplesInFrame = t * sampleRate / 1000
+        val bytesPerSample = 2;
+        val bytesInFrame = samplesInFrame * 2;
+        val buffer = ByteBuffer.allocate(bytesInFrame)
+        buffer.order(ByteOrder.LITTLE_ENDIAN)
+        val pcmArray = ShortArray(samplesInFrame)
+
+        for (i in 0 until bytesInFrame) {
+            val data = stream.read();
+            if (data != -1) buffer.put(i, data.toByte())
+            else buffer.put(i, 0.toByte())
+        }
+
+        for (i in 0 until bytesInFrame step bytesPerSample) {
+            pcmArray.set(i / bytesPerSample, buffer.getShort(i))
+        }
+        return pcmArray;
     }
 
     fun getNumberOfPCMSamples(): Int {
