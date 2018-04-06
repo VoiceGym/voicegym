@@ -100,31 +100,35 @@ class WavFile(val file: File) {
     }
 
     /**
-     * returns a timeframe of length t (in ms), starting from last mark
+     * @param t time in ms
+     * @return a timeframe of length t (in ms), starting from last mark
      */
     fun getTimeFrame(t: Int): ShortArray {
         val samplesInFrame = t * sampleRate / 1000
-        val bytesPerSample = 2;
-        val bytesInFrame = samplesInFrame * 2;
-        val buffer = ByteBuffer.allocate(bytesInFrame)
-        buffer.order(ByteOrder.LITTLE_ENDIAN)
+        val bytesPerSample = 2
+        val bytesInFrame = samplesInFrame * 2
+        val buffer = ByteBuffer
+                .allocate(bytesInFrame)
+                .order(ByteOrder.LITTLE_ENDIAN)
         val pcmArray = ShortArray(samplesInFrame)
 
         for (i in 0 until bytesInFrame) {
-            val data = stream.read();
-            if (data != -1) buffer.put(i, data.toByte())
-            else buffer.put(i, 0.toByte())
+            val data = stream.read()
+            if (data != -1)
+                buffer.put(i, data.toByte())
+            else
+                buffer.put(i, 0b0)
         }
 
         for (i in 0 until bytesInFrame step bytesPerSample) {
-            pcmArray.set(i / bytesPerSample, buffer.getShort(i))
+            pcmArray[i / bytesPerSample] = buffer.getShort(i)
         }
-        return pcmArray;
+        return pcmArray
     }
 
-    fun getNumberOfPCMSamples(): Int {
-        return this.dataChunkSize / (this.bitPerSample / 8)
-    }
+    fun getNumberOfPCMSamples(): Int =
+        this.dataChunkSize / (this.bitPerSample / 8)
+
 
     override fun toString(): String {
         return """WavFile(
