@@ -1,6 +1,6 @@
 package de.voicegym.voicegym
 
-import com.google.common.base.Stopwatch
+//import com.google.common.base.Stopwatch
 import de.voicegym.voicegym.SoundFiles.PCMHelper
 import de.voicegym.voicegym.SoundFiles.WavFile
 import junit.framework.Assert.assertEquals
@@ -52,8 +52,8 @@ class LibraryTest {
         val zero = DoubleArray(inputFrame.size)
         val out = DoubleArray(inputFrame.size)
 
-        val stopwatch = Stopwatch.createUnstarted()
-        stopwatch.start()
+        //val stopwatch = Stopwatch.createUnstarted()
+        //stopwatch.start()
         // ab hier 1000 ausführungen
         for (i in 0 until 1000) {
             System.arraycopy(inputFrame, 0, fft, 0, inputFrame.size)
@@ -61,8 +61,8 @@ class LibraryTest {
             fftDo.realForwardFull(fft)
             System.arraycopy(fft, 0, out, 0, inputFrame.size)
         }
-        stopwatch.stop()
-        println("${stopwatch.elapsed(TimeUnit.MILLISECONDS)} ms ")
+        //stopwatch.stop()
+        //println("${stopwatch.elapsed(TimeUnit.MILLISECONDS)} ms ")
         // bis hier
 
     }
