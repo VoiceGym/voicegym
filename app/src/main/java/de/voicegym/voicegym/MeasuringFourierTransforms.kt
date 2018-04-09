@@ -21,23 +21,46 @@ class MeasuringFourierTransforms : AppCompatActivity() {
             val wavFile = WavFile(getResources().openRawResource(R.raw.frame1))
             val inputFrame = PCMHelper.getDoubleArrayFromShortArray(1.0, wavFile.getTimeFrame(25))
 
-            val fftDo = DoubleFFT_1D(inputFrame.size.toLong())
-            val fft = DoubleArray(2 * inputFrame.size)
-            val zero = DoubleArray(inputFrame.size)
-            val out = DoubleArray(inputFrame.size)
+            jtransformResult.setText((getJTransformsExecutionTime(inputFrame)).toString() + " ms")
 
-            val n = 100
-            val start = System.currentTimeMillis();
-            for (i in 0 until n) {
-                System.arraycopy(inputFrame, 0, fft, 0, inputFrame.size)
-                System.arraycopy(zero, 0, fft, inputFrame.size, inputFrame.size)
-                fftDo.realForwardFull(fft)
-                System.arraycopy(fft, 0, out, 0, inputFrame.size)
-            }
-            val stop = System.currentTimeMillis()
-            jtransformResult.setText(((stop - start) / n).toString() + " ms")
+            fftwResult.setText((getFFTWExecutionTime(inputFrame)).toString() + " ms")
             statusText.setText("Done")
         }
 
+    }
+
+    private fun getFFTWExecutionTime(inputFrame: DoubleArray): Long {
+        val wrapper = FourierExecutorWrapper(inputFrame.size)
+
+
+        val n = 100
+        val start = System.currentTimeMillis();
+        for (i in 0 until n) {
+            // start code
+           wrapper.fourierTransform(inputFrame)
+            // until here
+        }
+        val stop = System.currentTimeMillis()
+        wrapper.destroy()
+        return ((stop - start))
+    }
+
+    fun getJTransformsExecutionTime(inputFrame: DoubleArray): Long {
+        val fftDo = DoubleFFT_1D(inputFrame.size.toLong())
+        val fft = DoubleArray(2 * inputFrame.size)
+        val zero = DoubleArray(inputFrame.size)
+        val out = DoubleArray(inputFrame.size)
+
+        val n = 100
+        val start = System.currentTimeMillis();
+        for (i in 0 until n) {
+            System.arraycopy(inputFrame, 0, fft, 0, inputFrame.size)
+            System.arraycopy(zero, 0, fft, inputFrame.size, inputFrame.size)
+            fftDo.realForwardFull(fft)
+            System.arraycopy(fft, 0, out, 0, inputFrame.size)
+        }
+        val stop = System.currentTimeMillis()
+
+        return ((stop - start) )
     }
 }

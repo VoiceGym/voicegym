@@ -1,5 +1,7 @@
 package de.voicegym.voicegym;
 
+import org.apache.commons.math3.util.DoubleArray;
+
 /**
  * Created by KayleeTheMech on 04.04.2018.
  */
@@ -9,15 +11,17 @@ public class FourierExecutorWrapper {
 
     private long objPtr = 0;
 
+    private double[] outBuffer;
+
     public FourierExecutorWrapper(int bufferSize) {
         initializeExecutor(bufferSize);
         destroyed = false;
+        outBuffer = new double[bufferSize * 2];
     }
 
-    public void fourierTransform(){
-        // TODO get BUFFER into native-lib
-        // TODO execute
-        // TODO get RESULT from native-lib
+    public double[] fourierTransform(double[] input) {
+        execute(input, outBuffer);
+        return outBuffer;
     }
 
     public void destroy() {
@@ -29,7 +33,7 @@ public class FourierExecutorWrapper {
     // FourierExecutor.cpp methods
     public native void initializeExecutor(int bufferSize);
 
-    public native void execute();
+    public native void execute(double[] inputFrame, double[] outBuffer);
 
     public native void destroyExecutor();
 

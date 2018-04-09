@@ -1,40 +1,49 @@
 #include <jni.h>
 #include <string>
 #include <fftw3.h>
+#include <iostream>
+
+using namespace std;
 
 
 class FourierExecutor {
 public:
-    FourierExecutor(int bufferSize) {
+    FourierExecutor(int bufferSize, jdoubleArray outArr) {
         this->bufferSize = bufferSize;
-        this->inputBuffer = (fftw_complex *) fftw_malloc(sizeof(fftw_complex) * bufferSize);
-        this->outputBuffer = (fftw_complex *) fftw_malloc(sizeof(fftw_complex) * bufferSize);
-        this->plan = fftw_plan_dft_1d(bufferSize, inputBuffer, outputBuffer, FFTW_FORWARD,
-                                      FFTW_ESTIMATE);
+        this->inputBuffer = (double *) fftw_malloc(sizeof(fftw_complex) * bufferSize);
+        this->outputBuffer = (double *) fftw_malloc(sizeof(fftw_complex) * bufferSize * 2);
+        this->plan = fftw_plan_r2r_1d(bufferSize, inputBuffer, outputBuffer,
+                                      FFTW_R2HC, FFTW_MEASURE);
+        this->output = outArr;
     }
 
-    fftw_complex *execute(fftw_complex *input) {
-        this->inputBuffer = input;
-        // execute the plan
+    void execute(double *input, double *output) {
+        copy(input, input + bufferSize, inputBuffer);
         fftw_execute(plan);
-        return this->outputBuffer;
+        copy(outputBuffer, outputBuffer + bufferSize * 2, output);
     }
 
     ~FourierExecutor() {
         fftw_destroy_plan(plan);
         fftw_free(inputBuffer);
         fftw_free(outputBuffer);
+        std::cout << "Killing Executor";
     }
 
     int getBufferSize() {
         return bufferSize;
     }
 
+    jdoubleArray getOutArray() {
+        return this->output;
+    }
+
 private:
     int bufferSize;
-    fftw_complex *inputBuffer;
-    fftw_complex *outputBuffer;
+    double *inputBuffer;
+    double *outputBuffer;
     fftw_plan plan;
+    jdoubleArray output;
 };
 
 /*----------------------------------------------------------------------------------------------
@@ -68,25 +77,37 @@ Java_de_voicegym_voicegym_MainActivity_stringFromJNI(
  ----------------------------------------------------------------------------------------------*/
 extern "C"
 JNIEXPORT void JNICALL
-Java_de_voicegym_voicegym_FourierExecutorWrapper_initializeExecutor(JNIEnv *env, jobject instance,
-                                                                    jint bufferSize) {
-    env->SetLongField(instance, getMemoryLocationOfExecutor(env, instance),
-                      (jlong) new FourierExecutor(bufferSize));
+Java_de_voicegym_voicegym_FourierExecutorWrapper_initializeExecutor(
+        JNIEnv *env,
+        jobject instance,
+        jint bufferSize) {
+
+    FourierExecutor *executor = new FourierExecutor(bufferSize,
+                                                    env->NewDoubleArray(bufferSize * 2));
+
+    env->SetLongField(instance,
+                      getMemoryLocationOfExecutor(env, instance),
+                      (jlong) executor);
+
 }
 
 /*----------------------------------------------------------------------------------------------
  *
  ----------------------------------------------------------------------------------------------*/
+
 extern "C"
 JNIEXPORT void JNICALL
-Java_de_voicegym_voicegym_FourierExecutorWrapper_execute(JNIEnv *env, jobject instance) {
+Java_de_voicegym_voicegym_FourierExecutorWrapper_execute(JNIEnv *env, jobject instance,
+                                                         jdoubleArray inputFrame,
+                                                         jdoubleArray outBuffer) {
     FourierExecutor *executor = (FourierExecutor *) env->GetLongField(instance,
                                                                       getMemoryLocationOfExecutor(
                                                                               env, instance));
-    //TODO PASS IN BUFFER with correct size
-    //TODO check BUFFER FITS with EXECUTOR
-    fftw_complex *input;
-    executor->execute(input);
+
+    //jsize len = env->GetArrayLength(inputFrame);
+    double *input = env->GetDoubleArrayElements(inputFrame, JNI_FALSE);
+    double *output = env->GetDoubleArrayElements(outBuffer, JNI_FALSE);
+    executor->execute(input, output);
 }
 
 /*----------------------------------------------------------------------------------------------
