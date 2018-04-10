@@ -23,26 +23,9 @@ class MeasuringFourierTransforms : AppCompatActivity() {
 
             jtransformResult.setText((getJTransformsExecutionTime(inputFrame)).toString() + " ms")
 
-            fftwResult.setText((getFFTWExecutionTime(inputFrame)).toString() + " ms")
             statusText.setText("Done")
         }
 
-    }
-
-    private fun getFFTWExecutionTime(inputFrame: DoubleArray): Long {
-        val wrapper = FourierExecutorWrapper(inputFrame.size)
-
-
-        val n = 100
-        val start = System.currentTimeMillis();
-        for (i in 0 until n) {
-            // start code
-           wrapper.fourierTransform(inputFrame)
-            // until here
-        }
-        val stop = System.currentTimeMillis()
-        wrapper.destroy()
-        return ((stop - start))
     }
 
     fun getJTransformsExecutionTime(inputFrame: DoubleArray): Long {
@@ -61,6 +44,6 @@ class MeasuringFourierTransforms : AppCompatActivity() {
         }
         val stop = System.currentTimeMillis()
 
-        return ((stop - start) )
+        return ((stop - start))
     }
 }
