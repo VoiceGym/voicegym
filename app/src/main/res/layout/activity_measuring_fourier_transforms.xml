@@ -34,18 +34,6 @@
             android:text="0 ms" />
 
         <TextView
-            android:id="@+id/textView2"
-            android:layout_width="match_parent"
-            android:layout_height="50dp"
-            android:text="FFTW: " />
-
-        <TextView
-            android:id="@+id/fftwResult"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="0 ms" />
-
-        <TextView
             android:id="@+id/statusText"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
