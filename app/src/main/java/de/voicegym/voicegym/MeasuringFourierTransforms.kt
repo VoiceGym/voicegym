@@ -18,29 +18,43 @@ class MeasuringFourierTransforms : AppCompatActivity() {
             statusText.setText("Measuring")
 
 
-            val wavFile = WavFile(getResources().openRawResource(R.raw.frame1))
-            val inputFrame = PCMHelper.getDoubleArrayFromShortArray(1.0, wavFile.getTimeFrame(25))
+            val wavFile = WavFile(getResources().openRawResource(R.raw.testtone))
+            val blocksize = 2048
+            val lengthOfBlock = wavFile.getFrameLength(blocksize)
+            val binning = 2
 
-            jtransformResult.setText((getJTransformsExecutionTime(inputFrame)).toString() + " ms")
+            val inputFrame = PCMHelper.getDoubleArrayFromShortArray(1.0, wavFile.getPCMBlock(blocksize))
 
-            statusText.setText("Done")
+            jtransformResult.setText("100 executions took" + (getJTransformsExecutionTime(inputFrame, binning)).toString() + " ms")
+
+            statusText.setText("Done, blocklength was {$lengthOfBlock} ms. With {$blocksize} samples, binning was {$binning}")
         }
 
     }
 
-    fun getJTransformsExecutionTime(inputFrame: DoubleArray): Long {
-        val fftDo = DoubleFFT_1D(inputFrame.size.toLong())
-        val fft = DoubleArray(2 * inputFrame.size)
-        val zero = DoubleArray(inputFrame.size)
-        val out = DoubleArray(inputFrame.size)
+    fun getJTransformsExecutionTime(inputFrame: DoubleArray, binning: Int): Long {
+        val blocksize = inputFrame.size
+        val fftDo = DoubleFFT_1D((blocksize / binning).toLong())
+        val fft = DoubleArray(2 * (blocksize / binning))
+        val zero = DoubleArray((blocksize / binning))
+        val inBin = DoubleArray(blocksize)
+        val out = DoubleArray((blocksize / binning))
 
         val n = 100
         val start = System.currentTimeMillis();
         for (i in 0 until n) {
-            System.arraycopy(inputFrame, 0, fft, 0, inputFrame.size)
-            System.arraycopy(zero, 0, fft, inputFrame.size, inputFrame.size)
-            fftDo.realForwardFull(fft)
-            System.arraycopy(fft, 0, out, 0, inputFrame.size)
+            if (binning == 1) {
+                System.arraycopy(inputFrame, 0, fft, 0, blocksize)
+                System.arraycopy(zero, 0, fft, blocksize, blocksize)
+                fftDo.realForwardFull(fft)
+                System.arraycopy(fft, 0, out, 0, blocksize)
+            } else {
+                PCMHelper.getBinnedDoubleArray(inputFrame, binning, inBin)
+                System.arraycopy(inBin, 0, fft, 0, blocksize / binning)
+                System.arraycopy(zero, 0, fft, blocksize / binning, blocksize / binning)
+                fftDo.realForwardFull(fft)
+                System.arraycopy(fft, 0, out, 0, blocksize / binning)
+            }
         }
         val stop = System.currentTimeMillis()
 
