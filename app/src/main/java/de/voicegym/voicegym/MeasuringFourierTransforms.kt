@@ -2,7 +2,8 @@ package de.voicegym.voicegym
 
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
-import de.voicegym.voicegym.SoundFiles.PCMHelper
+import de.voicegym.voicegym.FourierHelper.FourierHelper
+import de.voicegym.voicegym.FourierHelper.PCMUtil
 import de.voicegym.voicegym.SoundFiles.WavFile
 
 import kotlinx.android.synthetic.main.activity_measuring_fourier_transforms.*
@@ -19,11 +20,11 @@ class MeasuringFourierTransforms : AppCompatActivity() {
 
 
             val wavFile = WavFile(getResources().openRawResource(R.raw.testtone))
-            val blocksize = 2048
+            val blocksize = 16384
             val lengthOfBlock = wavFile.getFrameLength(blocksize)
-            val binning = 2
+            val binning = 16
 
-            val inputFrame = PCMHelper.getDoubleArrayFromShortArray(1.0, wavFile.getPCMBlock(blocksize))
+            val inputFrame = PCMUtil.getDoubleArrayFromShortArray(1.0, wavFile.getPCMBlock(blocksize))
 
             jtransformResult.setText("100 executions took" + (getJTransformsExecutionTime(inputFrame, binning)).toString() + " ms")
 
@@ -49,7 +50,7 @@ class MeasuringFourierTransforms : AppCompatActivity() {
                 fftDo.realForwardFull(fft)
                 System.arraycopy(fft, 0, out, 0, blocksize)
             } else {
-                PCMHelper.getBinnedDoubleArray(inputFrame, binning, inBin)
+                FourierHelper.binInputToOutputArray(inputFrame, binning, inBin)
                 System.arraycopy(inBin, 0, fft, 0, blocksize / binning)
                 System.arraycopy(zero, 0, fft, blocksize / binning, blocksize / binning)
                 fftDo.realForwardFull(fft)
