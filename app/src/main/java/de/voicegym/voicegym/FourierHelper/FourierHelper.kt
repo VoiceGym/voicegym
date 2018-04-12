@@ -12,6 +12,7 @@ class FourierHelper(blockSize: Int, binning: Int, collectedSamples: Int, sampleR
 
     private val fftTransformer = DoubleFFT_1D((blockSize).toLong())
     val fftData = DoubleArray(2 * (blockSize))
+    private val calculationBuffer = DoubleArray(blockSize)
 
     init {
         if ((collectedSamples / binning != blockSize) || (collectedSamples % binning != 0)) {
@@ -48,8 +49,33 @@ class FourierHelper(blockSize: Int, binning: Int, collectedSamples: Int, sampleR
         return fftData
     }
 
+    /**
+     * Calculates the Amplitudes for the complex values in the current FFT Buffer
+     *
+     * @return a DoubleArray filled with amplitudes / magnitude
+     */
+    fun amplitudeArray(): DoubleArray {
+        for (i in 0 until fftData.size / 2) {
+            calculationBuffer[i] = Math.sqrt(Math.pow(fftData[2 * i], 2.0) + Math.pow(fftData[2 * i + 1], 2.0))
+        }
+        return calculationBuffer
+    }
+
+    /**
+     * Calculates the Phases for the complex values in the current FFT Buffer
+     *
+     * @return a DoubleArray filled with phases
+     */
+    fun phaseArray(): DoubleArray {
+        for (i in 0 until fftData.size / 2) {
+            calculationBuffer[i] = Math.atan(fftData[2 * i] / fftData[2 * i + 1])
+        }
+        return calculationBuffer
+    }
 
     companion object {
+
+
         /**
          * Checks if a given number is a power of 2
          */

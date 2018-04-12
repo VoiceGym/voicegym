@@ -1,11 +1,16 @@
 package de.voicegym.voicegym
 
 import de.voicegym.voicegym.FourierHelper.FourierHelper
-import org.junit.Assert.*
+import de.voicegym.voicegym.FourierHelper.PCMUtil
+import de.voicegym.voicegym.SoundFiles.WavFile
+import junit.framework.Assert.*
 import org.junit.Test
+import java.io.File
+
 
 class TestFourierHelper {
     @Test
+    //@DisplayName("IsPowerOf2 function")
     fun testIsPowerOfTwo() {
         val set = HashSet<Int>()
         var i = 1
@@ -26,6 +31,7 @@ class TestFourierHelper {
     }
 
     @Test
+    //@DisplayName("Binning function, tiny positive test")
     fun testBinning() {
         // short positive test
         val input = DoubleArray(10)
@@ -43,4 +49,48 @@ class TestFourierHelper {
 
 
     }
+
+    @Test
+    //@DisplayName("FourierHelper")
+    fun testFourierHelperInstanciation() {
+        var exception: RuntimeException? = null;
+        try {
+            FourierHelper(1024, 2, 1024, 44100)
+        } catch (e: RuntimeException) {
+            exception = e;
+        }
+        assertNotNull(exception);
+        exception = null;
+        try {
+            FourierHelper(512, 2, 1024, 44100)
+        } catch (e: RuntimeException) {
+            exception = e;
+        }
+        assertNull(exception);
+        try {
+            FourierHelper(500, 2, 1000, 44100)
+        } catch (e: RuntimeException) {
+            exception = e;
+        }
+        assertNotNull(exception)
+    }
+
+    @Test
+    fun testFourierHelper() {
+        var helper = FourierHelper(4096, 2, 8192, 44100)
+
+        var pcmSamples: ShortArray = WavFile(File("src/test/resources/purewaves/440Hz-A4.wav")).getPCMBlock(8192)
+        assertEquals(8192, pcmSamples.size)
+        var normalizedPcmSamples: DoubleArray = PCMUtil.getDoubleArrayFromShortArray(1.0, pcmSamples)
+        helper.fft(normalizedPcmSamples)
+
+
+        var fftArray = helper.amplitudeArray()
+        for (i in 0 until 128) {
+            print("${fftArray[i].format(3)}, ")
+            if (i % 8 == 7) print("\n")
+        }
+    }
+
+    fun Double.format(digits: Int) = java.lang.String.format("%.${digits}f", this)
 }
