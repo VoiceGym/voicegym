@@ -12,18 +12,18 @@ class TestFourierHelper {
     @Test
     //@DisplayName("IsPowerOf2 function")
     fun testIsPowerOfTwo() {
-        val set = HashSet<Int>()
+        val powersOfTwo = mutableSetOf<Int>()
         var i = 1
         assertTrue(FourierHelper.isPowerOf2(1))
         // positive test all Integers power of 2 above 0
         while (i > 0) {
             i *= 2
-            set.add(i)
+            powersOfTwo += i
             if (i > 0) assertTrue(FourierHelper.isPowerOf2(i))
         }
         // negative test a relevant range
         for (i in 2 until 100000) {
-            if (!set.contains(i)) {
+            if (i !in powersOfTwo) {
                 assertFalse(FourierHelper.isPowerOf2(i))
             }
         }

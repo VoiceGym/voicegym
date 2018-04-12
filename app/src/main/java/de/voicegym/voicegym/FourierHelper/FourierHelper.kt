@@ -2,30 +2,30 @@ package de.voicegym.voicegym.FourierHelper
 
 import org.jtransforms.fft.DoubleFFT_1D
 
-class FourierHelper(blockSize: Int, binning: Int, collectedSamples: Int, sampleRate: Int) {
-    // binning refers to the number of samples averaged into one block
-    val binning = binning
-    // blockSize is value of the block used together with the FFT
-    val blockSize = blockSize
-    // the sampleRate
-    val sampleRate = sampleRate
+/**
+ * This needs a doc comment!
+ */
+class FourierHelper(
+        // binning refers to the number of samples averaged into one block
+        val blockSize: Int,
+        // blockSize is value of the block used together with the FFT
+        val binning: Int,
+        val collectedSamples: Int) {
 
+    // the sampleRate: IS NEVER USED
+    // val sampleRate = sampleRate
     private val fftTransformer = DoubleFFT_1D((blockSize).toLong())
-    val fftData = DoubleArray(2 * (blockSize))
+    private val fftData = DoubleArray(2 * (blockSize))
     private val calculationBuffer = DoubleArray(blockSize)
 
     init {
-        if ((collectedSamples / binning != blockSize) || (collectedSamples % binning != 0)) {
-            /**
-             * the blockSize * binning must be equal to the number of collected samples
-             */
-            throw RuntimeException("Make sure your number of collected samples fit into the fourier transform block")
+        //he blockSize * binning must be equal to the number of collected samples
+        require ((collectedSamples / binning != blockSize) || (collectedSamples % binning != 0)) {
+            "Make sure your number of collected samples fit into the fourier transform block"
         }
-
-        if (!isPowerOf2(blockSize)) {
-            throw RuntimeException("Blocksize wasn't chosen to be a power of two. FFT needs a blockSize the power of two.")
+        require (!isPowerOf2(blockSize)) {
+            "Blocksize wasn't chosen to be a power of two. FFT needs a blockSize the power of two."
         }
-
     }
 
     /**
@@ -74,8 +74,6 @@ class FourierHelper(blockSize: Int, binning: Int, collectedSamples: Int, sampleR
     }
 
     companion object {
-
-
         /**
          * Checks if a given number is a power of 2
          */

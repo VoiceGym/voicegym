@@ -76,7 +76,6 @@ class WavFile(private val stream: InputStream) {
 
     constructor(file: File) : this(FileInputStream(file))
 
-
     private fun checkStringAtPosition(str: String, startPosition: Int, data: ByteArray) =
             str.toCharArray().filterIndexed { i, char ->
                 char != data[startPosition + i].toChar()
