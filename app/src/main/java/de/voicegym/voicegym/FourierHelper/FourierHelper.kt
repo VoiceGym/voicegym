@@ -10,7 +10,8 @@ class FourierHelper(
         val blockSize: Int,
         // blockSize is value of the block used together with the FFT
         val binning: Int,
-        val collectedSamples: Int) {
+        val collectedSamples: Int,
+        val sampleRate: Int) {
 
     // the sampleRate: IS NEVER USED
     // val sampleRate = sampleRate
@@ -20,10 +21,10 @@ class FourierHelper(
 
     init {
         //he blockSize * binning must be equal to the number of collected samples
-        require ((collectedSamples / binning != blockSize) || (collectedSamples % binning != 0)) {
+        require(!(collectedSamples / binning != blockSize) && !(collectedSamples % binning != 0)) {
             "Make sure your number of collected samples fit into the fourier transform block"
         }
-        require (!isPowerOf2(blockSize)) {
+        require(isPowerOf2(blockSize)) {
             "Blocksize wasn't chosen to be a power of two. FFT needs a blockSize the power of two."
         }
     }
