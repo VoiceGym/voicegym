@@ -1,6 +1,6 @@
-package de.voicegym.voicegym.SoundFiles
+package de.voicegym.voicegym.FourierHelper
 
-object PCMHelper {
+object PCMUtil {
     fun getDoubleArrayFromShortArray(normalization: Double, inputArray: ShortArray): DoubleArray =
             inputArray.toList().map {
                 if (it >= 0)

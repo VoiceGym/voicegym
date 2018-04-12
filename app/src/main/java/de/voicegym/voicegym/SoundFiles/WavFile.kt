@@ -96,16 +96,31 @@ class WavFile(private val stream: InputStream) {
      * @param t time in ms
      * @return a timeframe of length t (in ms), starting from last mark
      */
-    fun getTimeFrame(t: Int): ShortArray {
-        val samplesInFrame = t * sampleRate / 1000
-        val bytesPerSample = 2
-        val bytesInFrame = samplesInFrame * 2
-        val buffer = ByteBuffer
-                .allocate(bytesInFrame)
-                .order(ByteOrder.LITTLE_ENDIAN)
-        val pcmArray = ShortArray(samplesInFrame)
+    fun getTimeFrame(t: Int): ShortArray = getPCMBlock(blocksize = t * sampleRate / 1000)
 
-        for (i in 0 until bytesInFrame) {
+    /**
+     * @param blocksize: number of pcm samples in block
+     * @return the duration of the block of pcm samples in ms
+     */
+    fun getFrameLength(blocksize: Int) = 1000 * blocksize / sampleRate
+
+    /**
+     * Fetches a block of PCM Samples
+     * Repeated application fetches the next block until the end of available data,
+     * then it will return an ShortArray filled with 0.
+     *
+     * @param blocksize the number of samples to collect
+     * @return ShortArray of length blocksize containing PCM Samples
+     */
+    fun getPCMBlock(blocksize: Int): ShortArray {
+        val bytesPerSample = bitPerSample / 8;
+        val bytesInBlock = blocksize * bytesPerSample
+        val buffer = ByteBuffer
+                .allocate(bytesInBlock)
+                .order(ByteOrder.LITTLE_ENDIAN)
+        val pcmArray = ShortArray(blocksize)
+
+        for (i in 0 until bytesInBlock) {
             val data = stream.read()
             if (data != -1)
                 buffer.put(i, data.toByte())
@@ -113,11 +128,13 @@ class WavFile(private val stream: InputStream) {
                 buffer.put(i, 0b0)
         }
 
-        for (i in 0 until bytesInFrame step bytesPerSample) {
+        for (i in 0 until bytesInBlock step bytesPerSample) {
             pcmArray[i / bytesPerSample] = buffer.getShort(i)
         }
+
         return pcmArray
     }
+
 
     fun getNumberOfPCMSamples(): Int =
             this.dataChunkSize / (this.bitPerSample / 8)

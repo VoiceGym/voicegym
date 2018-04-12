@@ -1,18 +1,14 @@
 package de.voicegym.voicegym
 
 //import com.google.common.base.Stopwatch
-import de.voicegym.voicegym.SoundFiles.PCMHelper
+import de.voicegym.voicegym.FourierHelper.PCMUtil
 import de.voicegym.voicegym.SoundFiles.WavFile
 import junit.framework.Assert.assertEquals
-import junit.framework.Assert.fail
 import org.jtransforms.fft.DoubleFFT_1D
 import org.junit.Test
 
 import java.io.File
 import java.io.FileInputStream
-import java.nio.ByteBuffer
-import java.nio.ByteOrder
-import java.util.concurrent.TimeUnit
 
 /**
  * Example local unit test, which will execute on the development machine (host).
@@ -45,7 +41,7 @@ class LibraryTest {
     fun testFireJtransformFourier() {
         val wavFile = WavFile(File("src/test/resources/frame1.wav"))
 
-        val inputFrame = PCMHelper.getDoubleArrayFromShortArray(1.0, wavFile.getTimeFrame(25))
+        val inputFrame = PCMUtil.getDoubleArrayFromShortArray(1.0, wavFile.getTimeFrame(25))
 
         val fftDo = DoubleFFT_1D(inputFrame.size.toLong())
         val fft = DoubleArray(2 * inputFrame.size)
