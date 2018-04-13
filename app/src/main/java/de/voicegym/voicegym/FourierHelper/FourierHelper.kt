@@ -10,11 +10,9 @@ class FourierHelper(
         val blockSize: Int,
         // blockSize is value of the block used together with the FFT
         val binning: Int,
-        val collectedSamples: Int,
-        val sampleRate: Int) {
+        collectedSamples: Int,
+        private val sampleRate: Int) {
 
-    // the sampleRate: IS NEVER USED
-    // val sampleRate = sampleRate
     private val fftTransformer = DoubleFFT_1D((blockSize).toLong())
     private val fftData = DoubleArray(2 * (blockSize))
     private val calculationBuffer = DoubleArray(blockSize)
@@ -46,7 +44,6 @@ class FourierHelper(
             binInputToOutputArray(inputFrame, binning, fftData)
         }
 
-
         // perform the transformation
         fftTransformer.realForwardFull(fftData)
         return fftData
@@ -74,6 +71,36 @@ class FourierHelper(
             calculationBuffer[i] = Math.atan(fftData[2 * i] / fftData[2 * i + 1])
         }
         return calculationBuffer
+    }
+
+    /**
+     * The frequencies corresponding to the array index positions in the amplitude and phase arrays.
+     *
+     * @return The corresponding frequencies (Hz) of the indeces.
+     */
+    fun frequencyArray(): DoubleArray {
+        val freqArray = DoubleArray(blockSize);
+        for (i in 0 until freqArray.size) {
+            freqArray[i] = i * sampleRate.toDouble() / (blockSize * binning)
+        }
+        return freqArray
+    }
+
+    /**
+     * @return The frequency spacing as a Double between array cells in Hz.
+     */
+    fun deltaFrequency(): Double {
+        return sampleRate.toDouble() / (blockSize * binning)
+    }
+
+    /**
+     * @see <a href="https://en.wikipedia.org/wiki/Nyquist_frequency">The Nyquist Frequency</a><br/>
+     * <br/>
+     * In practical terms the maximum sensible frequency we can use to display our results, for the given blocksize and binning settings.
+     * @return the Nyquist Frequency as a Double (Hz)
+     */
+    fun nyquistFrequency(): Double {
+        return sampleRate.toDouble() / (2 * binning)
     }
 
     companion object {
