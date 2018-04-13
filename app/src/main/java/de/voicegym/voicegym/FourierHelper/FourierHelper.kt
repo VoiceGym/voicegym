@@ -35,6 +35,9 @@ class FourierHelper(
      * @return the DoubleArray containing the result of the transformation
      */
     fun fft(inputFrame: DoubleArray): DoubleArray {
+        // delete last run
+        fftData.fill(0.0, 0, fftData.size - 1)
+
         if (binning == 1) {
             // use the unbinned input // inputFrame needs to fit into fftData
             System.arraycopy(inputFrame, 0, fftData, 0, blockSize)
@@ -43,8 +46,7 @@ class FourierHelper(
             binInputToOutputArray(inputFrame, binning, fftData)
         }
 
-        // delete imaginary parts from last transform
-        fftData.fill(0.toDouble(), blockSize, 2 * blockSize - 1)
+
         // perform the transformation
         fftTransformer.realForwardFull(fftData)
         return fftData

@@ -77,20 +77,40 @@ class TestFourierHelper {
 
     @Test
     fun testFourierHelper() {
-        var helper = FourierHelper(4096, 2, 8192, 44100)
+        val collectedSamples = 8192
+        var helper = FourierHelper(4096, 2, collectedSamples, 44100)
 
-        var pcmSamples: ShortArray = WavFile(File("src/test/resources/purewaves/440Hz-A4.wav")).getPCMBlock(8192)
-        assertEquals(8192, pcmSamples.size)
-        var normalizedPcmSamples: DoubleArray = PCMUtil.getDoubleArrayFromShortArray(1.0, pcmSamples)
-        helper.fft(normalizedPcmSamples)
+        val a1 = WavFile(File("src/test/resources/purewaves/055Hz-A1.wav"))
+        val a2 = WavFile(File("src/test/resources/purewaves/110Hz-A2.wav"))
+        val a3 = WavFile(File("src/test/resources/purewaves/220Hz-A3.wav"))
+        val a4 = WavFile(File("src/test/resources/purewaves/440Hz-A4.wav"))
+        val a5 = WavFile(File("src/test/resources/purewaves/880Hz-A5.wav"))
+
+        var pcmSamples: ShortArray = WavFile(File("src/test/resources/purewaves/440Hz-A4.wav")).getPCMBlock(collectedSamples)
+        assertEquals(collectedSamples, pcmSamples.size)
+
+        helper.fft(PCMUtil.getDoubleArrayFromShortArray(1.0, a1.getPCMBlock(collectedSamples)))
+        assertEquals(10, idxOfMax(helper.amplitudeArray()))
+
+        helper.fft(PCMUtil.getDoubleArrayFromShortArray(1.0, a2.getPCMBlock(collectedSamples)))
+        assertEquals(20, idxOfMax(helper.amplitudeArray()))
+
+        helper.fft(PCMUtil.getDoubleArrayFromShortArray(1.0, a3.getPCMBlock(collectedSamples)))
+        assertEquals(41, idxOfMax(helper.amplitudeArray()))
+
+        helper.fft(PCMUtil.getDoubleArrayFromShortArray(1.0, a4.getPCMBlock(collectedSamples)))
+        assertEquals(82, idxOfMax(helper.amplitudeArray()))
+
+        helper.fft(PCMUtil.getDoubleArrayFromShortArray(1.0, a5.getPCMBlock(collectedSamples)))
+        assertEquals(163, idxOfMax(helper.amplitudeArray()))
 
 
-        var fftArray = helper.amplitudeArray()
-        for (i in 0 until 128) {
-            print("${fftArray[i].format(3)}, ")
-            if (i % 8 == 7) print("\n")
-        }
     }
 
     fun Double.format(digits: Int) = java.lang.String.format("%.${digits}f", this)
+
+    fun idxOfMax(arr: DoubleArray): Int? {
+        val max = arr.max()
+        if (max != null && max != Double.NaN) return arr.indexOf(max) else return null
+    }
 }
