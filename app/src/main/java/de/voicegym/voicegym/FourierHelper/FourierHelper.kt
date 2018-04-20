@@ -78,13 +78,9 @@ class FourierHelper(
      *
      * @return The corresponding frequencies (Hz) of the indeces.
      */
-    fun frequencyArray(): DoubleArray {
-        val freqArray = DoubleArray(blockSize);
-        for (i in 0 until freqArray.size) {
-            freqArray[i] = i * sampleRate.toDouble() / (blockSize * binning)
-        }
-        return freqArray
-    }
+    fun frequencyArray() =
+        DoubleArray(blockSize, {it * sampleRate.toDouble() / (blockSize * binning)})
+
 
     /**
      * @return The frequency spacing as a Double between array cells in Hz.
