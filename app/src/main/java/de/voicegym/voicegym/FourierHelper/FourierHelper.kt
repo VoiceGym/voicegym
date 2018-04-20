@@ -81,13 +81,11 @@ class FourierHelper(
     fun frequencyArray() =
         DoubleArray(blockSize, {it * sampleRate.toDouble() / (blockSize * binning)})
 
-
     /**
      * @return The frequency spacing as a Double between array cells in Hz.
      */
-    fun deltaFrequency(): Double {
-        return sampleRate.toDouble() / (blockSize * binning)
-    }
+    fun deltaFrequency(): Double =
+        sampleRate.toDouble() / (blockSize * binning)
 
     /**
      * @see <a href="https://en.wikipedia.org/wiki/Nyquist_frequency">The Nyquist Frequency</a><br/>
@@ -100,6 +98,7 @@ class FourierHelper(
     }
 
     companion object {
+
         /**
          * Checks if a given number is a power of 2
          */
@@ -134,7 +133,5 @@ class FourierHelper(
                 targetN++
             }
         }
-
     }
-
 }
