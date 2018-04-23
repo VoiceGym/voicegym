@@ -2,29 +2,29 @@ package de.voicegym.voicegym.FourierHelper
 
 import org.jtransforms.fft.DoubleFFT_1D
 
-class FourierHelper(blockSize: Int, binning: Int, collectedSamples: Int, sampleRate: Int) {
-    // binning refers to the number of samples averaged into one block
-    val binning = binning
-    // blockSize is value of the block used together with the FFT
-    val blockSize = blockSize
-    // the sampleRate
-    val sampleRate = sampleRate
+/**
+ * This needs a doc comment!
+ */
+class FourierHelper(
+        // binning refers to the number of samples averaged into one block
+        val blockSize: Int,
+        // blockSize is value of the block used together with the FFT
+        val binning: Int,
+        collectedSamples: Int,
+        private val sampleRate: Int) {
 
     private val fftTransformer = DoubleFFT_1D((blockSize).toLong())
-    val fftData = DoubleArray(2 * (blockSize))
+    private val fftData = DoubleArray(2 * (blockSize))
+    private val calculationBuffer = DoubleArray(blockSize)
 
     init {
-        if ((collectedSamples / binning != blockSize) || (collectedSamples % binning != 0)) {
-            /**
-             * the blockSize * binning must be equal to the number of collected samples
-             */
-            throw RuntimeException("Make sure your number of collected samples fit into the fourier transform block")
+        //he blockSize * binning must be equal to the number of collected samples
+        require(!(collectedSamples / binning != blockSize) && !(collectedSamples % binning != 0)) {
+            "Make sure your number of collected samples fit into the fourier transform block"
         }
-
-        if (!isPowerOf2(blockSize)) {
-            throw RuntimeException("Blocksize wasn't chosen to be a power of two. FFT needs a blockSize the power of two.")
+        require(isPowerOf2(blockSize)) {
+            "Blocksize wasn't chosen to be a power of two. FFT needs a blockSize the power of two."
         }
-
     }
 
     /**
@@ -33,6 +33,9 @@ class FourierHelper(blockSize: Int, binning: Int, collectedSamples: Int, sampleR
      * @return the DoubleArray containing the result of the transformation
      */
     fun fft(inputFrame: DoubleArray): DoubleArray {
+        // delete last run
+        fftData.fill(0.0, 0, fftData.size - 1)
+
         if (binning == 1) {
             // use the unbinned input // inputFrame needs to fit into fftData
             System.arraycopy(inputFrame, 0, fftData, 0, blockSize)
@@ -41,13 +44,64 @@ class FourierHelper(blockSize: Int, binning: Int, collectedSamples: Int, sampleR
             binInputToOutputArray(inputFrame, binning, fftData)
         }
 
-        // delete imaginary parts from last transform
-        fftData.fill(0.toDouble(), blockSize, 2 * blockSize - 1)
         // perform the transformation
         fftTransformer.realForwardFull(fftData)
         return fftData
     }
 
+    /**
+     * Calculates the Amplitudes for the complex values in the current FFT Buffer
+     *
+     * @return a DoubleArray filled with amplitudes / magnitude
+     */
+    fun amplitudeArray(): DoubleArray {
+        for (i in 0 until fftData.size / 2) {
+            calculationBuffer[i] = Math.sqrt(Math.pow(fftData[2 * i], 2.0) + Math.pow(fftData[2 * i + 1], 2.0))
+        }
+        return calculationBuffer
+    }
+
+    /**
+     * Calculates the Phases for the complex values in the current FFT Buffer
+     *
+     * @return a DoubleArray filled with phases
+     */
+    fun phaseArray(): DoubleArray {
+        for (i in 0 until fftData.size / 2) {
+            calculationBuffer[i] = Math.atan(fftData[2 * i] / fftData[2 * i + 1])
+        }
+        return calculationBuffer
+    }
+
+    /**
+     * The frequencies corresponding to the array index positions in the amplitude and phase arrays.
+     *
+     * @return The corresponding frequencies (Hz) of the indeces.
+     */
+    fun frequencyArray(): DoubleArray {
+        val freqArray = DoubleArray(blockSize);
+        for (i in 0 until freqArray.size) {
+            freqArray[i] = i * sampleRate.toDouble() / (blockSize * binning)
+        }
+        return freqArray
+    }
+
+    /**
+     * @return The frequency spacing as a Double between array cells in Hz.
+     */
+    fun deltaFrequency(): Double {
+        return sampleRate.toDouble() / (blockSize * binning)
+    }
+
+    /**
+     * @see <a href="https://en.wikipedia.org/wiki/Nyquist_frequency">The Nyquist Frequency</a><br/>
+     * <br/>
+     * In practical terms the maximum sensible frequency we can use to display our results, for the given blocksize and binning settings.
+     * @return the Nyquist Frequency as a Double (Hz)
+     */
+    fun nyquistFrequency(): Double {
+        return sampleRate.toDouble() / (2 * binning)
+    }
 
     companion object {
         /**

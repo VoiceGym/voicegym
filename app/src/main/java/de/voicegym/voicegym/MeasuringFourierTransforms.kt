@@ -5,10 +5,10 @@ import android.support.v7.app.AppCompatActivity
 import de.voicegym.voicegym.FourierHelper.FourierHelper
 import de.voicegym.voicegym.FourierHelper.PCMUtil
 import de.voicegym.voicegym.SoundFiles.WavFile
-
-import kotlinx.android.synthetic.main.activity_measuring_fourier_transforms.*
+import kotlinx.android.synthetic.main.activity_measuring_fourier_transforms.fab
+import kotlinx.android.synthetic.main.activity_measuring_fourier_transforms.jtransformResult
+import kotlinx.android.synthetic.main.activity_measuring_fourier_transforms.statusText
 import org.jtransforms.fft.DoubleFFT_1D
-
 
 class MeasuringFourierTransforms : AppCompatActivity() {
 
@@ -23,12 +23,10 @@ class MeasuringFourierTransforms : AppCompatActivity() {
             val blocksize = 16384
             val lengthOfBlock = wavFile.getFrameLength(blocksize)
             val binning = 16
-
             val inputFrame = PCMUtil.getDoubleArrayFromShortArray(1.0, wavFile.getPCMBlock(blocksize))
 
-            jtransformResult.setText("100 executions took" + (getJTransformsExecutionTime(inputFrame, binning)).toString() + " ms")
-
-            statusText.setText("Done, blocklength was {$lengthOfBlock} ms. With {$blocksize} samples, binning was {$binning}")
+            jtransformResult.text = "100 executions took" + (getJTransformsExecutionTime(inputFrame, binning)).toString() + " ms"
+            statusText.text = "Done, blocklength was {$lengthOfBlock} ms. With {$blocksize} samples, binning was {$binning}"
         }
 
     }
@@ -42,7 +40,7 @@ class MeasuringFourierTransforms : AppCompatActivity() {
         val out = DoubleArray((blocksize / binning))
 
         val n = 100
-        val start = System.currentTimeMillis();
+        val start = System.currentTimeMillis()
         for (i in 0 until n) {
             if (binning == 1) {
                 System.arraycopy(inputFrame, 0, fft, 0, blocksize)
@@ -59,6 +57,6 @@ class MeasuringFourierTransforms : AppCompatActivity() {
         }
         val stop = System.currentTimeMillis()
 
-        return ((stop - start))
+        return stop - start
     }
 }
