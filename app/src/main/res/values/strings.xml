@@ -1,4 +1,8 @@
 <resources>
     <string name="app_name">VoiceGym</string>
     <string name="title_activity_measuring_fourier_transforms">MeasuringFourierTransforms</string>
+
+    <string name="title_activity_record">RecordActivity</string>
+    <string name="dummy_button">Dummy Button</string>
+    <string name="dummy_content">DUMMY\nCONTENT</string>
 </resources>
