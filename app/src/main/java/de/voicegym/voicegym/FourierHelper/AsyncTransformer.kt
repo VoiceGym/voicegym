@@ -16,23 +16,25 @@ class AsyncTransformer(val fourierHelper: FourierHelper) : Observable() {
                 // do work
                 val fftJob = inputQueue.poll()
                 val raw = fourierHelper.fft(PCMUtil.getDoubleArrayFromShortArray(1.0, fftJob.pcmData))
-                when (fftJob.jobType) {
-                    FFTJobType.GET_AMPLITUDE -> {
+                when (fftJob) {
+                    is AmplitudeJob -> {
                         System.arraycopy(fourierHelper.amplitudeArray(), 0, fftJob.amplitude, 0, fourierHelper.blockSize)
+                        addResultToResultQueue(fftJob.copy(processed = true))
                     }
-                    FFTJobType.GET_PHASE -> {
+                    is PhaseJob -> {
                         System.arraycopy(fourierHelper.phaseArray(), 0, fftJob.phase, 0, fourierHelper.blockSize)
+                        addResultToResultQueue(fftJob.copy(processed = true))
                     }
-                    FFTJobType.GET_AMPLITUDE_AND_PHASE -> {
+                    is AmplitudeAndPhaseJob -> {
                         System.arraycopy(fourierHelper.amplitudeArray(), 0, fftJob.amplitude, 0, fourierHelper.blockSize)
                         System.arraycopy(fourierHelper.phaseArray(), 0, fftJob.phase, 0, fourierHelper.blockSize)
+                        addResultToResultQueue(fftJob.copy(processed = true))
                     }
-                    FFTJobType.GET_COMPLEX_RESULT -> {
+                    is ComplexJob -> {
                         System.arraycopy(raw, 0, fftJob.complexResult, 0, 2 * fourierHelper.blockSize)
+                        addResultToResultQueue(fftJob.copy(processed = true))
                     }
                 }
-                fftJob.processed = true
-                addResultToResultQueue(fftJob)
             } else {
                 // go to sleep
                 lock.wait()
@@ -42,7 +44,6 @@ class AsyncTransformer(val fourierHelper: FourierHelper) : Observable() {
 
     private val inputQueue: ConcurrentLinkedQueue<FFTJob> = ConcurrentLinkedQueue()
     private val resultQueue: ConcurrentLinkedQueue<FFTJob> = ConcurrentLinkedQueue()
-
 
     fun addNewFFTJob(job: FFTJob) {
         inputQueue.add(job)

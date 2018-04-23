@@ -29,6 +29,12 @@
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="de.voicegym.voicegym.MainActivity" />
         </activity>
+        <activity
+            android:name=".Activities.RecordActivity"
+            android:configChanges="orientation|keyboardHidden|screenSize"
+            android:label="@string/title_activity_record"
+            android:theme="@style/FullscreenNoActionbar" />
+
     </application>
 
 </manifest>
