@@ -16,5 +16,6 @@ class RecordActivity : AppCompatActivity() {
         this.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
         window.decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_FULLSCREEN
         frameLayout.invalidate()
+
     }
 }
