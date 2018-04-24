@@ -8,7 +8,7 @@ import android.graphics.Rect
 import android.util.AttributeSet
 import android.view.View
 
-class InstrumentView : View {
+abstract class InstrumentView : View {
 
     constructor(context: Context) : this(context, null)
 
@@ -18,15 +18,5 @@ class InstrumentView : View {
 
     }
 
-    override fun onDraw(canvas: Canvas?) {
-        super.onDraw(canvas)
 
-        if (canvas != null) {
-            val paint = Paint()
-            paint.color = Color.WHITE
-            paint.textSize = 46.0f
-            canvas.drawText("TestText", 20.0f, 80.0f, paint)
-
-        }
-    }
 }
