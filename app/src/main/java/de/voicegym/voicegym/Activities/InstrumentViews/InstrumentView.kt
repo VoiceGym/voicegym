@@ -23,6 +23,9 @@ abstract class InstrumentView : View {
      */
     abstract val requiredResultType: RequestedResultType
 
+    /**
+     * This needs to be implemented to receive the result data
+     */
     protected abstract fun addCheckedResult(requestedResult: RequestedResult)
 
     /**
@@ -37,5 +40,12 @@ abstract class InstrumentView : View {
      *
      * @param resultDuration: the measurement time taken to capture the result (determined by binning and the blocklength of the fouriertransform)
      */
-    abstract fun setResultDuration(resultDuration: Double)
+    var resultDuration: Double = 0.1
+
+    /**
+     * @param forwardSpeed: 1 / passtime, where passtime is the time in seconds a result should take to pass over the screen.
+     *
+     * This will set the speed of the data passing over the view.
+     */
+    var forwardSpeed: Double = 0.1
 }
