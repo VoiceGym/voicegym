@@ -30,8 +30,8 @@ class ColorGradientPicker() {
     companion object {
         fun getHeatMap(): ColorGradientPicker = ColorGradientPicker()
                 .addColorToPalette(0f, Color.BLACK)
-                .addColorToPalette(0.25f, Color.RED)
-                .addColorToPalette(0.66f, Color.YELLOW)
+                .addColorToPalette(0.4f, Color.RED)
+                .addColorToPalette(0.8f, Color.YELLOW)
                 .addColorToPalette(1f, Color.WHITE)
     }
 

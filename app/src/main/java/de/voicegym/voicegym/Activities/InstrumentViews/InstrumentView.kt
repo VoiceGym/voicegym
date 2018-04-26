@@ -18,6 +18,16 @@ abstract class InstrumentView : View {
     }
 
 
+    var fromY: Double? = null
+
+    var untilY: Double? = null
+
+    /**
+     * needs to be smaller or equal the number of pixels available
+     */
+    var xDataPoints: Int? = null
+
+
     /**
      *  The instrument is drawn below the top_margin
      */
@@ -65,7 +75,7 @@ abstract class InstrumentView : View {
         if (canvas != null) {
             drawInstrument(canvas)
 
-            drawBorder(canvas)
+            if (draw_border) drawBorder(canvas)
         }
 
     }
@@ -74,13 +84,11 @@ abstract class InstrumentView : View {
         val paint = Paint()
         paint.color = border_color
         paint.strokeWidth = border_thickness
-        // top line
-        canvas.drawLine(left_margin - border_thickness, top_margin - border_thickness, width - right_margin + border_thickness, top_margin - border_thickness, paint)
-        // bottom line
-        canvas.drawLine(left_margin - border_thickness, height - bottom_margin + border_thickness, width - right_margin + border_thickness, height - bottom_margin + border_thickness, paint)
-        // left line
-        canvas.drawLine(left_margin - border_thickness, top_margin - border_thickness, left_margin - border_thickness, height - bottom_margin + border_thickness, paint)
-        // right line
-        canvas.drawLine(width - right_margin + border_thickness, top_margin - border_thickness, width - right_margin + border_thickness, height - bottom_margin + border_thickness, paint)
+        paint.style = Paint.Style.STROKE
+        val bottom = (height - bottom_margin + border_thickness)
+        val top = (top_margin - border_thickness)
+        val left = (left_margin - border_thickness)
+        val right = (width - right_margin + border_thickness)
+        canvas.drawRect(left, top, right, bottom, paint)
     }
 }
