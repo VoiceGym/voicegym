@@ -1,10 +1,11 @@
 package de.voicegym.voicegym.Activities.InstrumentViews
 
 import android.content.Context
+import android.graphics.Canvas
+import android.graphics.Color
+import android.graphics.Paint
 import android.util.AttributeSet
 import android.view.View
-import de.voicegym.voicegym.FourierHelper.RequestedResult
-import de.voicegym.voicegym.FourierHelper.RequestedResultType
 
 abstract class InstrumentView : View {
 
@@ -16,36 +17,70 @@ abstract class InstrumentView : View {
 
     }
 
-    /**
-     * The {@link RequestedResultType} RequestedResultType this implementation of the InstrumentView needs.
-     *
-     * This has to be overridden in concrete implementation of this class.
-     */
-    abstract val requiredResultType: RequestedResultType
 
     /**
-     * This needs to be implemented to receive the result data
+     *  The instrument is drawn below the top_margin
      */
-    protected abstract fun addCheckedResult(requestedResult: RequestedResult)
+    var top_margin: Float = 20f
 
     /**
-     * @param requestedResult: The result to display in this InstrumentView
+     *  The instrument is drawn above the above_margin
      */
-    fun addResult(requestedResult: RequestedResult) {
-        if (requestedResult.resultType == requiredResultType) addCheckedResult(requestedResult)
+    var bottom_margin: Float = 20f
+
+    /**
+     *  The instrument is drawn right to the left_margin
+     */
+    var left_margin: Float = 50f
+
+    /**
+     * The instrument is drawn left to the right_margin
+     */
+    var right_margin: Float = 20f
+
+    /**
+     * Whether to draw a border around the instrument area
+     */
+    var draw_border: Boolean = true
+
+    /**
+     * Which color to pick for the border
+     */
+    var border_color = Color.GRAY
+
+    /**
+     * The thickness of the border
+     */
+    var border_thickness = 3f
+
+    /**
+     * This function needs to be overridden by the concrete implementation of the InstrumentView
+     */
+    protected abstract fun drawInstrument(canvas: Canvas)
+
+
+    override fun onDraw(canvas: Canvas?) {
+        super.onDraw(canvas)
+
+        if (canvas != null) {
+            drawInstrument(canvas)
+
+            drawBorder(canvas)
+        }
+
     }
 
-    /**
-     * This needs to be called once to tell the view the scale of the abscissa.
-     *
-     * @param resultDuration: the measurement time taken to capture the result (determined by binning and the blocklength of the fouriertransform)
-     */
-    var resultDuration: Double = 0.1
-
-    /**
-     * @param forwardSpeed: 1 / passtime, where passtime is the time in seconds a result should take to pass over the screen.
-     *
-     * This will set the speed of the data passing over the view.
-     */
-    var forwardSpeed: Double = 0.1
+    private fun drawBorder(canvas: Canvas) {
+        val paint = Paint()
+        paint.color = border_color
+        paint.strokeWidth = border_thickness
+        // top line
+        canvas.drawLine(left_margin - border_thickness, top_margin - border_thickness, width - right_margin + border_thickness, top_margin - border_thickness, paint)
+        // bottom line
+        canvas.drawLine(left_margin - border_thickness, height - bottom_margin + border_thickness, width - right_margin + border_thickness, height - bottom_margin + border_thickness, paint)
+        // left line
+        canvas.drawLine(left_margin - border_thickness, top_margin - border_thickness, left_margin - border_thickness, height - bottom_margin + border_thickness, paint)
+        // right line
+        canvas.drawLine(width - right_margin + border_thickness, top_margin - border_thickness, width - right_margin + border_thickness, height - bottom_margin + border_thickness, paint)
+    }
 }
