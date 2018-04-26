@@ -14,6 +14,17 @@ class SpectrogramView : InstrumentView {
         paint.color = Color.WHITE
         paint.textSize = 46f
         canvas.drawText("TestText", left_margin + 20f, 80f + top_margin, paint)
+
+
+        val picker = ColorGradientPicker.getHeatMap()
+
+        for (i in 0..599) {
+            paint.color = picker.pickColor(i.toFloat() / 600)
+            canvas.drawPoint(left_margin + i, height - bottom_margin - 20, paint)
+            canvas.drawPoint(left_margin + i, height - bottom_margin - 19, paint)
+            canvas.drawPoint(left_margin + i, height - bottom_margin - 18, paint)
+            canvas.drawPoint(left_margin + i, height - bottom_margin - 17, paint)
+        }
     }
 
 
