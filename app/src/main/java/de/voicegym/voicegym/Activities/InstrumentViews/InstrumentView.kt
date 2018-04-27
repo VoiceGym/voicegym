@@ -1,13 +1,29 @@
 package de.voicegym.voicegym.Activities.InstrumentViews
 
 import android.content.Context
+import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
+import android.graphics.Path
 import android.util.AttributeSet
 import android.view.View
 
 abstract class InstrumentView : View {
+
+    var mCanvas: Canvas? = null
+    var mBitmap: Bitmap? = null
+    var mPath = Path()
+    var mPaint = Paint()
+    var buffer: IntArray? = null
+
+    override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
+        super.onSizeChanged(w, h, oldw, oldh)
+
+        mBitmap = Bitmap.createBitmap((width - left_margin - right_margin).toInt(), (height - top_margin - bottom_margin).toInt(), Bitmap.Config.ARGB_8888);
+        mCanvas = Canvas(mBitmap)
+        buffer = IntArray((getDrawAreaHeight() * getDrawAreaWidth()).toInt())
+    }
 
     constructor(context: Context) : this(context, null)
 
@@ -17,6 +33,16 @@ abstract class InstrumentView : View {
 
     }
 
+    init {
+        // Set up the paint with which to draw.
+        mPaint.color = Color.BLACK
+        mPaint.isAntiAlias = true
+        mPaint.isDither = true
+        mPaint.style = Paint.Style.STROKE
+        mPaint.strokeJoin = Paint.Join.ROUND
+        mPaint.strokeCap = Paint.Cap.ROUND
+        mPaint.strokeWidth = 1f
+    }
 
     var fromY: Double? = null
 
@@ -48,6 +74,11 @@ abstract class InstrumentView : View {
      */
     var right_margin: Float = 20f
 
+    fun getDrawAreaWidth(): Float = (width - left_margin - right_margin)
+
+    fun getDrawAreaHeight(): Float = (height - top_margin - bottom_margin)
+
+
     /**
      * Whether to draw a border around the instrument area
      */
@@ -63,17 +94,16 @@ abstract class InstrumentView : View {
      */
     var border_thickness = 3f
 
-    /**
-     * This function needs to be overridden by the concrete implementation of the InstrumentView
-     */
-    protected abstract fun drawInstrument(canvas: Canvas)
-
 
     override fun onDraw(canvas: Canvas?) {
         super.onDraw(canvas)
 
+
         if (canvas != null) {
-            drawInstrument(canvas)
+            // Draw internal bitmap and path
+            canvas.drawBitmap(mBitmap, left_margin, top_margin, mPaint)
+            canvas.drawPath(mPath, mPaint);
+            // Draw
 
             if (draw_border) drawBorder(canvas)
         }
@@ -91,4 +121,12 @@ abstract class InstrumentView : View {
         val right = (width - right_margin + border_thickness)
         canvas.drawRect(left, top, right, bottom, paint)
     }
+
+    fun moveBitmap(numberOfPixels: Int) {
+        if (buffer != null) {
+            mBitmap?.getPixels(buffer, 0, getDrawAreaWidth().toInt(), numberOfPixels, 0, getDrawAreaWidth().toInt() - numberOfPixels, getDrawAreaHeight().toInt())
+            mBitmap?.setPixels(buffer, 0, getDrawAreaWidth().toInt(), 0, 0, getDrawAreaWidth().toInt() - numberOfPixels, getDrawAreaHeight().toInt())
+        }
+    }
+
 }

@@ -5,6 +5,7 @@ import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
 import android.view.View
 import de.voicegym.voicegym.Activities.InstrumentViews.ColorGradientPicker
+import de.voicegym.voicegym.Activities.InstrumentViews.HotGradientColorPicker
 import de.voicegym.voicegym.FourierHelper.FourierHelper
 import de.voicegym.voicegym.R
 import kotlinx.android.synthetic.main.activity_record.dummyView
@@ -29,15 +30,15 @@ class RecordActivity : AppCompatActivity() {
         setContentView(R.layout.activity_record)
 
         dummyView.xDataPoints = 50
-        dummyView.refreshColorArray()
 
         floatingActionButton.setOnClickListener({
             val addColors = IntArray(dummyView.getDrawAreaHeight().toInt())
             for (i in 0 until addColors.size) {
-                addColors[i] = heatMap.pickColor(random.nextFloat())
+                addColors[i] = HotGradientColorPicker.pickColor(random.nextFloat())
             }
             dummyView.insertColorLine(addColors)
             dummyView.invalidate()
+            floatingActionButton.invalidate()
         })
     }
 }
