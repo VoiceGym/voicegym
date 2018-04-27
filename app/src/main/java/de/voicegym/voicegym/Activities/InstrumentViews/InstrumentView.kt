@@ -98,13 +98,11 @@ abstract class InstrumentView : View {
     override fun onDraw(canvas: Canvas?) {
         super.onDraw(canvas)
 
-
         if (canvas != null) {
             // Draw internal bitmap and path
             canvas.drawBitmap(mBitmap, left_margin, top_margin, mPaint)
             canvas.drawPath(mPath, mPaint);
-            // Draw
-
+            // Draw Instrument Tools
             if (draw_border) drawBorder(canvas)
         }
 

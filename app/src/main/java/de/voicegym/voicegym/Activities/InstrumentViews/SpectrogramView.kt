@@ -7,10 +7,6 @@ import android.util.AttributeSet
 class SpectrogramView : InstrumentView {
 
 
-    override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
-        super.onSizeChanged(w, h, oldw, oldh)
-    }
-
     fun insertColorLine(colorValues: IntArray) {
         val deltaX = getDrawAreaWidth() / xDataPoints as Int
         var lx = deltaX * (xDataPoints as Int - 1)
@@ -23,8 +19,6 @@ class SpectrogramView : InstrumentView {
             }
         }
     }
-
-
 
     constructor(context: Context) : this(context, null)
 
