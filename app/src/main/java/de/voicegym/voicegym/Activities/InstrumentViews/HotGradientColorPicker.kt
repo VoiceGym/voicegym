@@ -3,39 +3,32 @@ package de.voicegym.voicegym.Activities.InstrumentViews
 import android.graphics.Color
 import android.graphics.Color.rgb
 
-class HotGradientColorPicker {
-    companion object {
-        val rThreshold = 0.4f
-        val gThreshold = 0.8f
-        val bThreshold = 1f
-        val delGR = 0xFF / (gThreshold - rThreshold);
-        val delBG = 0xFF / (bThreshold - gThreshold)
-        /**
-         * value must be between 0 and 1, otherwise
-         */
-        fun pickColor(value: Double): Int {
-            var r: Int = 0;
-            var g: Int = 0;
-            var b: Int = 0;
-            if (value <= 0) {
-                return Color.BLACK
-            } else if (value < rThreshold) {
-                r = ((value / rThreshold) * 0xFF).toInt()
-            } else if (value < gThreshold) {
-                r = 0xFF;
-                g = ((value - rThreshold) * delGR).toInt()
-            } else if (value < bThreshold) {
-                r = 0xFF;
-                g = 0xFF;
-                b = ((value - gThreshold) * delBG).toInt()
-            } else {
-                return Color.WHITE
-            }
-            return rgb(r, g, b)
-        }
+object HotGradientColorPicker {
+    const val rThreshold = 0.4
+    const val gThreshold = 0.8
+    const val bThreshold = 1.0
+    const val delGR = 255 / (gThreshold - rThreshold)
+    const val delBG = 255 / (bThreshold - gThreshold)
 
-        fun pickColor(value: Float): Int {
-            return pickColor(value.toDouble())
+    /**
+     * value must be between 0 and 1, otherwise
+     */
+    fun pickColor(value: Double) = when {
+        value <= 0 ->
+            Color.BLACK
+        value < rThreshold -> {
+            val r = ((value / rThreshold) * 255).toInt()
+            rgb(r, 0, 0)
         }
+        value < gThreshold -> {
+            val g = ((value - rThreshold) * delGR).toInt()
+            rgb(255, g, 0)
+        }
+        value < bThreshold -> {
+            val b = ((value - gThreshold) * delBG).toInt()
+            rgb(255, 255, b)
+        }
+        else ->
+            Color.WHITE
     }
 }
