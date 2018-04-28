@@ -13,7 +13,7 @@ class HotGradientColorPicker {
         /**
          * value must be between 0 and 1, otherwise
          */
-        fun pickColor(value: Float): Int {
+        fun pickColor(value: Double): Int {
             var r: Int = 0;
             var g: Int = 0;
             var b: Int = 0;
@@ -32,6 +32,10 @@ class HotGradientColorPicker {
                 return Color.WHITE
             }
             return rgb(r, g, b)
+        }
+
+        fun pickColor(value: Float): Int {
+            return pickColor(value.toDouble())
         }
     }
 }

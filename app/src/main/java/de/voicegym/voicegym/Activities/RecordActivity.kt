@@ -16,7 +16,7 @@ import org.apache.commons.math3.analysis.interpolation.LinearInterpolator
 
 class RecordActivity : AppCompatActivity() {
 
-    val fourierHelper = FourierHelper(4096, 4, 16384, 44100)
+    val fourierHelper = FourierHelper(8192, 2, 16384, 44100)
     val interpolator = LinearInterpolator()
 
     val fromFrequency: Double = 10.0
@@ -39,28 +39,36 @@ class RecordActivity : AppCompatActivity() {
 
         dummyView.xDataPoints = 50
 
-        val wavFile = WavFile(resources.openRawResource(R.raw.twosounds))
+        val wavFile = WavFile(resources.openRawResource(R.raw.testtone))
         shortArray = wavFile.getPCMBlock(16384)
 
 
         floatingActionButton.setOnClickListener({
-            dummyView.insertColorLine(getColorArray())
+            dummyView.insertColorLine(getDisplayData())
             dummyView.invalidate()
             floatingActionButton.invalidate()
         })
     }
 
-    private fun getColorArray(): IntArray {
+    private fun getDisplayData(): IntArray {
         if (shortArray != null) {
             fourierHelper.fft(PCMUtil.getDoubleArrayFromShortArray(1.0, shortArray!!))
             val spectrum = fourierHelper.amplitudeArray()
-            val interpolatingFunction = interpolator.interpolate(frequencyArray, spectrum)
-            val colors = IntArray(dummyView.getDrawAreaHeight().toInt())
-            val deltaFrequency = (tillFrequency - fromFrequency) / colors.size
-            for (i in 0 until colors.size) {
-                colors[i] = HotGradientColorPicker.pickColor((interpolatingFunction.value(fromFrequency + i * deltaFrequency) / 200).toFloat())
-            }
-            return colors
+            return calculateColorArrayForSpectrum(spectrum, 65.0)
         } else throw RuntimeException("Resource Not Available")
+    }
+
+    private fun calculateColorArrayForSpectrum(amplitude: DoubleArray, normalizationConstant: Double): IntArray {
+        val interpolatingFunction = interpolator.interpolate(frequencyArray, amplitude)
+        val colors = IntArray(dummyView.getDrawAreaHeight().toInt())
+        val deltaFrequency = (tillFrequency - fromFrequency) / colors.size
+        for (i in 0 until colors.size) {
+            colors[i] = HotGradientColorPicker.pickColor((getDezibelFromAmplitude(interpolatingFunction.value(fromFrequency + i * deltaFrequency)) / normalizationConstant))
+        }
+        return colors
+    }
+
+    private fun getDezibelFromAmplitude(amplitude: Double): Double {
+        return (20 * Math.log10(amplitude))
     }
 }
