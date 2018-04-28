@@ -1,11 +1,10 @@
 package de.voicegym.voicegym.Activities.InstrumentViews
 
 import android.animation.ArgbEvaluator
-import android.graphics.Color
 import java.util.TreeMap
 
 
-class ColorGradientPicker() {
+class ColorGradientPicker() : GradientPicker {
     private val colorMap = TreeMap<Float, Int>()
 
     private val evaluator = ArgbEvaluator()
@@ -15,7 +14,7 @@ class ColorGradientPicker() {
         return this
     }
 
-    fun pickColor(value: Float): Int {
+    override fun pickColor(value: Float): Int {
         if ((colorMap.firstKey() <= value) && (value <= colorMap.lastKey())) {
             if (colorMap.containsKey(value)) {
                 return colorMap.get(value) as Int
@@ -27,12 +26,6 @@ class ColorGradientPicker() {
         } else throw RuntimeException("Color not in range of picker")
     }
 
-    companion object {
-        fun getHeatMap(): ColorGradientPicker = ColorGradientPicker()
-                .addColorToPalette(0f, Color.BLACK)
-                .addColorToPalette(0.4f, Color.RED)
-                .addColorToPalette(0.8f, Color.YELLOW)
-                .addColorToPalette(1f, Color.WHITE)
-    }
+    override fun pickColor(value: Double): Int = pickColor(value.toFloat())
 
 }

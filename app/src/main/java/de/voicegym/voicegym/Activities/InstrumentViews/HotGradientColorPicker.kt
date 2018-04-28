@@ -3,7 +3,8 @@ package de.voicegym.voicegym.Activities.InstrumentViews
 import android.graphics.Color
 import android.graphics.Color.rgb
 
-object HotGradientColorPicker {
+object HotGradientColorPicker : GradientPicker {
+
     const val rThreshold = 0.4
     const val gThreshold = 0.8
     const val bThreshold = 1.0
@@ -13,7 +14,7 @@ object HotGradientColorPicker {
     /**
      * value must be between 0 and 1, otherwise
      */
-    fun pickColor(value: Double) = when {
+    override fun pickColor(value: Double) = when {
         value <= 0 ->
             Color.BLACK
         value < rThreshold -> {
@@ -31,4 +32,8 @@ object HotGradientColorPicker {
         else ->
             Color.WHITE
     }
+
+    override fun pickColor(value: Float): Int = pickColor(value.toDouble())
+
+
 }

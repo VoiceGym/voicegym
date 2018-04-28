@@ -43,11 +43,11 @@ class RecordActivity : AppCompatActivity() {
         shortArray = wavFile.getPCMBlock(16384)
 
 
-        floatingActionButton.setOnClickListener({
+        floatingActionButton.setOnClickListener {
             dummyView.insertColorLine(getDisplayData())
             dummyView.invalidate()
             floatingActionButton.invalidate()
-        })
+        }
     }
 
     private fun getDisplayData(): IntArray {
