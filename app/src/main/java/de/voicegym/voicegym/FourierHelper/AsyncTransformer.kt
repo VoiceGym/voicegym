@@ -1,5 +1,9 @@
 package de.voicegym.voicegym.FourierHelper
 
+import de.voicegym.voicegym.FourierHelper.RequestedResultType.FFT_AMPLITUDE
+import de.voicegym.voicegym.FourierHelper.RequestedResultType.FFT_AMPLITUDE_AND_PHASE
+import de.voicegym.voicegym.FourierHelper.RequestedResultType.FFT_COMPLEX_RESULT
+import de.voicegym.voicegym.FourierHelper.RequestedResultType.FFT_PHASE
 import java.util.Observable
 import java.util.concurrent.ConcurrentLinkedQueue
 import kotlin.concurrent.thread
@@ -16,23 +20,28 @@ class AsyncTransformer(val fourierHelper: FourierHelper) : Observable() {
                 // do work
                 val fftJob = inputQueue.poll()
                 val raw = fourierHelper.fft(PCMUtil.getDoubleArrayFromShortArray(1.0, fftJob.pcmData))
-                when (fftJob) {
-                    is AmplitudeJob -> {
-                        System.arraycopy(fourierHelper.amplitudeArray(), 0, fftJob.amplitude, 0, fourierHelper.blockSize)
-                        addResultToResultQueue(fftJob.copy(processed = true))
+                when (fftJob.requestedResult) {
+                    FFT_AMPLITUDE -> {
+                        val amplitude = DoubleArray(fourierHelper.blockSize)
+                        System.arraycopy(fourierHelper.amplitudeArray(), 0, amplitude, 0, fourierHelper.blockSize)
+                        addResultToResultQueue(AmplitudeResult(amplitude))
                     }
-                    is PhaseJob -> {
-                        System.arraycopy(fourierHelper.phaseArray(), 0, fftJob.phase, 0, fourierHelper.blockSize)
-                        addResultToResultQueue(fftJob.copy(processed = true))
+                    FFT_PHASE -> {
+                        val phase = DoubleArray(fourierHelper.blockSize)
+                        System.arraycopy(fourierHelper.phaseArray(), 0, phase, 0, fourierHelper.blockSize)
+                        addResultToResultQueue(PhaseResult(phase))
                     }
-                    is AmplitudeAndPhaseJob -> {
-                        System.arraycopy(fourierHelper.amplitudeArray(), 0, fftJob.amplitude, 0, fourierHelper.blockSize)
-                        System.arraycopy(fourierHelper.phaseArray(), 0, fftJob.phase, 0, fourierHelper.blockSize)
-                        addResultToResultQueue(fftJob.copy(processed = true))
+                    FFT_AMPLITUDE_AND_PHASE -> {
+                        val amplitude = DoubleArray(fourierHelper.blockSize)
+                        val phase = DoubleArray(fourierHelper.blockSize)
+                        System.arraycopy(fourierHelper.amplitudeArray(), 0, amplitude, 0, fourierHelper.blockSize)
+                        System.arraycopy(fourierHelper.phaseArray(), 0, phase, 0, fourierHelper.blockSize)
+                        addResultToResultQueue(AmplitudeAndPhaseResult(amplitude, phase))
                     }
-                    is ComplexJob -> {
-                        System.arraycopy(raw, 0, fftJob.complexResult, 0, 2 * fourierHelper.blockSize)
-                        addResultToResultQueue(fftJob.copy(processed = true))
+                    FFT_COMPLEX_RESULT -> {
+                        val complexResult = DoubleArray(2 * fourierHelper.blockSize)
+                        System.arraycopy(raw, 0, complexResult, 0, 2 * fourierHelper.blockSize)
+                        addResultToResultQueue(ComplexResult(complexResult))
                     }
                 }
             } else {
@@ -42,20 +51,20 @@ class AsyncTransformer(val fourierHelper: FourierHelper) : Observable() {
         }
     })
 
-    private val inputQueue: ConcurrentLinkedQueue<FFTJob> = ConcurrentLinkedQueue()
-    private val resultQueue: ConcurrentLinkedQueue<FFTJob> = ConcurrentLinkedQueue()
+    private val inputQueue: ConcurrentLinkedQueue<ResultTask> = ConcurrentLinkedQueue()
+    private val resultQueue: ConcurrentLinkedQueue<RequestedResult> = ConcurrentLinkedQueue()
 
-    fun addNewFFTJob(job: FFTJob) {
+    fun addNewFFTJob(job: ResultTask) {
         inputQueue.add(job)
         lock.notifyAll()
     }
 
-    private fun addResultToResultQueue(result: FFTJob) {
+    private fun addResultToResultQueue(result: RequestedResult) {
         resultQueue.add(result)
         this.setChanged()
         this.notifyObservers()
     }
 
-    private fun getResult(): FFTJob? = if (resultQueue.isNotEmpty()) resultQueue.poll() else null
+    private fun getResult(): RequestedResult? = if (resultQueue.isNotEmpty()) resultQueue.poll() else null
 
 }
