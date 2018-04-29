@@ -1,4 +1,4 @@
-package de.voicegym.voicegym.FourierHelper
+package de.voicegym.voicegym.fourierHelper
 
 import org.jtransforms.fft.DoubleFFT_1D
 

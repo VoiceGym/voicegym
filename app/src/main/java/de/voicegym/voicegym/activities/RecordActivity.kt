@@ -1,14 +1,14 @@
-package de.voicegym.voicegym.Activities
+package de.voicegym.voicegym.activities
 
 import android.content.pm.ActivityInfo
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
 import android.view.View
-import de.voicegym.voicegym.Activities.InstrumentViews.HotGradientColorPicker
-import de.voicegym.voicegym.FourierHelper.FourierHelper
-import de.voicegym.voicegym.FourierHelper.PCMUtil
 import de.voicegym.voicegym.R
-import de.voicegym.voicegym.SoundFiles.WavFile
+import de.voicegym.voicegym.fourierHelper.FourierHelper
+import de.voicegym.voicegym.fourierHelper.PCMUtil
+import de.voicegym.voicegym.soundFiles.WavFile
+import de.voicegym.voicegym.views.util.HotGradientColorPicker
 import kotlinx.android.synthetic.main.activity_record.dummyView
 import kotlinx.android.synthetic.main.activity_record.floatingActionButton
 import org.apache.commons.math3.analysis.interpolation.LinearInterpolator
@@ -22,28 +22,10 @@ class RecordActivity : AppCompatActivity() {
     val fromFrequency: Double = 10.0
     val tillFrequency: Double = 1000.0
     val frequencyArray: DoubleArray = fourierHelper.frequencyArray()
-    var fromIndexF: Int = 0
-    var tillIndexF: Int = 0
     var shortArray: ShortArray? = null
-    var frequencyRangeArray: DoubleArray? = null
-
 
     init {
-        onRangeChanged()
-    }
-
-    fun onRangeChanged() {
         if (fromFrequency > tillFrequency) throw RuntimeException("fromFrequency must be smaller than tillFrequency")
-        if (frequencyArray[0] > fromFrequency) throw RuntimeException("you choose a frequency below available range")
-        if (frequencyArray[frequencyArray.size - 1] < tillFrequency) throw RuntimeException("you choose a frequency above available range")
-
-        // find range for which values are displayed
-        var idx = 0
-        while (frequencyArray[idx] < fromFrequency) idx++
-        fromIndexF = idx - 1 // just keep one datapoint outside of range
-        while (frequencyArray[idx] < tillFrequency) idx++
-        tillIndexF = idx + 1 // just keep two datapoints outside of range
-        frequencyRangeArray = frequencyArray.copyOfRange(fromIndexF, tillIndexF)
     }
 
 
@@ -77,19 +59,16 @@ class RecordActivity : AppCompatActivity() {
     }
 
     private fun calculateColorArrayForSpectrum(amplitude: DoubleArray, normalizationConstant: Double): IntArray {
-        val interpolatingFunction = interpolator.interpolate(frequencyRangeArray, amplitude.copyOfRange(fromIndexF, tillIndexF))
+        val interpolatingFunction = interpolator.interpolate(frequencyArray, amplitude)
         val colors = IntArray(dummyView.getDrawAreaHeight().toInt())
         val deltaFrequency = (tillFrequency - fromFrequency) / colors.size
         for (i in 0 until colors.size) {
-            val amplitudeVal = interpolatingFunction.value(fromFrequency + i * deltaFrequency)
-            colors[i] = HotGradientColorPicker.pickColor(getDezibelFromAmplitude(amplitudeVal) / normalizationConstant)
+            colors[i] = HotGradientColorPicker.pickColor((getDezibelFromAmplitude(interpolatingFunction.value(fromFrequency + i * deltaFrequency)) / normalizationConstant))
         }
         return colors
     }
 
-    private fun getDezibelFromAmplitude(amplitude: Double): Double {
-        return (20 * Math.log10(amplitude))
-    }
-
+    private fun getDezibelFromAmplitude(amplitude: Double) =
+        20 * Math.log10(amplitude)
 
 }

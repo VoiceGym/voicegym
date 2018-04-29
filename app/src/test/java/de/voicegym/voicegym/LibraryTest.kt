@@ -2,7 +2,7 @@ package de.voicegym.voicegym
 
 //import com.google.common.base.Stopwatch
 import de.voicegym.voicegym.FourierHelper.PCMUtil
-import de.voicegym.voicegym.SoundFiles.WavFile
+import de.voicegym.voicegym.soundFiles.WavFile
 import junit.framework.Assert.assertEquals
 import org.jtransforms.fft.DoubleFFT_1D
 import org.junit.Test

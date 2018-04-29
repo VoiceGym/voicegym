@@ -1,4 +1,4 @@
-package de.voicegym.voicegym.Activities.InstrumentViews
+package de.voicegym.voicegym.views.util
 
 import android.animation.ArgbEvaluator
 import java.util.TreeMap

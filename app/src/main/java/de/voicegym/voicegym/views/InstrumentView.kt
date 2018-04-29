@@ -1,4 +1,4 @@
-package de.voicegym.voicegym.Activities.InstrumentViews
+package de.voicegym.voicegym.views
 
 import android.content.Context
 import android.graphics.Bitmap

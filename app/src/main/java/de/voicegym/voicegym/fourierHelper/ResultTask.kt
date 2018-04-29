@@ -1,9 +1,9 @@
-package de.voicegym.voicegym.FourierHelper
+package de.voicegym.voicegym.fourierHelper
 
-import de.voicegym.voicegym.FourierHelper.RequestedResultType.FFT_AMPLITUDE
-import de.voicegym.voicegym.FourierHelper.RequestedResultType.FFT_AMPLITUDE_AND_PHASE
-import de.voicegym.voicegym.FourierHelper.RequestedResultType.FFT_COMPLEX_RESULT
-import de.voicegym.voicegym.FourierHelper.RequestedResultType.FFT_PHASE
+import de.voicegym.voicegym.fourierHelper.RequestedResultType.FFT_AMPLITUDE
+import de.voicegym.voicegym.fourierHelper.RequestedResultType.FFT_AMPLITUDE_AND_PHASE
+import de.voicegym.voicegym.fourierHelper.RequestedResultType.FFT_COMPLEX_RESULT
+import de.voicegym.voicegym.fourierHelper.RequestedResultType.FFT_PHASE
 
 data class ResultTask(val requestedResult: RequestedResultType, val pcmData: ShortArray)
 
@@ -26,4 +26,3 @@ data class AmplitudeAndPhaseResult(val amplitude: DoubleArray, val phase: Double
 data class ComplexResult(val complexResult: DoubleArray) : RequestedResult() {
     override val resultType = FFT_COMPLEX_RESULT
 }
-

@@ -4,17 +4,16 @@ import android.Manifest
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.media.MediaPlayer
 import android.media.MediaRecorder
 import android.os.Bundle
 import android.support.design.widget.FloatingActionButton
 import android.support.v4.app.ActivityCompat
 import android.support.v7.app.AppCompatActivity
 import android.util.AttributeSet
-import de.voicegym.voicegym.Activities.RecordActivity
+import de.voicegym.voicegym.activities.MeasuringFourierTransforms
+import de.voicegym.voicegym.activities.RecordActivity
 import kotlinx.android.synthetic.main.activity_main.measureButton
 import kotlinx.android.synthetic.main.activity_main.recordActivityButton
-import java.io.File
 
 class MainActivity : AppCompatActivity() {
 

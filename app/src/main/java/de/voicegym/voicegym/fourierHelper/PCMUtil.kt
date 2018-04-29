@@ -1,4 +1,4 @@
-package de.voicegym.voicegym.FourierHelper
+package de.voicegym.voicegym.fourierHelper
 
 object PCMUtil {
     fun getDoubleArrayFromShortArray(normalization: Double, inputArray: ShortArray): DoubleArray {

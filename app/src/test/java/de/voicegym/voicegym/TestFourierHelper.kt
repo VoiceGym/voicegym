@@ -2,7 +2,7 @@ package de.voicegym.voicegym
 
 import de.voicegym.voicegym.FourierHelper.FourierHelper
 import de.voicegym.voicegym.FourierHelper.PCMUtil
-import de.voicegym.voicegym.SoundFiles.WavFile
+import de.voicegym.voicegym.soundFiles.WavFile
 import junit.framework.Assert.*
 import org.junit.Test
 import java.io.File
