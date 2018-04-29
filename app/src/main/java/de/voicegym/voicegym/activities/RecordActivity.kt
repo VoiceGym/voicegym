@@ -22,10 +22,28 @@ class RecordActivity : AppCompatActivity() {
     val fromFrequency: Double = 10.0
     val tillFrequency: Double = 1000.0
     val frequencyArray: DoubleArray = fourierHelper.frequencyArray()
+    var fromIndexF: Int = 0
+    var tillIndexF: Int = 0
     var shortArray: ShortArray? = null
+    var frequencyRangeArray: DoubleArray? = null
+
 
     init {
+        onRangeChanged()
+    }
+
+    fun onRangeChanged() {
         if (fromFrequency > tillFrequency) throw RuntimeException("fromFrequency must be smaller than tillFrequency")
+        if (frequencyArray[0] > fromFrequency) throw RuntimeException("you choose a frequency below available range")
+        if (frequencyArray[frequencyArray.size - 1] < tillFrequency) throw RuntimeException("you choose a frequency above available range")
+
+        // find range for which values are displayed
+        var idx = 0
+        while (frequencyArray[idx] < fromFrequency) idx++
+        fromIndexF = idx - 1 // just keep one datapoint outside of range
+        while (frequencyArray[idx] < tillFrequency) idx++
+        tillIndexF = idx + 1 // just keep two datapoints outside of range
+        frequencyRangeArray = frequencyArray.copyOfRange(fromIndexF, tillIndexF)
     }
 
 
@@ -59,16 +77,19 @@ class RecordActivity : AppCompatActivity() {
     }
 
     private fun calculateColorArrayForSpectrum(amplitude: DoubleArray, normalizationConstant: Double): IntArray {
-        val interpolatingFunction = interpolator.interpolate(frequencyArray, amplitude)
+        val interpolatingFunction = interpolator.interpolate(frequencyRangeArray, amplitude.copyOfRange(fromIndexF, tillIndexF))
         val colors = IntArray(dummyView.getDrawAreaHeight().toInt())
         val deltaFrequency = (tillFrequency - fromFrequency) / colors.size
         for (i in 0 until colors.size) {
-            colors[i] = HotGradientColorPicker.pickColor((getDezibelFromAmplitude(interpolatingFunction.value(fromFrequency + i * deltaFrequency)) / normalizationConstant))
+            val amplitudeVal = interpolatingFunction.value(fromFrequency + i * deltaFrequency)
+            colors[i] = HotGradientColorPicker.pickColor(getDezibelFromAmplitude(amplitudeVal) / normalizationConstant)
         }
         return colors
     }
 
-    private fun getDezibelFromAmplitude(amplitude: Double) =
-        20 * Math.log10(amplitude)
+    private fun getDezibelFromAmplitude(amplitude: Double): Double {
+        return (20 * Math.log10(amplitude))
+    }
+
 
 }
