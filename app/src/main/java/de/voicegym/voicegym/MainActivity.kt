@@ -45,7 +45,7 @@ class MainActivity : AppCompatActivity() {
             grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         permissionToRecordAccepted = when (requestCode) {
-            Companion.REQUEST_RECORD_AUDIO_PERMISSION ->
+            REQUEST_RECORD_AUDIO_PERMISSION ->
                 grantResults[0] == PackageManager.PERMISSION_GRANTED
             else -> false
         }

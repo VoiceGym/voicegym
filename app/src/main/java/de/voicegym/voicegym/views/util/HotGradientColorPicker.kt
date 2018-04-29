@@ -35,5 +35,4 @@ object HotGradientColorPicker : GradientPicker {
 
     override fun pickColor(value: Float): Int = pickColor(value.toDouble())
 
-
 }

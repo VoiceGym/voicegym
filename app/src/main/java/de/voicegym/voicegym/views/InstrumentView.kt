@@ -11,27 +11,15 @@ import android.view.View
 
 abstract class InstrumentView : View {
 
+    constructor(context: Context) : this(context, null)
+    constructor(context: Context, attrs: AttributeSet?) : this(context, attrs, 0)
+    constructor(context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0) : super(context, attrs, defStyleAttr)
+
     var mCanvas: Canvas? = null
     var mBitmap: Bitmap? = null
     var mPath = Path()
     var mPaint = Paint()
     var buffer: IntArray? = null
-
-    override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
-        super.onSizeChanged(w, h, oldw, oldh)
-
-        mBitmap = Bitmap.createBitmap((width - left_margin - right_margin).toInt(), (height - top_margin - bottom_margin).toInt(), Bitmap.Config.ARGB_8888);
-        mCanvas = Canvas(mBitmap)
-        buffer = IntArray((getDrawAreaHeight() * getDrawAreaWidth()).toInt())
-    }
-
-    constructor(context: Context) : this(context, null)
-
-    constructor(context: Context, attrs: AttributeSet?) : this(context, attrs, 0)
-
-    constructor(context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0) : super(context, attrs, defStyleAttr) {
-
-    }
 
     init {
         // Set up the paint with which to draw.
@@ -52,7 +40,6 @@ abstract class InstrumentView : View {
      * needs to be smaller or equal the number of pixels available
      */
     var xDataPoints: Int? = null
-
 
     /**
      *  The instrument is drawn below the top_margin
@@ -78,7 +65,6 @@ abstract class InstrumentView : View {
 
     fun getDrawAreaHeight(): Float = (height - top_margin - bottom_margin)
 
-
     /**
      * Whether to draw a border around the instrument area
      */
@@ -94,18 +80,27 @@ abstract class InstrumentView : View {
      */
     var border_thickness = 3f
 
-
     override fun onDraw(canvas: Canvas?) {
         super.onDraw(canvas)
 
         if (canvas != null) {
             // Draw internal bitmap and path
             canvas.drawBitmap(mBitmap, left_margin, top_margin, mPaint)
-            canvas.drawPath(mPath, mPaint);
+            canvas.drawPath(mPath, mPaint)
             // Draw Instrument Tools
             if (draw_border) drawBorder(canvas)
         }
+    }
 
+    override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
+        super.onSizeChanged(w, h, oldw, oldh)
+
+        mBitmap = Bitmap.createBitmap(
+                (width - left_margin - right_margin).toInt(),
+                (height - top_margin - bottom_margin).toInt(),
+                Bitmap.Config.ARGB_8888)
+        mCanvas = Canvas(mBitmap)
+        buffer = IntArray((getDrawAreaHeight() * getDrawAreaWidth()).toInt())
     }
 
     private fun drawBorder(canvas: Canvas) {
@@ -126,5 +121,4 @@ abstract class InstrumentView : View {
             mBitmap?.setPixels(buffer, 0, getDrawAreaWidth().toInt(), 0, 0, getDrawAreaWidth().toInt() - numberOfPixels, getDrawAreaHeight().toInt())
         }
     }
-
 }

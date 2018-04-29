@@ -17,7 +17,7 @@ class MeasuringFourierTransforms : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_measuring_fourier_transforms)
         fab.setOnClickListener {
-            statusText.setText("Measuring")
+            statusText.text = "Measuring"
 
 
             val wavFile = WavFile(getResources().openRawResource(R.raw.testtone))

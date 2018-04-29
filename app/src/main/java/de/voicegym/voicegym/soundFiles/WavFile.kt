@@ -134,10 +134,8 @@ class WavFile(private val stream: InputStream) {
         return pcmArray
     }
 
-
     fun getNumberOfPCMSamples(): Int =
             this.dataChunkSize / (this.bitPerSample / 8)
-
 
     override fun toString(): String {
         return """WavFile(
