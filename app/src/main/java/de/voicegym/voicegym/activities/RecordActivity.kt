@@ -7,7 +7,7 @@ import android.view.View
 import de.voicegym.voicegym.R
 import de.voicegym.voicegym.fourierHelper.FourierHelper
 import de.voicegym.voicegym.fourierHelper.PCMUtil
-import de.voicegym.voicegym.soundFiles.WavFile
+import de.voicegym.voicegym.audioHelper.WavFile
 import de.voicegym.voicegym.views.util.HotGradientColorPicker
 import kotlinx.android.synthetic.main.activity_record.dummyView
 import kotlinx.android.synthetic.main.activity_record.floatingActionButton

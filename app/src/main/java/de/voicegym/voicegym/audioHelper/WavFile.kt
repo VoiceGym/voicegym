@@ -1,4 +1,4 @@
-package de.voicegym.voicegym.soundFiles
+package de.voicegym.voicegym.audioHelper
 
 import java.io.File
 import java.io.FileInputStream
