@@ -50,6 +50,9 @@ class RecordHelper(val preferredBufferSize: Int) {
         if (listener.canHandleBufferSize(bufferSize)) listenerList.add(listener)
     }
 
+    fun unSubscribeListener(listener: RecordBufferListener) {
+        if (listenerList.contains(listener)) listenerList.remove(listener)
+    }
 
     private var recordingThread = Thread(
             Runnable {
