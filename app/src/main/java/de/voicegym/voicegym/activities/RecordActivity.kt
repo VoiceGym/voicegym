@@ -77,7 +77,7 @@ class RecordActivity : AppCompatActivity(), RecordBufferListener {
         window.decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_FULLSCREEN
 
         setContentView(R.layout.activity_record)
-        dummyView.xDataPoints = 300
+        dummyView.xDataPoints = 200
         dummyView.invalidate()
         Log.i("Activity", "onCreate")
         recorder = RecordHelper(collectedSamples)
