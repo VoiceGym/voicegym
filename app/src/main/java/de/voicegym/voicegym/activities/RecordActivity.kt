@@ -2,21 +2,43 @@ package de.voicegym.voicegym.activities
 
 import android.content.pm.ActivityInfo
 import android.os.Bundle
+import android.os.Handler
 import android.support.v7.app.AppCompatActivity
+import android.util.Log
 import android.view.View
 import de.voicegym.voicegym.R
+import de.voicegym.voicegym.audioHelper.RecordBufferListener
+import de.voicegym.voicegym.audioHelper.RecordHelper
 import de.voicegym.voicegym.fourierHelper.FourierHelper
 import de.voicegym.voicegym.fourierHelper.PCMUtil
-import de.voicegym.voicegym.audioHelper.WavFile
 import de.voicegym.voicegym.views.util.HotGradientColorPicker
 import kotlinx.android.synthetic.main.activity_record.dummyView
-import kotlinx.android.synthetic.main.activity_record.floatingActionButton
 import org.apache.commons.math3.analysis.interpolation.LinearInterpolator
+import java.util.concurrent.ConcurrentLinkedQueue
 
 
-class RecordActivity : AppCompatActivity() {
+class RecordActivity : AppCompatActivity(), RecordBufferListener {
 
-    val fourierHelper = FourierHelper(8192, 2, 16384, 44100)
+    val sampleRate = 44100
+    val collectedSamples = 8192
+    val binning = 2
+    val blockSize = collectedSamples / binning
+
+    override fun canHandleBufferSize(bufferSize: Int): Boolean = (collectedSamples == bufferSize)
+
+    override fun onBufferReady(data: ShortArray) {
+        inputQueue.add(data)
+        // Get a handler that can be used to post to the main thread
+        val myRunnable = Runnable {
+            updateActivity()
+        };
+        Handler(this.getMainLooper()).post(myRunnable);
+
+    }
+
+
+    val inputQueue = ConcurrentLinkedQueue<ShortArray>()
+    val fourierHelper = FourierHelper(blockSize, binning, collectedSamples, sampleRate)
     val interpolator = LinearInterpolator()
 
     val fromFrequency: Double = 10.0
@@ -24,7 +46,6 @@ class RecordActivity : AppCompatActivity() {
     val frequencyArray: DoubleArray = fourierHelper.frequencyArray()
     var fromIndexF: Int = 0
     var tillIndexF: Int = 0
-    var shortArray: ShortArray? = null
     var frequencyRangeArray: DoubleArray? = null
 
 
@@ -47,6 +68,8 @@ class RecordActivity : AppCompatActivity() {
     }
 
 
+    var recorder: RecordHelper? = null
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -54,27 +77,28 @@ class RecordActivity : AppCompatActivity() {
         window.decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_FULLSCREEN
 
         setContentView(R.layout.activity_record)
-
-        dummyView.xDataPoints = 50
-
-        val wavFile = WavFile(resources.openRawResource(R.raw.testtone))
-        shortArray = wavFile.getPCMBlock(16384)
-
-
-        floatingActionButton.setOnClickListener {
-            dummyView.insertColorLine(getDisplayData())
-            dummyView.invalidate()
-            floatingActionButton.invalidate()
-        }
+        dummyView.xDataPoints = 300
+        dummyView.invalidate()
+        Log.i("Activity", "onCreate")
+        recorder = RecordHelper(collectedSamples)
+        recorder?.subscribeListener(this)
+        recorder?.start()
     }
 
-    private fun getDisplayData(): IntArray {
-        if (shortArray != null) {
-            fourierHelper.fft(PCMUtil.getDoubleArrayFromShortArray(1.0, shortArray!!))
-            val spectrum = fourierHelper.amplitudeArray()
-            return calculateColorArrayForSpectrum(spectrum, 65.0)
-        } else throw RuntimeException("Resource Not Available")
+    override fun onDestroy() {
+        recorder?.stopRecording()
+        super.onDestroy()
     }
+
+    private fun updateActivity() {
+        val shortArray = inputQueue.poll()
+        fourierHelper.fft(PCMUtil.getDoubleArrayFromShortArray(1.0, shortArray))
+        val spectrum = fourierHelper.amplitudeArray()
+        val colors = calculateColorArrayForSpectrum(spectrum, 55.0)
+        dummyView.insertColorLine(colors)
+        dummyView.invalidate()
+    }
+
 
     private fun calculateColorArrayForSpectrum(amplitude: DoubleArray, normalizationConstant: Double): IntArray {
         val interpolatingFunction = interpolator.interpolate(frequencyRangeArray, amplitude.copyOfRange(fromIndexF, tillIndexF))
