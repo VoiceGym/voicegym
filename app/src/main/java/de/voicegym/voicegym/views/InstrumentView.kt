@@ -8,6 +8,7 @@ import android.graphics.Paint
 import android.graphics.Path
 import android.util.AttributeSet
 import android.view.View
+import org.jetbrains.anko.backgroundColor
 
 abstract class InstrumentView : View {
 
@@ -81,6 +82,7 @@ abstract class InstrumentView : View {
     var border_thickness = 3f
 
     override fun onDraw(canvas: Canvas?) {
+        backgroundColor = Color.BLACK
         super.onDraw(canvas)
 
         if (canvas != null) {
