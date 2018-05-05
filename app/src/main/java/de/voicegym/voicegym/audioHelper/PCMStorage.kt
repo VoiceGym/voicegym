@@ -2,7 +2,7 @@ package de.voicegym.voicegym.audioHelper
 
 import java.util.concurrent.ConcurrentLinkedQueue
 
-class PCMStorage : RecordBufferListener {
+class PCMStorage(val sampleRate: Int) : RecordBufferListener {
 
     private val inputQueue = ConcurrentLinkedQueue<ShortArray>()
     private var readArray: ShortArray? = null

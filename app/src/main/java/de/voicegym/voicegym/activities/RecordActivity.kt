@@ -109,7 +109,7 @@ class RecordActivity : AppCompatActivity(), RecordBufferListener {
         activityState = RECORDING
         floatingActionButton.backgroundTintList = ColorStateList.valueOf(Color.RED)
         Log.e("RecordActivity", "Switched to record")
-        pcmStorage = PCMStorage()
+        pcmStorage = PCMStorage(sampleRate)
         recorder?.subscribeListener(pcmStorage!!)
     }
 
