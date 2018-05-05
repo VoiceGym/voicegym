@@ -40,6 +40,10 @@ class RecordActivity : AppCompatActivity(), RecordBufferListener {
     val frequencyArray: DoubleArray = fourierHelper.frequencyArray()
 
     // variables
+    private var deltaFrequency: Double = 0.0
+
+    fun getDeltaFrequency() = deltaFrequency
+
     var fromIndexF: Int = 0
     var tillIndexF: Int = 0
     var frequencyRangeArray: DoubleArray? = null
@@ -69,7 +73,7 @@ class RecordActivity : AppCompatActivity(), RecordBufferListener {
     private fun calculateColorArrayForSpectrum(amplitude: DoubleArray, normalizationConstant: Double): IntArray {
         val interpolatingFunction = interpolator.interpolate(frequencyRangeArray, amplitude.copyOfRange(fromIndexF, tillIndexF))
         val colors = IntArray(dummyView.getDrawAreaHeight().toInt())
-        val deltaFrequency = (tillFrequency - fromFrequency) / colors.size
+        deltaFrequency = (tillFrequency - fromFrequency) / colors.size
         for (i in 0 until colors.size) {
             val amplitudeVal = interpolatingFunction.value(fromFrequency + i * deltaFrequency)
             colors[i] = HotGradientColorPicker.pickColor(getDezibelFromAmplitude(amplitudeVal) / normalizationConstant)
@@ -83,6 +87,7 @@ class RecordActivity : AppCompatActivity(), RecordBufferListener {
         this.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE)
         window.decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_FULLSCREEN
         setContentView(R.layout.activity_record)
+        getWindow().getDecorView().setBackgroundColor(Color.BLACK);
         dummyView.xDataPoints = numberDataPoints
         dummyView.invalidate()
         Log.i("Activity", "onCreate")

@@ -1,10 +1,46 @@
 package de.voicegym.voicegym.views
 
 import android.content.Context
+import android.graphics.Canvas
+import android.graphics.Color
 import android.util.AttributeSet
+import android.view.MotionEvent
+import android.view.MotionEvent.ACTION_DOWN
+import de.voicegym.voicegym.activities.RecordActivity
 
-//TODO SOLVE HOW TO UPDATE THE VIEW AT GIVEN INTERVALS
 class SpectrogramView : InstrumentView {
+
+    private var drawLine: Boolean = false
+    private var yPosLine: Float = 0f
+
+    override fun onDraw(canvas: Canvas?) {
+        super.onDraw(canvas)
+
+        if (drawLine) drawFrequencyLine(canvas)
+    }
+
+    private fun drawFrequencyLine(canvas: Canvas?) {
+        val width = getDrawAreaWidth()
+        mPaint.color = Color.GRAY
+        mPaint.strokeWidth = 2f
+        mPaint.textSize = 24f
+        canvas?.drawLine(left_margin, yPosLine, width + left_margin, yPosLine, mPaint)
+        if (context is RecordActivity) {
+            val deltaFrequency = (context as RecordActivity).getDeltaFrequency()
+            val frequency = (context as RecordActivity).fromFrequency + (bottom_margin + getDrawAreaHeight() - yPosLine) * deltaFrequency
+            canvas?.drawText("${frequency.toInt()} Hz", left_margin + 5, yPosLine - 5, mPaint)
+        }
+    }
+
+    override fun onTouchEvent(event: MotionEvent?): Boolean {
+        when (event?.action) {
+            ACTION_DOWN -> {
+                drawLine = !drawLine
+                yPosLine = event?.y
+            }
+        }
+        return super.onTouchEvent(event)
+    }
 
     constructor(context: Context) : this(context, null)
     constructor(context: Context, attrs: AttributeSet?) : this(context, attrs, 0)
