@@ -11,13 +11,13 @@ class SpectrogramView : InstrumentView {
     constructor(context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0) : super(context, attrs, defStyleAttr)
 
     fun insertColorLine(colorValues: IntArray) {
-        val deltaX : Float = getDrawAreaWidth() / xDataPoints as Int
+        val deltaX: Float = getDrawAreaWidth() / xDataPoints as Int
         val lx = deltaX * (xDataPoints as Int - 1)
         val lowerY = getDrawAreaHeight()
         moveBitmap(deltaX.toInt())
         colorValues.forEachIndexed { i, color ->
-                mPaint.color = color
-                mCanvas!!.drawLine(lx, lowerY - i, lx + deltaX, lowerY - i, mPaint)
+            mPaint.color = color
+            mCanvas!!.drawLine(lx, lowerY - i, lx + deltaX, lowerY - i, mPaint)
         }
     }
 }

@@ -97,10 +97,7 @@ abstract class InstrumentView : View {
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
         super.onSizeChanged(w, h, oldw, oldh)
 
-        mBitmap = Bitmap.createBitmap(
-                (width - left_margin - right_margin).toInt(),
-                (height - top_margin - bottom_margin).toInt(),
-                Bitmap.Config.ARGB_8888)
+        mBitmap = Bitmap.createBitmap((width - left_margin - right_margin).toInt(), (height - top_margin - bottom_margin).toInt(), Bitmap.Config.ARGB_8888)
         mCanvas = Canvas(mBitmap)
         buffer = IntArray((getDrawAreaHeight() * getDrawAreaWidth()).toInt())
     }

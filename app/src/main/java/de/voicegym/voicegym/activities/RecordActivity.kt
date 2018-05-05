@@ -92,7 +92,7 @@ class RecordActivity : AppCompatActivity(), RecordBufferListener {
         floatingActionButton.backgroundTintList = ColorStateList.valueOf(Color.GREEN)
         floatingActionButton.setOnClickListener {
             when (activityState) {
-                WAITING -> recordToFile()
+                WAITING   -> recordToFile()
                 RECORDING -> stopRecordToFile()
             }
         }

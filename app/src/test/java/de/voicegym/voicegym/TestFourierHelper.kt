@@ -1,9 +1,11 @@
 package de.voicegym.voicegym
 
-import de.voicegym.voicegym.FourierHelper.FourierHelper
-import de.voicegym.voicegym.FourierHelper.PCMUtil
 import de.voicegym.voicegym.audioHelper.WavFile
-import junit.framework.Assert.*
+import junit.framework.Assert.assertEquals
+import junit.framework.Assert.assertFalse
+import junit.framework.Assert.assertNotNull
+import junit.framework.Assert.assertNull
+import junit.framework.Assert.assertTrue
 import org.junit.Test
 import java.io.File
 
@@ -44,8 +46,7 @@ class TestFourierHelper {
             assertEquals(1.0, output[i], 0.00000001)
         }
 
-        for (i in 5 until 10)
-            assertEquals(0.0, output[i], 0.00000001)
+        for (i in 5 until 10) assertEquals(0.0, output[i], 0.00000001)
 
 
     }

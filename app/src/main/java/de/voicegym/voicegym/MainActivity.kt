@@ -39,15 +39,11 @@ class MainActivity : AppCompatActivity() {
         })
     }
 
-    override fun onRequestPermissionsResult(
-            requestCode: Int,
-            permissions: Array<String>,
-            grantResults: IntArray) {
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         permissionToRecordAccepted = when (requestCode) {
-            REQUEST_RECORD_AUDIO_PERMISSION ->
-                grantResults[0] == PackageManager.PERMISSION_GRANTED
-            else -> false
+            REQUEST_RECORD_AUDIO_PERMISSION -> grantResults[0] == PackageManager.PERMISSION_GRANTED
+            else                            -> false
         }
         if (!permissionToRecordAccepted) finish()
     }

@@ -20,9 +20,9 @@ class RecordHelper(val preferredBufferSize: Int) {
 
     // depending on config
     val bytesPerBufferSlot = when (audioFormat) {
-        ENCODING_PCM_8BIT -> 1
+        ENCODING_PCM_8BIT  -> 1
         ENCODING_PCM_16BIT -> 2
-        else -> throw Error("Unsupported AudioFormat")
+        else               -> throw Error("Unsupported AudioFormat")
     }
     // we are using the number of slots as a bufferSize, and recalculate it for the recordObject
     val minimumBufferSize = getMinBufferSize(sampleRate, channelConfig, audioFormat) / bytesPerBufferSlot
@@ -54,13 +54,12 @@ class RecordHelper(val preferredBufferSize: Int) {
         if (listenerList.contains(listener)) listenerList.remove(listener)
     }
 
-    private var recordingThread = Thread(
-            Runnable {
-                Log.i("Recordhelper", "Starting Thread")
-                setup()
-                record()
-                Log.i("Recordhelper", "Thread Done")
-            })
+    private var recordingThread = Thread(Runnable {
+        Log.i("Recordhelper", "Starting Thread")
+        setup()
+        record()
+        Log.i("Recordhelper", "Thread Done")
+    })
 
     fun start() {
         recordingThread.start()

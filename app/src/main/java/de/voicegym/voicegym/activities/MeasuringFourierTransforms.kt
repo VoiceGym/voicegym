@@ -3,9 +3,9 @@ package de.voicegym.voicegym.activities
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
 import de.voicegym.voicegym.R
+import de.voicegym.voicegym.audioHelper.WavFile
 import de.voicegym.voicegym.fourierHelper.FourierHelper
 import de.voicegym.voicegym.fourierHelper.PCMUtil
-import de.voicegym.voicegym.audioHelper.WavFile
 import kotlinx.android.synthetic.main.activity_measuring_fourier_transforms.fab
 import kotlinx.android.synthetic.main.activity_measuring_fourier_transforms.jtransformResult
 import kotlinx.android.synthetic.main.activity_measuring_fourier_transforms.statusText

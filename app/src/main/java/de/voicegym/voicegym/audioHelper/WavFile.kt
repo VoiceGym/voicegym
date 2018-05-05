@@ -30,6 +30,7 @@ var dataChunkSize: Int         // 4 byte at byte 40; littleEndian
 // followed by the data in littleEndian Format
 -------------------------------------------------------------------*/
 class WavFile(private val stream: InputStream) {
+
     private val riffHeader = "RIFF"
     private val riffChunkSize: Int
     private val riffType = "WAVE"
@@ -76,10 +77,9 @@ class WavFile(private val stream: InputStream) {
 
     constructor(file: File) : this(FileInputStream(file))
 
-    private fun checkStringAtPosition(str: String, startPosition: Int, data: ByteArray) =
-            str.toCharArray().filterIndexed { i, char ->
-                char != data[startPosition + i].toChar()
-            }.isEmpty()
+    private fun checkStringAtPosition(str: String, startPosition: Int, data: ByteArray) = str.toCharArray().filterIndexed { i, char ->
+        char != data[startPosition + i].toChar()
+    }.isEmpty()
 
     fun getNextPCMSample(): Short {
         if (bitPerSample == 16.toShort()) {
@@ -114,17 +114,13 @@ class WavFile(private val stream: InputStream) {
     fun getPCMBlock(blocksize: Int): ShortArray {
         val bytesPerSample = bitPerSample / 8;
         val bytesInBlock = blocksize * bytesPerSample
-        val buffer = ByteBuffer
-                .allocate(bytesInBlock)
-                .order(ByteOrder.LITTLE_ENDIAN)
+        val buffer = ByteBuffer.allocate(bytesInBlock).order(ByteOrder.LITTLE_ENDIAN)
         val pcmArray = ShortArray(blocksize)
 
         for (i in 0 until bytesInBlock) {
             val data = stream.read()
-            if (data != -1)
-                buffer.put(i, data.toByte())
-            else
-                buffer.put(i, 0b0)
+            if (data != -1) buffer.put(i, data.toByte())
+            else buffer.put(i, 0b0)
         }
 
         for (i in 0 until bytesInBlock step bytesPerSample) {
@@ -134,8 +130,7 @@ class WavFile(private val stream: InputStream) {
         return pcmArray
     }
 
-    fun getNumberOfPCMSamples(): Int =
-            this.dataChunkSize / (this.bitPerSample / 8)
+    fun getNumberOfPCMSamples(): Int = this.dataChunkSize / (this.bitPerSample / 8)
 
     override fun toString(): String {
         return """WavFile(

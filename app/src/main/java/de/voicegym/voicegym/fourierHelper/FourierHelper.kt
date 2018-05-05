@@ -9,9 +9,8 @@ class FourierHelper(
         // binning refers to the number of samples averaged into one block
         val blockSize: Int,
         // blockSize is value of the block used together with the FFT
-        val binning: Int,
-        collectedSamples: Int,
-        private val sampleRate: Int) {
+        val binning: Int, collectedSamples: Int, private val sampleRate: Int
+) {
 
     private val fftTransformer = DoubleFFT_1D((blockSize).toLong())
     private val fftData = DoubleArray(2 * (blockSize))
@@ -78,14 +77,12 @@ class FourierHelper(
      *
      * @return The corresponding frequencies (Hz) of the indeces.
      */
-    fun frequencyArray() =
-        DoubleArray(blockSize, {it * sampleRate.toDouble() / (blockSize * binning)})
+    fun frequencyArray() = DoubleArray(blockSize, { it * sampleRate.toDouble() / (blockSize * binning) })
 
     /**
      * @return The frequency spacing as a Double between array cells in Hz.
      */
-    fun deltaFrequency(): Double =
-        sampleRate.toDouble() / (blockSize * binning)
+    fun deltaFrequency(): Double = sampleRate.toDouble() / (blockSize * binning)
 
     /**
      * @see <a href="https://en.wikipedia.org/wiki/Nyquist_frequency">The Nyquist Frequency</a><br/>

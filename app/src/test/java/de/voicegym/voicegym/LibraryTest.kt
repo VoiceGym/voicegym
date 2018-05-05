@@ -1,12 +1,11 @@
 package de.voicegym.voicegym
 
 //import com.google.common.base.Stopwatch
-import de.voicegym.voicegym.FourierHelper.PCMUtil
+
 import de.voicegym.voicegym.audioHelper.WavFile
 import junit.framework.Assert.assertEquals
 import org.jtransforms.fft.DoubleFFT_1D
 import org.junit.Test
-
 import java.io.File
 import java.io.FileInputStream
 
@@ -16,6 +15,7 @@ import java.io.FileInputStream
  * See [testing documentation](http://d.android.com/tools/testing).
  */
 class LibraryTest {
+
     fun getByteArray(file: File): ByteArray {
         val stream: FileInputStream = FileInputStream(file)
         val data: ByteArray = ByteArray(file.length().toInt())
