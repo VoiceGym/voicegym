@@ -60,14 +60,14 @@ class RecordHelper(val preferredBufferSize: Int) {
                 setup()
                 record()
                 Log.i("Recordhelper", "Thread Done")
-            });
+            })
 
     fun start() {
         recordingThread.start()
     }
 
     private fun setup() {
-        setThreadPriority(THREAD_PRIORITY_AUDIO);
+        setThreadPriority(THREAD_PRIORITY_AUDIO)
         Log.i("RecordObject", "Trying to get a hold of the microphone")
         recordObject = AudioRecord(MIC, sampleRate, channelConfig, audioFormat, bufferSize * bytesPerBufferSlot)
         Log.i("RecordObject", "Got the microphone")

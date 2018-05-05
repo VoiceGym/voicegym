@@ -4,6 +4,11 @@ import java.util.concurrent.ConcurrentLinkedQueue
 
 class PCMStorage : RecordBufferListener {
 
+    private val inputQueue = ConcurrentLinkedQueue<ShortArray>()
+    private var readArray: ShortArray? = null
+    private var readPosition: Int = 0
+    private var sealed: Boolean = false
+
     fun read(): Short {
         if (readArray == null) setToNextArray()
         val ret = readArray!![readPosition++]
@@ -15,7 +20,9 @@ class PCMStorage : RecordBufferListener {
         if (inputQueue.isNotEmpty()) {
             readArray = inputQueue.poll()
             readPosition = 0
-        } else throw Error("Cannot set to next array if there is none")
+        } else {
+            throw Error("Cannot set to next array if there is none")
+        }
     }
 
     fun ready(): Boolean = sealed
@@ -27,15 +34,8 @@ class PCMStorage : RecordBufferListener {
         return false
     }
 
-
-    private val inputQueue = ConcurrentLinkedQueue<ShortArray>()
-    private var readArray: ShortArray? = null
-    private var readPosition: Int = 0
-    private var sealed: Boolean = false
-
-
     override fun onBufferReady(data: ShortArray) {
-        if (data.size == 0) throw Error("No empty arrays allowed in storage")
+        if (data.isEmpty()) throw Error("No empty arrays allowed in storage")
         if (!sealed) inputQueue.add(data)
     }
 
@@ -44,6 +44,8 @@ class PCMStorage : RecordBufferListener {
     fun stopListening() {
         if (!sealed) {
             sealed = true
-        } else throw RuntimeException("PCMStorage already sealed")
+        } else {
+            throw RuntimeException("PCMStorage already sealed")
+        }
     }
 }

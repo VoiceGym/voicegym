@@ -23,7 +23,6 @@ import kotlinx.android.synthetic.main.activity_record.floatingActionButton
 import org.apache.commons.math3.analysis.interpolation.LinearInterpolator
 import java.util.concurrent.ConcurrentLinkedQueue
 
-
 class RecordActivity : AppCompatActivity(), RecordBufferListener {
     // configuration
     val sampleRate = 44100
@@ -44,6 +43,8 @@ class RecordActivity : AppCompatActivity(), RecordBufferListener {
     var fromIndexF: Int = 0
     var tillIndexF: Int = 0
     var frequencyRangeArray: DoubleArray? = null
+    // FIXME I don't see why this has to be nullable and cannot be declared on initialization.
+    // Can we please reduce the number of nullable variables.
     var recorder: RecordHelper? = null
     var activityState: ActivityState = WAITING
 
@@ -79,7 +80,7 @@ class RecordActivity : AppCompatActivity(), RecordBufferListener {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        this.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
+        this.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE)
         window.decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_FULLSCREEN
         setContentView(R.layout.activity_record)
         dummyView.xDataPoints = numberDataPoints
@@ -88,13 +89,12 @@ class RecordActivity : AppCompatActivity(), RecordBufferListener {
         recorder = RecordHelper(collectedSamples)
         recorder?.subscribeListener(this)
         recorder?.start()
-        floatingActionButton.backgroundTintList = ColorStateList.valueOf(Color.GREEN);
+        floatingActionButton.backgroundTintList = ColorStateList.valueOf(Color.GREEN)
         floatingActionButton.setOnClickListener {
             when (activityState) {
                 WAITING -> recordToFile()
                 RECORDING -> stopRecordToFile()
             }
-
         }
     }
 
@@ -113,7 +113,6 @@ class RecordActivity : AppCompatActivity(), RecordBufferListener {
         recorder?.subscribeListener(pcmStorage!!)
     }
 
-
     private fun stopRecordToFile() {
         activityState = WAITING
         floatingActionButton.backgroundTintList = ColorStateList.valueOf(Color.GREEN)
@@ -122,17 +121,14 @@ class RecordActivity : AppCompatActivity(), RecordBufferListener {
         recorder?.unSubscribeListener(pcmStorage!!)
     }
 
-
     override fun canHandleBufferSize(bufferSize: Int): Boolean = (collectedSamples == bufferSize)
 
     override fun onBufferReady(data: ShortArray) {
         inputQueue.add(data)
         // Get a handler that can be used to post to the main thread
-        val myRunnable = Runnable {
+        Handler(this.mainLooper).post {
             updateActivity()
-        };
-        Handler(this.getMainLooper()).post(myRunnable);
-
+        }
     }
 
     private fun updateActivity() {
