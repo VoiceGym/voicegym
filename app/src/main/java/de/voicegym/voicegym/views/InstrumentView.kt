@@ -7,6 +7,7 @@ import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.Path
 import android.util.AttributeSet
+import android.view.MotionEvent
 import android.view.View
 import org.jetbrains.anko.backgroundColor
 
@@ -80,6 +81,11 @@ abstract class InstrumentView : View {
      * The thickness of the border
      */
     var border_thickness = 3f
+
+    /**
+     * placeholder if we need to add handling of events here
+     */
+    override fun onTouchEvent(event: MotionEvent?): Boolean = true
 
     override fun onDraw(canvas: Canvas?) {
         backgroundColor = Color.BLACK

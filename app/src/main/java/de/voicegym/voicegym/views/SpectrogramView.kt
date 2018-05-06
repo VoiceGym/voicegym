@@ -6,6 +6,8 @@ import android.graphics.Color
 import android.util.AttributeSet
 import android.view.MotionEvent
 import android.view.MotionEvent.ACTION_DOWN
+import android.view.MotionEvent.ACTION_MOVE
+import android.view.MotionEvent.ACTION_UP
 import de.voicegym.voicegym.activities.RecordActivity
 
 class SpectrogramView : InstrumentView {
@@ -37,7 +39,19 @@ class SpectrogramView : InstrumentView {
             ACTION_DOWN -> {
                 drawLine = !drawLine
                 yPosLine = event?.y
+                return super.onTouchEvent(event)
             }
+
+            ACTION_MOVE -> {
+                yPosLine = event?.y
+                return super.onTouchEvent(event)
+            }
+
+            ACTION_UP   -> {
+                yPosLine = event?.y
+                return super.onTouchEvent(event)
+            }
+
         }
         return super.onTouchEvent(event)
     }
