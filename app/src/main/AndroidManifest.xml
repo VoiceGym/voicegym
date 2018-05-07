@@ -13,7 +13,7 @@
         android:screenOrientation="sensorPortrait"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <activity android:name=".Activities.NavigationDrawerActivity"
+        <activity android:name=".activities.NavigationDrawerActivity"
             android:label="@string/title_activity_navigation_drawer"
             android:theme="@style/Theme.AppCompat.Light.NoActionBar">
             <intent-filter>

@@ -1,23 +1,40 @@
-package de.voicegym.voicegym.Activities
+package de.voicegym.voicegym.activities
 
+import android.net.Uri
 import android.os.Bundle
 import android.support.design.widget.NavigationView
+import android.support.v4.app.Fragment
 import android.support.v4.view.GravityCompat
 import android.support.v7.app.ActionBarDrawerToggle
 import android.support.v7.app.AppCompatActivity
+import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import de.voicegym.voicegym.R
+import de.voicegym.voicegym.fragments.ExercisesFragment
+import de.voicegym.voicegym.fragments.InstrumentsFragment
 import de.voicegym.voicegym.fragments.RecordingsFragment
-import de.voicegym.voicegym.fragments.dummy.DummyContent
+import de.voicegym.voicegym.fragments.ReportsFragment
+import de.voicegym.voicegym.fragments.dummy.ExerciseContent
+import de.voicegym.voicegym.fragments.dummy.RecordingsContent
 import kotlinx.android.synthetic.main.activity_navigation_drawer.drawer_layout
 import kotlinx.android.synthetic.main.activity_navigation_drawer.nav_view
 import kotlinx.android.synthetic.main.app_bar_navigation_drawer.toolbar
 import org.jetbrains.anko.contentView
 
-class NavigationDrawerActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListener, RecordingsFragment.OnListFragmentInteractionListener {
+class NavigationDrawerActivity :
+        AppCompatActivity(),
+        NavigationView.OnNavigationItemSelectedListener,
+        RecordingsFragment.OnListFragmentInteractionListener,
+        InstrumentsFragment.OnFragmentInteractionListener,
+        ExercisesFragment.OnListFragmentInteractionListener,
+        ReportsFragment.OnFragmentInteractionListener {
 
-    override fun onCreate(savedInstanceState: Bundle?) {
+        override fun onFragmentInteraction(uri: Uri) {
+            TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+        }
+
+        override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_navigation_drawer)
         setSupportActionBar(toolbar)
@@ -30,17 +47,6 @@ class NavigationDrawerActivity : AppCompatActivity(), NavigationView.OnNavigatio
         nav_view.setNavigationItemSelectedListener(this)
 
         loadRecordingsFragment()
-    }
-
-    private fun loadRecordingsFragment() {
-        contentView!!.post {
-            val fragment = RecordingsFragment()
-            val fragmentTransaction = supportFragmentManager.beginTransaction()
-            fragmentTransaction.setCustomAnimations(android.R.anim.fade_in,
-                    android.R.anim.fade_out)
-            fragmentTransaction.replace(R.id.content_area, fragment, "RECORDINGS")
-            fragmentTransaction.commitAllowingStateLoss()
-        }
     }
 
     override fun onBackPressed() {
@@ -70,20 +76,20 @@ class NavigationDrawerActivity : AppCompatActivity(), NavigationView.OnNavigatio
     override fun onNavigationItemSelected(item: MenuItem): Boolean {
         // Handle navigation view item clicks here.
         when (item.itemId) {
-            R.id.nav_camera -> {
-                // Handle the camera action
+            R.id.nav_instruments -> {
+                loadInstrumentsFragment()
             }
-            R.id.nav_gallery -> {
-
+            R.id.nav_exercises -> {
+                loadExercisesFragment()
             }
-            R.id.nav_slideshow -> {
-
+            R.id.nav_recordings -> {
+                loadRecordingsFragment()
             }
-            R.id.nav_manage -> {
-
+            R.id.nav_reports -> {
+                loadReportsFragment()
             }
             R.id.nav_share -> {
-
+                // load share action
             }
         }
 
@@ -91,7 +97,38 @@ class NavigationDrawerActivity : AppCompatActivity(), NavigationView.OnNavigatio
         return true
     }
 
-    override fun onListFragmentInteraction(item: DummyContent.DummyItem?) {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    private fun loadFragment(fragment: Fragment, TAG: String) {
+        contentView!!.post {
+            val fragmentTransaction = supportFragmentManager.beginTransaction()
+            fragmentTransaction.setCustomAnimations(
+                    android.R.anim.fade_in,
+                    android.R.anim.fade_out)
+            fragmentTransaction.replace(R.id.content_area, fragment, TAG)
+            fragmentTransaction.commitAllowingStateLoss()
+        }
     }
+
+    private fun loadRecordingsFragment() {
+        loadFragment(RecordingsFragment(), "RECORDINGS")
+    }
+
+    private fun loadReportsFragment() {
+        loadFragment(ReportsFragment(), "REPORTS")
+    }
+
+    private fun loadExercisesFragment() {
+        loadFragment(ExercisesFragment(), "EXERCISES")
+    }
+
+    private fun loadInstrumentsFragment() {
+        loadFragment(InstrumentsFragment(), "INSTRUMENTS")
+    }
+
+    override fun onListFragmentInteraction(item: ExerciseContent.ExerciseItem?) {
+        Log.d("foo", "bar")
+    }
+    override fun onListFragmentInteraction(item: RecordingsContent.RecordingItem?) {
+        Log.d("foo", "bar")
+    }
+
 }

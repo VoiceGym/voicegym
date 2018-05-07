@@ -10,16 +10,15 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import de.voicegym.voicegym.R
-
-import de.voicegym.voicegym.fragments.dummy.RecordingsContent
-import de.voicegym.voicegym.fragments.dummy.RecordingsContent.RecordingItem
+import de.voicegym.voicegym.fragments.dummy.ExerciseContent
+import de.voicegym.voicegym.fragments.dummy.ExerciseContent.ExerciseItem
 
 /**
  * A fragment representing a list of Items.
  * Activities containing this fragment MUST implement the
- * [RecordingsFragment.OnListFragmentInteractionListener] interface.
+ * [ExercisesFragment.OnListFragmentInteractionListener] interface.
  */
-class RecordingsFragment : Fragment() {
+class ExercisesFragment : Fragment() {
 
     // TODO: Customize parameters
     private var columnCount = 1
@@ -36,7 +35,7 @@ class RecordingsFragment : Fragment() {
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
                               savedInstanceState: Bundle?): View? {
-        val view = inflater.inflate(R.layout.fragment_recordings_list, container, false)
+        val view = inflater.inflate(R.layout.fragment_exercises_list, container, false)
 
         // Set the adapter
         if (view is RecyclerView) {
@@ -45,7 +44,7 @@ class RecordingsFragment : Fragment() {
                     columnCount <= 1 -> LinearLayoutManager(context)
                     else -> GridLayoutManager(context, columnCount)
                 }
-                adapter = RecordingsRecyclerViewAdapter(RecordingsContent.ITEMS, listener)
+                adapter = ExercisesRecyclerViewAdapter(ExerciseContent.ITEMS, listener)
             }
         }
         return view
@@ -78,7 +77,7 @@ class RecordingsFragment : Fragment() {
      */
     interface OnListFragmentInteractionListener {
         // TODO: Update argument type and name
-        fun onListFragmentInteraction(item: RecordingItem?)
+        fun onListFragmentInteraction(item: ExerciseItem?)
     }
 
     companion object {
@@ -89,7 +88,7 @@ class RecordingsFragment : Fragment() {
         // TODO: Customize parameter initialization
         @JvmStatic
         fun newInstance(columnCount: Int) =
-                RecordingsFragment().apply {
+                ExercisesFragment().apply {
                     arguments = Bundle().apply {
                         putInt(ARG_COLUMN_COUNT, columnCount)
                     }

@@ -20,4 +20,8 @@
     <string name="nav_header_desc">Navigation header</string>
     <string name="action_settings">Einstellungen</string>
 
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="reports_fragment">I\'m the Reports Fragment</string>
+    <string name="instruments_fragment">I\'m the Instruments Fragment</string>
+
 </resources>

@@ -4,30 +4,29 @@ package de.voicegym.voicegym.fragments
 import android.support.v7.widget.RecyclerView
 import android.view.LayoutInflater
 import android.view.View
-import android.view.View.OnClickListener
 import android.view.ViewGroup
 import android.widget.TextView
 import de.voicegym.voicegym.R
-import de.voicegym.voicegym.fragments.RecordingsFragment.OnListFragmentInteractionListener
-import de.voicegym.voicegym.fragments.dummy.RecordingsContent.RecordingItem
-import kotlinx.android.synthetic.main.fragment_recordings.view.content
-import kotlinx.android.synthetic.main.fragment_recordings.view.item_number
+import de.voicegym.voicegym.fragments.ExercisesFragment.OnListFragmentInteractionListener
+import de.voicegym.voicegym.fragments.dummy.ExerciseContent.ExerciseItem
+import kotlinx.android.synthetic.main.fragment_exercises.view.content
+import kotlinx.android.synthetic.main.fragment_exercises.view.item_number
 
 /**
- * [RecyclerView.Adapter] that can display a [DummyItem] and makes a call to the
+ * [RecyclerView.Adapter] that can display a [ExerciseItem] and makes a call to the
  * specified [OnListFragmentInteractionListener].
  * TODO: Replace the implementation with code for your data type.
  */
-class RecordingsRecyclerViewAdapter(
-        private val mValues: List<RecordingItem>,
+class ExercisesRecyclerViewAdapter(
+        private val mValues: List<ExerciseItem>,
         private val mListener: OnListFragmentInteractionListener?)
-    : RecyclerView.Adapter<RecordingsRecyclerViewAdapter.ViewHolder>() {
+    : RecyclerView.Adapter<ExercisesRecyclerViewAdapter.ViewHolder>() {
 
-    private val mOnClickListener: OnClickListener
+    private val mOnClickListener: View.OnClickListener
 
     init {
-        mOnClickListener = OnClickListener { v ->
-            val item = v.tag as RecordingItem
+        mOnClickListener = View.OnClickListener { v ->
+            val item = v.tag as ExerciseItem
             // Notify the active callbacks interface (the activity, if the fragment is attached to
             // one) that an item has been selected.
             mListener?.onListFragmentInteraction(item)
@@ -36,7 +35,7 @@ class RecordingsRecyclerViewAdapter(
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         val view = LayoutInflater.from(parent.context)
-                .inflate(R.layout.fragment_recordings, parent, false)
+                .inflate(R.layout.fragment_exercises, parent, false)
         return ViewHolder(view)
     }
 
