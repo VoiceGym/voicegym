@@ -1,4 +1,4 @@
-package de.voicegym.voicegym
+package de.voicegym.voicegym.Activities
 
 import android.os.Bundle
 import android.support.design.widget.NavigationView
@@ -7,11 +7,15 @@ import android.support.v7.app.ActionBarDrawerToggle
 import android.support.v7.app.AppCompatActivity
 import android.view.Menu
 import android.view.MenuItem
+import de.voicegym.voicegym.R
+import de.voicegym.voicegym.fragments.RecordingsFragment
+import de.voicegym.voicegym.fragments.dummy.DummyContent
 import kotlinx.android.synthetic.main.activity_navigation_drawer.drawer_layout
 import kotlinx.android.synthetic.main.activity_navigation_drawer.nav_view
 import kotlinx.android.synthetic.main.app_bar_navigation_drawer.toolbar
+import org.jetbrains.anko.contentView
 
-class NavigationDrawerActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListener {
+class NavigationDrawerActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListener, RecordingsFragment.OnListFragmentInteractionListener {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -24,6 +28,19 @@ class NavigationDrawerActivity : AppCompatActivity(), NavigationView.OnNavigatio
         toggle.syncState()
 
         nav_view.setNavigationItemSelectedListener(this)
+
+        loadRecordingsFragment()
+    }
+
+    private fun loadRecordingsFragment() {
+        contentView!!.post {
+            val fragment = RecordingsFragment()
+            val fragmentTransaction = supportFragmentManager.beginTransaction()
+            fragmentTransaction.setCustomAnimations(android.R.anim.fade_in,
+                    android.R.anim.fade_out)
+            fragmentTransaction.replace(R.id.content_area, fragment, "RECORDINGS")
+            fragmentTransaction.commitAllowingStateLoss()
+        }
     }
 
     override fun onBackPressed() {
@@ -72,5 +89,9 @@ class NavigationDrawerActivity : AppCompatActivity(), NavigationView.OnNavigatio
 
         drawer_layout.closeDrawer(GravityCompat.START)
         return true
+    }
+
+    override fun onListFragmentInteraction(item: DummyContent.DummyItem?) {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 }
