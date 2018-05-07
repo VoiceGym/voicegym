@@ -5,4 +5,19 @@
     <string name="title_activity_record">RecordActivity</string>
     <string name="dummy_button">Dummy Button</string>
     <string name="dummy_content">DUMMY\nCONTENT</string>
+
+    <!-- Menu Strings -->
+    <string name="instruments">Instrumente</string>
+    <string name="exercises">Übungen</string>
+    <string name="reports">Reports</string>
+    <string name="recordings">Aufnahmen</string>
+
+    <string name="title_activity_navigation_drawer">VoiceGym</string>
+    <string name="navigation_drawer_open">Open navigation drawer</string>
+    <string name="navigation_drawer_close">Close navigation drawer</string>
+    <string name="nav_header_title">VoiceGym</string>
+    <string name="nav_header_subtitle">sprich_mit_uns@voicegym.de</string>
+    <string name="nav_header_desc">Navigation header</string>
+    <string name="action_settings">Einstellungen</string>
+
 </resources>

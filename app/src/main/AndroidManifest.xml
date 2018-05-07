@@ -13,7 +13,9 @@
         android:screenOrientation="sensorPortrait"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <activity android:name=".MainActivity">
+        <activity android:name=".NavigationDrawerActivity"
+            android:label="@string/title_activity_navigation_drawer"
+            android:theme="@style/Theme.AppCompat.Light.NoActionBar">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <action android:name="android.intent.action.VIEW" />
@@ -35,7 +37,6 @@
             android:configChanges="orientation|keyboardHidden|screenSize"
             android:label="@string/title_activity_record"
             android:theme="@style/FullscreenNoActionbar" />
-
     </application>
 
 </manifest>
