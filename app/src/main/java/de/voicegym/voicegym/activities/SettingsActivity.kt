@@ -37,7 +37,7 @@ class SettingsActivity : AppCompatPreferenceActivity() {
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         // This is needed to make the UP button in SettingsActivity Work
-        // nothing else in AndroidManifest.xml required
+        // nothing else     in AndroidManifest.xml required
         if (item.itemId == android.R.id.home) {
             finish() // or go to another activity
             return true

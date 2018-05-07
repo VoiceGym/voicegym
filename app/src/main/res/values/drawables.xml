@@ -6,4 +6,5 @@
     <item name="ic_menu_share" type="drawable">@android:drawable/ic_menu_share</item>
     <item name="ic_menu_send" type="drawable">@android:drawable/ic_menu_send</item>
     <item name="ic_menu_rate" type="drawable">@android:drawable/btn_star</item>
+    <item name="ic_menu_settings" type="drawable">@drawable/ic_settings_black_24dp</item>
 </resources>

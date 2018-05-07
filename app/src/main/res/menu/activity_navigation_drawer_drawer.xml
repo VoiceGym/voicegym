@@ -14,10 +14,11 @@
             android:title="@string/exercises" />
         <item
             android:id="@+id/nav_recordings"
+            android:icon="@drawable/ic_hearing_black_24dp"
             android:title="@string/recordings" />
         <item
             android:id="@+id/nav_reports"
-            android:icon="@drawable/ic_menu_gallery"
+            android:icon="@drawable/ic_show_chart_black_24dp"
             android:title="@string/reports" />
     </group>
     <group>
@@ -32,6 +33,7 @@
                 android:title="Bewerte uns!" />
             <item
                 android:id="@+id/nav_settings"
+                android:icon="@drawable/ic_menu_settings"
                 android:title="Einstellungen" />
 
         </menu>
