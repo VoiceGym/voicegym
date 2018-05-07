@@ -1,5 +1,6 @@
 package de.voicegym.voicegym.activities
 
+import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.support.design.widget.NavigationView
@@ -71,6 +72,7 @@ class NavigationDrawerActivity :
             R.id.action_settings -> return true
             else -> return super.onOptionsItemSelected(item)
         }
+
     }
 
     override fun onNavigationItemSelected(item: MenuItem): Boolean {
@@ -90,6 +92,10 @@ class NavigationDrawerActivity :
             }
             R.id.nav_share -> {
                 // load share action
+            }
+            R.id.nav_settings -> {
+                val intent = Intent(this, SettingsActivity::class.java)
+                startActivity(intent)
             }
         }
 
