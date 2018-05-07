@@ -1,10 +1,11 @@
-package de.voicegym.voicegym
+package de.voicegym.voicegym.activities
 
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
-import de.voicegym.voicegym.FourierHelper.FourierHelper
-import de.voicegym.voicegym.FourierHelper.PCMUtil
-import de.voicegym.voicegym.SoundFiles.WavFile
+import de.voicegym.voicegym.R
+import de.voicegym.voicegym.audioHelper.WavFile
+import de.voicegym.voicegym.fourierHelper.FourierHelper
+import de.voicegym.voicegym.fourierHelper.PCMUtil
 import kotlinx.android.synthetic.main.activity_measuring_fourier_transforms.fab
 import kotlinx.android.synthetic.main.activity_measuring_fourier_transforms.jtransformResult
 import kotlinx.android.synthetic.main.activity_measuring_fourier_transforms.statusText
@@ -16,7 +17,7 @@ class MeasuringFourierTransforms : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_measuring_fourier_transforms)
         fab.setOnClickListener {
-            statusText.setText("Measuring")
+            statusText.text = "Measuring"
 
 
             val wavFile = WavFile(getResources().openRawResource(R.raw.testtone))

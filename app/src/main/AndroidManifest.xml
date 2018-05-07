@@ -3,6 +3,7 @@
     package="de.voicegym.voicegym">
 
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
 
     <application
         android:allowBackup="true"
@@ -21,7 +22,7 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".MeasuringFourierTransforms"
+            android:name=".activities.MeasuringFourierTransforms"
             android:label="@string/title_activity_measuring_fourier_transforms"
             android:parentActivityName=".MainActivity"
             android:theme="@style/AppTheme.NoActionBar">
@@ -30,7 +31,7 @@
                 android:value="de.voicegym.voicegym.MainActivity" />
         </activity>
         <activity
-            android:name=".Activities.RecordActivity"
+            android:name=".activities.RecordActivity"
             android:configChanges="orientation|keyboardHidden|screenSize"
             android:label="@string/title_activity_record"
             android:theme="@style/FullscreenNoActionbar" />

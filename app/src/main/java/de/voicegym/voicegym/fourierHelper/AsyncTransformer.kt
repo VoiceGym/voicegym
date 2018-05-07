@@ -1,9 +1,9 @@
-package de.voicegym.voicegym.FourierHelper
+package de.voicegym.voicegym.fourierHelper
 
-import de.voicegym.voicegym.FourierHelper.RequestedResultType.FFT_AMPLITUDE
-import de.voicegym.voicegym.FourierHelper.RequestedResultType.FFT_AMPLITUDE_AND_PHASE
-import de.voicegym.voicegym.FourierHelper.RequestedResultType.FFT_COMPLEX_RESULT
-import de.voicegym.voicegym.FourierHelper.RequestedResultType.FFT_PHASE
+import de.voicegym.voicegym.fourierHelper.RequestedResultType.FFT_AMPLITUDE
+import de.voicegym.voicegym.fourierHelper.RequestedResultType.FFT_AMPLITUDE_AND_PHASE
+import de.voicegym.voicegym.fourierHelper.RequestedResultType.FFT_COMPLEX_RESULT
+import de.voicegym.voicegym.fourierHelper.RequestedResultType.FFT_PHASE
 import java.util.Observable
 import java.util.concurrent.ConcurrentLinkedQueue
 import kotlin.concurrent.thread
@@ -21,16 +21,18 @@ class AsyncTransformer(val fourierHelper: FourierHelper) : Observable() {
                 val fftJob = inputQueue.poll()
                 val raw = fourierHelper.fft(PCMUtil.getDoubleArrayFromShortArray(1.0, fftJob.pcmData))
                 when (fftJob.requestedResult) {
-                    FFT_AMPLITUDE -> {
+                    FFT_AMPLITUDE           -> {
                         val amplitude = DoubleArray(fourierHelper.blockSize)
                         System.arraycopy(fourierHelper.amplitudeArray(), 0, amplitude, 0, fourierHelper.blockSize)
                         addResultToResultQueue(AmplitudeResult(amplitude))
                     }
-                    FFT_PHASE -> {
+
+                    FFT_PHASE               -> {
                         val phase = DoubleArray(fourierHelper.blockSize)
                         System.arraycopy(fourierHelper.phaseArray(), 0, phase, 0, fourierHelper.blockSize)
                         addResultToResultQueue(PhaseResult(phase))
                     }
+
                     FFT_AMPLITUDE_AND_PHASE -> {
                         val amplitude = DoubleArray(fourierHelper.blockSize)
                         val phase = DoubleArray(fourierHelper.blockSize)
@@ -38,7 +40,8 @@ class AsyncTransformer(val fourierHelper: FourierHelper) : Observable() {
                         System.arraycopy(fourierHelper.phaseArray(), 0, phase, 0, fourierHelper.blockSize)
                         addResultToResultQueue(AmplitudeAndPhaseResult(amplitude, phase))
                     }
-                    FFT_COMPLEX_RESULT -> {
+
+                    FFT_COMPLEX_RESULT      -> {
                         val complexResult = DoubleArray(2 * fourierHelper.blockSize)
                         System.arraycopy(raw, 0, complexResult, 0, 2 * fourierHelper.blockSize)
                         addResultToResultQueue(ComplexResult(complexResult))

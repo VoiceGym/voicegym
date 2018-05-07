@@ -1,4 +1,4 @@
-package de.voicegym.voicegym.FourierHelper
+package de.voicegym.voicegym.fourierHelper
 
 enum class RequestedResultType {
     FFT_AMPLITUDE,
