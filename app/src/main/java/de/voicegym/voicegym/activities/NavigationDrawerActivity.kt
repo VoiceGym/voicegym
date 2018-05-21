@@ -23,25 +23,23 @@ import kotlinx.android.synthetic.main.activity_navigation_drawer.nav_view
 import kotlinx.android.synthetic.main.app_bar_navigation_drawer.toolbar
 import org.jetbrains.anko.contentView
 
-class NavigationDrawerActivity :
-        AppCompatActivity(),
-        NavigationView.OnNavigationItemSelectedListener,
-        RecordingsFragment.OnListFragmentInteractionListener,
-        InstrumentsFragment.OnFragmentInteractionListener,
-        ExercisesFragment.OnListFragmentInteractionListener,
-        ReportsFragment.OnFragmentInteractionListener {
+class NavigationDrawerActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListener, RecordingsFragment.OnListFragmentInteractionListener, InstrumentsFragment.OnFragmentInteractionListener, ExercisesFragment.OnListFragmentInteractionListener, ReportsFragment.OnFragmentInteractionListener, SwitchToRecordingViewListener {
 
-        override fun onFragmentInteraction(uri: Uri) {
-            TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-        }
+    override fun switchToRecordingView() {
+        val intent = Intent(this, RecordActivity::class.java).apply { }
+        startActivity(intent)
+    }
 
-        override fun onCreate(savedInstanceState: Bundle?) {
+    override fun onFragmentInteraction(uri: Uri) {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
+
+    override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_navigation_drawer)
         setSupportActionBar(toolbar)
 
-        val toggle = ActionBarDrawerToggle(
-                this, drawer_layout, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close)
+        val toggle = ActionBarDrawerToggle(this, drawer_layout, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close)
         drawer_layout.addDrawerListener(toggle)
         toggle.syncState()
 
@@ -70,7 +68,7 @@ class NavigationDrawerActivity :
         // as you specify a parent activity in AndroidManifest.xml.
         when (item.itemId) {
             R.id.action_settings -> return true
-            else -> return super.onOptionsItemSelected(item)
+            else                 -> return super.onOptionsItemSelected(item)
         }
 
     }
@@ -81,19 +79,24 @@ class NavigationDrawerActivity :
             R.id.nav_instruments -> {
                 loadInstrumentsFragment()
             }
-            R.id.nav_exercises -> {
+
+            R.id.nav_exercises   -> {
                 loadExercisesFragment()
             }
-            R.id.nav_recordings -> {
+
+            R.id.nav_recordings  -> {
                 loadRecordingsFragment()
             }
-            R.id.nav_reports -> {
+
+            R.id.nav_reports     -> {
                 loadReportsFragment()
             }
-            R.id.nav_share -> {
+
+            R.id.nav_share       -> {
                 // load share action
             }
-            R.id.nav_settings -> {
+
+            R.id.nav_settings    -> {
                 val intent = Intent(this, SettingsActivity::class.java)
                 startActivity(intent)
             }
@@ -106,9 +109,7 @@ class NavigationDrawerActivity :
     private fun loadFragment(fragment: Fragment, TAG: String) {
         contentView!!.post {
             val fragmentTransaction = supportFragmentManager.beginTransaction()
-            fragmentTransaction.setCustomAnimations(
-                    android.R.anim.fade_in,
-                    android.R.anim.fade_out)
+            fragmentTransaction.setCustomAnimations(android.R.anim.fade_in, android.R.anim.fade_out)
             fragmentTransaction.replace(R.id.content_area, fragment, TAG)
             fragmentTransaction.commitAllowingStateLoss()
         }
@@ -133,6 +134,7 @@ class NavigationDrawerActivity :
     override fun onListFragmentInteraction(item: ExerciseContent.ExerciseItem?) {
         Log.d("foo", "bar")
     }
+
     override fun onListFragmentInteraction(item: RecordingsContent.RecordingItem?) {
         Log.d("foo", "bar")
     }
