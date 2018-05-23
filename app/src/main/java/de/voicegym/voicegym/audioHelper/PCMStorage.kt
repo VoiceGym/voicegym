@@ -1,38 +1,47 @@
 package de.voicegym.voicegym.audioHelper
 
+import java.io.InputStream
+import java.nio.ByteBuffer
 import java.util.concurrent.ConcurrentLinkedQueue
 
-class PCMStorage(val sampleRate: Int) : RecordBufferListener {
+fun Byte.toPositiveInt() = toInt() and 0xFF
 
-    private val inputQueue = ConcurrentLinkedQueue<ShortArray>()
-    private var readArray: ShortArray? = null
-    private var readPosition: Int = 0
-    private var sealed: Boolean = false
+class PCMStorage(val sampleRate: Int) : RecordBufferListener, InputStream() {
 
-    fun read(): Short {
-        if (readArray == null) setToNextArray()
-        val ret = readArray!![readPosition++]
-        if (readPosition == readArray?.size) setToNextArray()
+    override fun read(): Int {
+        var ret: Int = -1
+        if (buffer == null) {
+            if (getNextBuffer()) {
+                ret = buffer!!.get().toPositiveInt()
+            }
+        } else if (!buffer!!.hasRemaining()) {
+            if (getNextBuffer()) {
+                ret = buffer!!.get().toPositiveInt()
+            }
+        } else {
+            ret = buffer!!.get().toPositiveInt()
+        }
         return ret
     }
 
-    private fun setToNextArray() {
+    private fun getNextBuffer(): Boolean {
         if (inputQueue.isNotEmpty()) {
-            readArray = inputQueue.poll()
-            readPosition = 0
+            buffer = ByteBuffer.allocate(2 * inputQueue.peek().size)
+            buffer!!.asShortBuffer().put(inputQueue.poll())
+            return true
         } else {
-            throw Error("Cannot set to next array if there is none")
+            return false
         }
     }
 
-    fun ready(): Boolean = sealed
+    private val inputQueue = ConcurrentLinkedQueue<ShortArray>()
 
-    fun hasData(): Boolean {
-        if (!sealed) return false
-        if (readArray != null && readPosition < readArray!!.size) return true
-        if (inputQueue.isNotEmpty()) return true
-        return false
-    }
+    private var sealed: Boolean = false
+
+    private var buffer: ByteBuffer? = null
+
+
+    fun ready(): Boolean = sealed
 
     override fun onBufferReady(data: ShortArray) {
         if (data.isEmpty()) throw Error("No empty arrays allowed in storage")
