@@ -12,7 +12,7 @@ import android.view.View
 import de.voicegym.voicegym.R
 import de.voicegym.voicegym.activities.ActivityState.RECORDING
 import de.voicegym.voicegym.activities.ActivityState.WAITING
-import de.voicegym.voicegym.audioHelper.AudioHelper.getDezibelFromAmplitude
+import de.voicegym.voicegym.audioHelper.getDezibelFromAmplitude
 import de.voicegym.voicegym.audioHelper.PCMEncoder
 import de.voicegym.voicegym.audioHelper.PCMStorage
 import de.voicegym.voicegym.audioHelper.RecordBufferListener
