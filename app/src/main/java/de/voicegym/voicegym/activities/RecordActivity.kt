@@ -129,14 +129,20 @@ class RecordActivity : AppCompatActivity(), RecordBufferListener {
         Log.e("RecordActivity", "Back to waiting")
         pcmStorage?.stopListening()
         recorder?.unSubscribeListener(pcmStorage!!)
-        val timestamp = SimpleDateFormat("yyyy-MM-dd'T'HH-mm-ss").format(Calendar.getInstance().getTime())
+        if (isExternalStorageWritable()) {
 
+            val timestamp = SimpleDateFormat("yyyy-MM-dd'T'HH-mm-ss").format(Calendar.getInstance().getTime())
 
-        val pcmEncoder = PCMEncoder(128000, pcmStorage!!.sampleRate, 1)
-        pcmEncoder.setOutputPath(getVoiceGymFolder() + File.separator + timestamp + ".m4a")
-        pcmEncoder.prepare()
-        pcmEncoder.encode(pcmStorage, pcmStorage!!.sampleRate)
-        pcmEncoder.stop()
+            val pcmEncoder = PCMEncoder(128000, pcmStorage!!.sampleRate, 1)
+            val outFile = File(getVoiceGymFolder(), timestamp + ".mp4")
+            if (outFile.exists()) outFile.delete()
+            outFile.createNewFile()
+            if (!outFile.canWrite()) throw Error("Cannot write file")
+            pcmEncoder.setOutputPath(outFile.path)
+            pcmEncoder.prepare()
+            pcmEncoder.encode(pcmStorage, pcmStorage!!.sampleRate)
+            pcmEncoder.stop()
+        }
         Log.e("PCMEncoder", "Done encoding")
     }
 
@@ -160,15 +166,27 @@ class RecordActivity : AppCompatActivity(), RecordBufferListener {
     }
 
 
-    fun getVoiceGymFolder(): String {
-        val externalStorage = getExternalFilesDir(Environment.DIRECTORY_MUSIC)
-        val voiceGymFolder = externalStorage.toString() + File.separator + "VoiceGym"
-        val folder = File(voiceGymFolder)
-        if (!folder.exists()) {
-            if (!folder.mkdir()) throw Error("Error creating VoiceGym folder:" + voiceGymFolder)
+    fun getVoiceGymFolder(): File? {
+        // Get the directory for the user's public pictures directory.
+        val file = File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MUSIC), "VoiceGym")
+        if (!file.exists()) {
+            if (!file?.mkdirs()) throw Error("Error creating VoiceGym folder")
         }
-        return voiceGymFolder
+        return file
     }
+
+
+    /* Checks if external storage is available for read and write */
+    fun isExternalStorageWritable(): Boolean {
+        return Environment.getExternalStorageState() == Environment.MEDIA_MOUNTED
+    }
+
+    /* Checks if external storage is available to at least read */
+    fun isExternalStorageReadable(): Boolean {
+        return Environment.getExternalStorageState() in setOf(Environment.MEDIA_MOUNTED, Environment.MEDIA_MOUNTED_READ_ONLY)
+    }
+
+
 }
 
 enum class ActivityState {
