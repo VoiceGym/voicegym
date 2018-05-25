@@ -5,7 +5,7 @@ import android.support.v7.app.AppCompatActivity
 import de.voicegym.voicegym.R
 import de.voicegym.voicegym.audioHelper.WavFile
 import de.voicegym.voicegym.fourierHelper.FourierHelper
-import de.voicegym.voicegym.fourierHelper.PCMUtil
+import de.voicegym.voicegym.fourierHelper.getDoubleArrayFromShortArray
 import kotlinx.android.synthetic.main.activity_measuring_fourier_transforms.fab
 import kotlinx.android.synthetic.main.activity_measuring_fourier_transforms.jtransformResult
 import kotlinx.android.synthetic.main.activity_measuring_fourier_transforms.statusText
@@ -24,12 +24,11 @@ class MeasuringFourierTransforms : AppCompatActivity() {
             val blocksize = 16384
             val lengthOfBlock = wavFile.getFrameLength(blocksize)
             val binning = 16
-            val inputFrame = PCMUtil.getDoubleArrayFromShortArray(1.0, wavFile.getPCMBlock(blocksize))
+            val inputFrame = getDoubleArrayFromShortArray(1.0, wavFile.getPCMBlock(blocksize))
 
             jtransformResult.text = "100 executions took" + (getJTransformsExecutionTime(inputFrame, binning)).toString() + " ms"
             statusText.text = "Done, blocklength was {$lengthOfBlock} ms. With {$blocksize} samples, binning was {$binning}"
         }
-
     }
 
     fun getJTransformsExecutionTime(inputFrame: DoubleArray, binning: Int): Long {

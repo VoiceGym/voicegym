@@ -12,13 +12,14 @@ import android.view.View
 import de.voicegym.voicegym.R
 import de.voicegym.voicegym.activities.ActivityState.RECORDING
 import de.voicegym.voicegym.activities.ActivityState.WAITING
-import de.voicegym.voicegym.audioHelper.getDezibelFromAmplitude
+import de.voicegym.voicegym.activities.ActivityState.DONE
 import de.voicegym.voicegym.audioHelper.PCMEncoder
+import de.voicegym.voicegym.audioHelper.getDezibelFromAmplitude
 import de.voicegym.voicegym.audioHelper.PCMStorage
 import de.voicegym.voicegym.audioHelper.RecordBufferListener
 import de.voicegym.voicegym.audioHelper.RecordHelper
 import de.voicegym.voicegym.fourierHelper.FourierHelper
-import de.voicegym.voicegym.fourierHelper.PCMUtil
+import de.voicegym.voicegym.fourierHelper.getDoubleArrayFromShortArray
 import de.voicegym.voicegym.views.util.HotGradientColorPicker
 import kotlinx.android.synthetic.main.activity_record.dummyView
 import kotlinx.android.synthetic.main.activity_record.floatingActionButton
@@ -104,6 +105,7 @@ class RecordActivity : AppCompatActivity(), RecordBufferListener {
             when (activityState) {
                 WAITING   -> recordToFile()
                 RECORDING -> stopRecordToFile()
+                DONE -> throw NotImplementedError()
             }
         }
     }
@@ -158,7 +160,7 @@ class RecordActivity : AppCompatActivity(), RecordBufferListener {
 
     private fun updateActivity() {
         val shortArray = inputQueue.poll()
-        fourierHelper.fft(PCMUtil.getDoubleArrayFromShortArray(1.0, shortArray))
+        fourierHelper.fft(getDoubleArrayFromShortArray(1.0, shortArray))
         val spectrum = fourierHelper.amplitudeArray()
         val colors = calculateColorArrayForSpectrum(spectrum, 55.0)
         dummyView.insertColorLine(colors)

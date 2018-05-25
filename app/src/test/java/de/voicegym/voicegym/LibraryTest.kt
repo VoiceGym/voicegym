@@ -3,6 +3,7 @@ package de.voicegym.voicegym
 //import com.google.common.base.Stopwatch
 
 import de.voicegym.voicegym.audioHelper.WavFile
+import de.voicegym.voicegym.fourierHelper.PCMUtil.getDoubleArrayFromShortArray
 import junit.framework.Assert.assertEquals
 import org.jtransforms.fft.DoubleFFT_1D
 import org.junit.Test
@@ -41,7 +42,7 @@ class LibraryTest {
     fun testFireJtransformFourier() {
         val wavFile = WavFile(File("src/test/resources/frame1.wav"))
 
-        val inputFrame = PCMUtil.getDoubleArrayFromShortArray(1.0, wavFile.getTimeFrame(25))
+        val inputFrame = getDoubleArrayFromShortArray(1.0, wavFile.getTimeFrame(25))
 
         val fftDo = DoubleFFT_1D(inputFrame.size.toLong())
         val fft = DoubleArray(2 * inputFrame.size)
