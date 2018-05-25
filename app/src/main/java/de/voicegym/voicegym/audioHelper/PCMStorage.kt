@@ -2,6 +2,7 @@ package de.voicegym.voicegym.audioHelper
 
 import java.io.InputStream
 import java.nio.ByteBuffer
+import java.nio.ByteOrder
 import java.util.concurrent.ConcurrentLinkedQueue
 
 fun Byte.toPositiveInt() = toInt() and 0xFF
@@ -27,7 +28,8 @@ class PCMStorage(val sampleRate: Int) : RecordBufferListener, InputStream() {
     private fun getNextBuffer(): Boolean {
         if (inputQueue.isNotEmpty()) {
             buffer = ByteBuffer.allocate(2 * inputQueue.peek().size)
-            buffer!!.asShortBuffer().put(inputQueue.poll())
+            buffer?.order(ByteOrder.LITTLE_ENDIAN)
+            buffer?.asShortBuffer()?.put(inputQueue.poll())
             return true
         } else {
             return false
