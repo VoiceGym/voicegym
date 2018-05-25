@@ -19,7 +19,7 @@ class AsyncTransformer(val fourierHelper: FourierHelper) : Observable() {
             if (inputQueue.isNotEmpty()) {
                 // do work
                 val fftJob = inputQueue.poll()
-                val raw = fourierHelper.fft(PCMUtil.getDoubleArrayFromShortArray(1.0, fftJob.pcmData))
+                val raw = fourierHelper.fft(getDoubleArrayFromShortArray(1.0, fftJob.pcmData))
                 when (fftJob.requestedResult) {
                     FFT_AMPLITUDE           -> {
                         val amplitude = DoubleArray(fourierHelper.blockSize)

@@ -10,14 +10,14 @@ import android.support.v7.app.AppCompatActivity
 import android.util.Log
 import android.view.View
 import de.voicegym.voicegym.R
+import de.voicegym.voicegym.activities.ActivityState.DONE
 import de.voicegym.voicegym.activities.ActivityState.RECORDING
 import de.voicegym.voicegym.activities.ActivityState.WAITING
-import de.voicegym.voicegym.activities.ActivityState.DONE
 import de.voicegym.voicegym.audioHelper.PCMEncoder
-import de.voicegym.voicegym.audioHelper.getDezibelFromAmplitude
 import de.voicegym.voicegym.audioHelper.PCMStorage
 import de.voicegym.voicegym.audioHelper.RecordBufferListener
 import de.voicegym.voicegym.audioHelper.RecordHelper
+import de.voicegym.voicegym.audioHelper.getDezibelFromAmplitude
 import de.voicegym.voicegym.fourierHelper.FourierHelper
 import de.voicegym.voicegym.fourierHelper.getDoubleArrayFromShortArray
 import de.voicegym.voicegym.views.util.HotGradientColorPicker
@@ -25,6 +25,7 @@ import kotlinx.android.synthetic.main.activity_record.dummyView
 import kotlinx.android.synthetic.main.activity_record.floatingActionButton
 import org.apache.commons.math3.analysis.interpolation.LinearInterpolator
 import java.io.File
+import java.io.InputStream
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.concurrent.ConcurrentLinkedQueue
@@ -105,7 +106,7 @@ class RecordActivity : AppCompatActivity(), RecordBufferListener {
             when (activityState) {
                 WAITING   -> recordToFile()
                 RECORDING -> stopRecordToFile()
-                DONE -> throw NotImplementedError()
+                DONE      -> throw NotImplementedError()
             }
         }
     }
@@ -140,9 +141,9 @@ class RecordActivity : AppCompatActivity(), RecordBufferListener {
             if (outFile.exists()) outFile.delete()
             outFile.createNewFile()
             if (!outFile.canWrite()) throw Error("Cannot write file")
-            pcmEncoder.setOutputPath(outFile.path)
+            pcmEncoder.outputPath = outFile.path
             pcmEncoder.prepare()
-            pcmEncoder.encode(pcmStorage, pcmStorage!!.sampleRate)
+            pcmEncoder.encode(pcmStorage as InputStream, pcmStorage!!.sampleRate)
             pcmEncoder.stop()
         }
         Log.e("PCMEncoder", "Done encoding")

@@ -1,6 +1,8 @@
 package de.voicegym.voicegym
 
 import de.voicegym.voicegym.audioHelper.WavFile
+import de.voicegym.voicegym.fourierHelper.FourierHelper
+import de.voicegym.voicegym.fourierHelper.getDoubleArrayFromShortArray
 import junit.framework.Assert.assertEquals
 import junit.framework.Assert.assertFalse
 import junit.framework.Assert.assertNotNull
@@ -94,27 +96,27 @@ class TestFourierHelper {
         var pcmSamples: ShortArray = WavFile(File("src/test/resources/purewaves/440Hz-A4.wav")).getPCMBlock(collectedSamples)
         assertEquals(collectedSamples, pcmSamples.size)
 
-        helper.fft(PCMUtil.getDoubleArrayFromShortArray(1.0, a0.getPCMBlock(collectedSamples)))
+        helper.fft(getDoubleArrayFromShortArray(1.0, a0.getPCMBlock(collectedSamples)))
         assertEquals(5, idxOfMax(helper.amplitudeArray()))
         assertEquals(27.5, helper.frequencyArray()[5], helper.deltaFrequency())
 
-        helper.fft(PCMUtil.getDoubleArrayFromShortArray(1.0, a1.getPCMBlock(collectedSamples)))
+        helper.fft(getDoubleArrayFromShortArray(1.0, a1.getPCMBlock(collectedSamples)))
         assertEquals(10, idxOfMax(helper.amplitudeArray()))
         assertEquals(55.0, helper.frequencyArray()[10], helper.deltaFrequency())
 
-        helper.fft(PCMUtil.getDoubleArrayFromShortArray(1.0, a2.getPCMBlock(collectedSamples)))
+        helper.fft(getDoubleArrayFromShortArray(1.0, a2.getPCMBlock(collectedSamples)))
         assertEquals(20, idxOfMax(helper.amplitudeArray()))
         assertEquals(110.0, helper.frequencyArray()[20], helper.deltaFrequency())
 
-        helper.fft(PCMUtil.getDoubleArrayFromShortArray(1.0, a3.getPCMBlock(collectedSamples)))
+        helper.fft(getDoubleArrayFromShortArray(1.0, a3.getPCMBlock(collectedSamples)))
         assertEquals(41, idxOfMax(helper.amplitudeArray()))
         assertEquals(220.0, helper.frequencyArray()[41], helper.deltaFrequency())
 
-        helper.fft(PCMUtil.getDoubleArrayFromShortArray(1.0, a4.getPCMBlock(collectedSamples)))
+        helper.fft(getDoubleArrayFromShortArray(1.0, a4.getPCMBlock(collectedSamples)))
         assertEquals(82, idxOfMax(helper.amplitudeArray()))
         assertEquals(440.0, helper.frequencyArray()[82], helper.deltaFrequency())
 
-        helper.fft(PCMUtil.getDoubleArrayFromShortArray(1.0, a5.getPCMBlock(collectedSamples)))
+        helper.fft(getDoubleArrayFromShortArray(1.0, a5.getPCMBlock(collectedSamples)))
         assertEquals(163, idxOfMax(helper.amplitudeArray()))
         assertEquals(880.0, helper.frequencyArray()[163], helper.deltaFrequency())
 
