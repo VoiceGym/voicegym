@@ -7,24 +7,13 @@ import de.voicegym.voicegym.fourierHelper.getDoubleArrayFromShortArray
 import org.jtransforms.fft.DoubleFFT_1D
 import org.junit.Test
 import java.io.File
-import java.io.FileInputStream
 
 /**
  * Example local unit test, which will execute on the development machine (host).
  *
  * See [testing documentation](http://d.android.com/tools/testing).
  */
-class LibraryTest {
-
-    fun getByteArray(file: File): ByteArray {
-        val stream: FileInputStream = FileInputStream(file)
-        val data: ByteArray = ByteArray(file.length().toInt())
-        stream.read(data)
-        return data
-    }
-
-
-
+class FourierTest {
 
     @Test
     fun testFireJtransformFourier() {
