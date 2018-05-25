@@ -8,11 +8,15 @@ import android.support.test.InstrumentationRegistry
 import android.support.test.filters.SmallTest
 import android.support.test.runner.AndroidJUnit4
 import android.util.Log
+import de.voicegym.voicegym.audioHelper.PCMStorage
+import junit.framework.Assert.assertEquals
 import org.junit.Assert
 import org.junit.Test
 import org.junit.runner.RunWith
 import java.io.File
 import java.io.InputStream
+import java.nio.ByteBuffer
+import java.nio.ByteOrder
 
 
 @RunWith(AndroidJUnit4::class)
@@ -33,9 +37,9 @@ class MediaCodecTest {
         val appContext = InstrumentationRegistry.getTargetContext()
         val context = InstrumentationRegistry.getInstrumentation().context
         val inputFile: InputStream = context.assets.open("pfeifen.raw")
-//        val inputFile = "/input.pcm"
+        //        val inputFile = "/input.pcm"
 
-        val outFile : String = File(appContext.filesDir, "pfeifen.mp4").absolutePath
+        val outFile: String = File(appContext.filesDir, "pfeifen.mp4").absolutePath
         Log.d(LOGTAG, outFile)
         val COMPRESSED_AUDIO_FILE_MIME_TYPE = "audio/mp4a-latm"
         val CODEC_TIMEOUT = 5000L
@@ -120,6 +124,38 @@ class MediaCodecTest {
 
         Assert.assertEquals(1, 1)
 
+
+    }
+
+
+    @Test
+    fun comparePCMStorageToRawFile() {
+        val context = InstrumentationRegistry.getInstrumentation().context
+        val inputStream: InputStream = context.assets.open("pfeifen.raw")
+        val pcmStorage = PCMStorage(44100)
+        val buffer = ByteArray(16384) // 8192 shorts
+        val pcmSamples = ShortArray(8192)
+
+        inputStream.read(buffer)
+        ByteBuffer.wrap(buffer).order(ByteOrder.LITTLE_ENDIAN).asShortBuffer().get(pcmSamples)
+        pcmStorage.onBufferReady(pcmSamples)
+
+        val buffer2 = ByteArray(16384) // 8192 shorts
+        val pcmSamples2 = ShortArray(8192)
+
+        inputStream.read(buffer2)
+        ByteBuffer.wrap(buffer2).order(ByteOrder.LITTLE_ENDIAN).asShortBuffer().get(pcmSamples2)
+        pcmStorage.onBufferReady(pcmSamples2)
+
+        inputStream.close()
+        pcmStorage.stopListening()
+
+        val compareStream: InputStream = context.assets.open("pfeifen.raw")
+        for (i in 1..16384) {
+            val compare=compareStream.read()
+            val stored=pcmStorage.read()
+            assertEquals(compare, stored)
+        }
 
     }
 
