@@ -151,7 +151,7 @@ class MediaCodecTest {
         pcmStorage.stopListening()
 
         val compareStream: InputStream = context.assets.open("pfeifen.raw")
-        for (i in 1..16384) {
+        for (i in 1..30000) {
             val compare=compareStream.read()
             val stored=pcmStorage.read()
             assertEquals(compare, stored)
