@@ -112,7 +112,7 @@ class WavFile(private val stream: InputStream) {
      * @return ShortArray of length blocksize containing PCM Samples
      */
     fun getPCMBlock(blocksize: Int): ShortArray {
-        val bytesPerSample = bitPerSample / 8;
+        val bytesPerSample = bitPerSample / 8
         val bytesInBlock = blocksize * bytesPerSample
         val buffer = ByteBuffer.allocate(bytesInBlock).order(ByteOrder.LITTLE_ENDIAN)
         val pcmArray = ShortArray(blocksize)

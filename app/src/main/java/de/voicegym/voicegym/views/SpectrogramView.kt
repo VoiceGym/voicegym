@@ -38,17 +38,17 @@ class SpectrogramView : InstrumentView {
         when (event?.action) {
             ACTION_DOWN -> {
                 drawLine = !drawLine
-                yPosLine = event?.y
+                yPosLine = event.y
                 return super.onTouchEvent(event)
             }
 
             ACTION_MOVE -> {
-                yPosLine = event?.y
+                yPosLine = event.y
                 return super.onTouchEvent(event)
             }
 
             ACTION_UP   -> {
-                yPosLine = event?.y
+                yPosLine = event.y
                 return super.onTouchEvent(event)
             }
 

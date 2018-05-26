@@ -9,7 +9,7 @@ class FourierHelper(
         // binning refers to the number of samples averaged into one block
         val blockSize: Int,
         // blockSize is value of the block used together with the FFT
-        val binning: Int, collectedSamples: Int, private val sampleRate: Int
+        private val binning: Int, collectedSamples: Int, private val sampleRate: Int
 ) {
 
     private val fftTransformer = DoubleFFT_1D((blockSize).toLong())

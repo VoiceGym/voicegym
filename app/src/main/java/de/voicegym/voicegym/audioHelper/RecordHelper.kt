@@ -11,24 +11,24 @@ import android.os.Process.THREAD_PRIORITY_AUDIO
 import android.os.Process.setThreadPriority
 import android.util.Log
 
-class RecordHelper(val preferredBufferSize: Int) {
+class RecordHelper(private val preferredBufferSize: Int) {
 
     // Config, could be in constructor
-    val sampleRate = 44100
-    val channelConfig = CHANNEL_IN_MONO
-    val audioFormat = ENCODING_PCM_16BIT
+    private val sampleRate = 44100
+    private val channelConfig = CHANNEL_IN_MONO
+    private val audioFormat = ENCODING_PCM_16BIT
 
     // depending on config
-    val bytesPerBufferSlot = when (audioFormat) {
+    private val bytesPerBufferSlot = when (audioFormat) {
         ENCODING_PCM_8BIT  -> 1
         ENCODING_PCM_16BIT -> 2
         else               -> throw Error("Unsupported AudioFormat")
     }
     // we are using the number of slots as a bufferSize, and recalculate it for the recordObject
-    val minimumBufferSize = getMinBufferSize(sampleRate, channelConfig, audioFormat) / bytesPerBufferSlot
+    private val minimumBufferSize = getMinBufferSize(sampleRate, channelConfig, audioFormat) / bytesPerBufferSlot
 
 
-    val bufferSize = if (preferredBufferSize > minimumBufferSize) preferredBufferSize else minimumBufferSize
+    private val bufferSize = if (preferredBufferSize > minimumBufferSize) preferredBufferSize else minimumBufferSize
 
     private var recordObject: AudioRecord? = null
     private var audioBuffer = ShortArray(bufferSize)
@@ -85,7 +85,7 @@ class RecordHelper(val preferredBufferSize: Int) {
             // locks the thread while reading from microphone
             recordObject?.read(audioBuffer, 0, bufferSize)
             // pass it on to the listeners
-            listenerList.forEach { item -> item.onBufferReady(audioBuffer) }
+            listenerList.forEach { it.onBufferReady(audioBuffer) }
         }
         recordObject?.stop()
         recordObject?.release()

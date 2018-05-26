@@ -1,18 +1,23 @@
 package de.voicegym.voicegym
 
 import de.voicegym.voicegym.audioHelper.WavFile
+import de.voicegym.voicegym.fourierHelper.FourierHelper
+import de.voicegym.voicegym.fourierHelper.getDoubleArrayFromShortArray
 import junit.framework.Assert.assertEquals
 import junit.framework.Assert.assertFalse
-import junit.framework.Assert.assertNotNull
-import junit.framework.Assert.assertNull
 import junit.framework.Assert.assertTrue
+import org.hamcrest.CoreMatchers.equalTo
+import org.hamcrest.MatcherAssert.assertThat
+import org.junit.Rule
 import org.junit.Test
+import org.junit.rules.ExpectedException
 import java.io.File
+import org.hamcrest.CoreMatchers.`is` as Is
 
 
-class TestFourierHelper {
+class FourierHelperTest {
+
     @Test
-    //@DisplayName("IsPowerOf2 function")
     fun testIsPowerOfTwo() {
         val powersOfTwo = mutableSetOf<Int>()
         var i = 1
@@ -46,40 +51,36 @@ class TestFourierHelper {
             assertEquals(1.0, output[i], 0.00000001)
         }
 
-        for (i in 5 until 10) assertEquals(0.0, output[i], 0.00000001)
+        for (i in 5 until 10) {
+            assertEquals(0.0, output[i], 0.00000001)
+        }
+    }
 
+    @Rule
+    @JvmField
+    val exception = ExpectedException.none()
 
+    @Test
+    fun fourierHelperInstantiationFails() {
+        exception.expect(IllegalArgumentException::class.java)
+        FourierHelper(1024, 2, 1024, 44100)
     }
 
     @Test
-    //@DisplayName("FourierHelper")
-    fun testFourierHelperInstanciation() {
-        var exception: RuntimeException? = null;
-        try {
-            FourierHelper(1024, 2, 1024, 44100)
-        } catch (e: RuntimeException) {
-            exception = e;
-        }
-        assertNotNull(exception);
-        exception = null;
-        try {
-            FourierHelper(512, 2, 1024, 44100)
-        } catch (e: RuntimeException) {
-            exception = e;
-        }
-        assertNull(exception);
-        try {
-            FourierHelper(500, 2, 1000, 44100)
-        } catch (e: RuntimeException) {
-            exception = e;
-        }
-        assertNotNull(exception)
+    fun fourierHelperInstantiationFailsToo() {
+        exception.expect(IllegalArgumentException::class.java)
+        FourierHelper(500, 2, 1000, 44100)
     }
 
     @Test
-    fun testFourierHelper() {
+    fun fourierHelperInstantiationSuccess() {
+        FourierHelper(512, 2, 1024, 44100)
+    }
+
+    @Test
+    fun testWavFi() {
         val collectedSamples = 8192
-        var helper = FourierHelper(4096, 2, collectedSamples, 44100)
+        val helper = FourierHelper(4096, 2, collectedSamples, 44100)
 
         assertEquals(5.383, helper.deltaFrequency(), 0.001)
 
@@ -91,40 +92,39 @@ class TestFourierHelper {
         val a4 = WavFile(File("src/test/resources/purewaves/440Hz-A4.wav"))
         val a5 = WavFile(File("src/test/resources/purewaves/880Hz-A5.wav"))
 
-        var pcmSamples: ShortArray = WavFile(File("src/test/resources/purewaves/440Hz-A4.wav")).getPCMBlock(collectedSamples)
-        assertEquals(collectedSamples, pcmSamples.size)
+        val pcmSamples: ShortArray = WavFile(File("src/test/resources/purewaves/440Hz-A4.wav")).getPCMBlock(collectedSamples)
+        assertThat(pcmSamples.size, Is(equalTo(collectedSamples)))
 
-        helper.fft(PCMUtil.getDoubleArrayFromShortArray(1.0, a0.getPCMBlock(collectedSamples)))
+        helper.fft(getDoubleArrayFromShortArray(1.0, a0.getPCMBlock(collectedSamples)))
         assertEquals(5, idxOfMax(helper.amplitudeArray()))
         assertEquals(27.5, helper.frequencyArray()[5], helper.deltaFrequency())
 
-        helper.fft(PCMUtil.getDoubleArrayFromShortArray(1.0, a1.getPCMBlock(collectedSamples)))
+        helper.fft(getDoubleArrayFromShortArray(1.0, a1.getPCMBlock(collectedSamples)))
         assertEquals(10, idxOfMax(helper.amplitudeArray()))
         assertEquals(55.0, helper.frequencyArray()[10], helper.deltaFrequency())
 
-        helper.fft(PCMUtil.getDoubleArrayFromShortArray(1.0, a2.getPCMBlock(collectedSamples)))
+        helper.fft(getDoubleArrayFromShortArray(1.0, a2.getPCMBlock(collectedSamples)))
         assertEquals(20, idxOfMax(helper.amplitudeArray()))
         assertEquals(110.0, helper.frequencyArray()[20], helper.deltaFrequency())
 
-        helper.fft(PCMUtil.getDoubleArrayFromShortArray(1.0, a3.getPCMBlock(collectedSamples)))
+        helper.fft(getDoubleArrayFromShortArray(1.0, a3.getPCMBlock(collectedSamples)))
         assertEquals(41, idxOfMax(helper.amplitudeArray()))
         assertEquals(220.0, helper.frequencyArray()[41], helper.deltaFrequency())
 
-        helper.fft(PCMUtil.getDoubleArrayFromShortArray(1.0, a4.getPCMBlock(collectedSamples)))
+        helper.fft(getDoubleArrayFromShortArray(1.0, a4.getPCMBlock(collectedSamples)))
         assertEquals(82, idxOfMax(helper.amplitudeArray()))
         assertEquals(440.0, helper.frequencyArray()[82], helper.deltaFrequency())
 
-        helper.fft(PCMUtil.getDoubleArrayFromShortArray(1.0, a5.getPCMBlock(collectedSamples)))
+        helper.fft(getDoubleArrayFromShortArray(1.0, a5.getPCMBlock(collectedSamples)))
         assertEquals(163, idxOfMax(helper.amplitudeArray()))
         assertEquals(880.0, helper.frequencyArray()[163], helper.deltaFrequency())
-
-
     }
 
-    fun Double.format(digits: Int) = java.lang.String.format("%.${digits}f", this)
-
-    fun idxOfMax(arr: DoubleArray): Int? {
+    private fun idxOfMax(arr: DoubleArray): Int? {
         val max = arr.max()
-        if (max != null && max != Double.NaN) return arr.indexOf(max) else return null
+        if (max != null && max != Double.NaN)
+            return arr.indexOf(max)
+        else
+            return null
     }
 }

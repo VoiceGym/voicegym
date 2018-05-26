@@ -5,11 +5,11 @@ import android.graphics.Color.rgb
 
 object HotGradientColorPicker : GradientPicker {
 
-    const val rThreshold = 0.4
-    const val gThreshold = 0.8
-    const val bThreshold = 1.0
-    const val delGR = 255 / (gThreshold - rThreshold)
-    const val delBG = 255 / (bThreshold - gThreshold)
+    private const val rThreshold = 0.4
+    private const val gThreshold = 0.8
+    private const val bThreshold = 1.0
+    private const val delGR = 255 / (gThreshold - rThreshold)
+    private const val delBG = 255 / (bThreshold - gThreshold)
 
     /**
      * value must be between 0 and 1, otherwise

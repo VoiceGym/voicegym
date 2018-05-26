@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:showIn="navigation_view">
+
+    <group
+        android:id="@+id/group_1"
+        android:checkableBehavior="single">
+        <item
+            android:id="@+id/nav_instruments"
+            android:icon="@drawable/ic_menu_manage"
+            android:title="@string/instruments" />
+        <item
+            android:id="@+id/nav_exercises"
+            android:icon="@drawable/ic_menu_slideshow"
+            android:title="@string/exercises" />
+        <item
+            android:id="@+id/nav_recordings"
+            android:icon="@drawable/ic_hearing_black_24dp"
+            android:title="@string/recordings" />
+        <item
+            android:id="@+id/nav_reports"
+            android:icon="@drawable/ic_show_chart_black_24dp"
+            android:title="@string/reports" />
+    </group>
+    <group android:id="@+id/group_2">
+            <item
+                android:id="@+id/nav_share"
+                android:icon="@drawable/ic_menu_share"
+                android:title="Share" />
+            <item
+                android:id="@+id/nav_rate"
+                android:icon="@drawable/ic_menu_rate"
+                android:title="Bewerte uns!" />
+            <item
+                android:id="@+id/nav_settings"
+                android:icon="@drawable/ic_menu_settings"
+                android:title="Einstellungen" />
+
+    </group>
+</menu>
