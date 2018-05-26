@@ -26,24 +26,13 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".activities.MeasuringFourierTransforms"
-            android:label="@string/title_activity_measuring_fourier_transforms"
-            android:parentActivityName=".MainActivity"
-            android:theme="@style/AppTheme.NoActionBar">
-            <meta-data
-                android:name="android.support.PARENT_ACTIVITY"
-                android:value="de.voicegym.voicegym.MainActivity" />
-        </activity>
-        <activity
             android:name=".activities.RecordActivity"
             android:configChanges="orientation|keyboardHidden|screenSize"
             android:label="@string/title_activity_record"
             android:theme="@style/FullscreenNoActionbar" />
         <activity
             android:name=".activities.SettingsActivity"
-            android:label="@string/title_activity_settings">
-        </activity>
-        <activity android:name=".MainActivity" />
+            android:label="@string/title_activity_settings"></activity>
     </application>
 
 </manifest>

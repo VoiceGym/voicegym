@@ -66,9 +66,9 @@ class RecordActivity : AppCompatActivity(), RecordBufferListener {
         // find range for which values are displayed
         var idx = 0
         while (frequencyArray[idx] < fromFrequency) idx++
-        fromIndexF = idx - 1 // just keep one datapoint outside of range
+        fromIndexF = idx - 1 // just keep one data point outside of range
         while (frequencyArray[idx] < tillFrequency) idx++
-        tillIndexF = idx + 1 // just keep two datapoints outside of range
+        tillIndexF = idx + 1 // just keep two data points outside of range
         frequencyRangeArray = frequencyArray.copyOfRange(fromIndexF, tillIndexF)
     }
 
