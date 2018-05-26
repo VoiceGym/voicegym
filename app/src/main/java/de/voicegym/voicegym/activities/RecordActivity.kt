@@ -99,8 +99,8 @@ class RecordActivity : AppCompatActivity(), RecordBufferListener {
         floatingActionButton.backgroundTintList = ColorStateList.valueOf(Color.GREEN)
         floatingActionButton.setOnClickListener {
             when (activityState) {
-                WAITING   -> recordToFile()
-                RECORDING -> stopRecordToFile()
+                WAITING   -> storePCMSamples()
+                RECORDING -> saveStoredPCMSamplesOnSDCard()
                 DONE      -> throw NotImplementedError()
             }
         }
@@ -113,7 +113,7 @@ class RecordActivity : AppCompatActivity(), RecordBufferListener {
 
     var pcmStorage: PCMStorage? = null
 
-    private fun recordToFile() {
+    private fun storePCMSamples() {
         activityState = RECORDING
         floatingActionButton.backgroundTintList = ColorStateList.valueOf(Color.RED)
         Log.e("RecordActivity", "Switched to record")
@@ -121,14 +121,16 @@ class RecordActivity : AppCompatActivity(), RecordBufferListener {
         recorder?.subscribeListener(pcmStorage!!)
     }
 
-    private fun stopRecordToFile() {
+    private fun saveStoredPCMSamplesOnSDCard() {
         if (pcmStorage != null) {
             activityState = WAITING
             floatingActionButton.backgroundTintList = ColorStateList.valueOf(Color.GREEN)
             Log.e("RecordActivity", "Back to waiting")
             pcmStorage!!.stopListening()
             recorder?.unSubscribeListener(pcmStorage!!)
-            savePCMInputStreamOnSDCard(pcmStorage!!, pcmStorage!!.sampleRate, 128000)
+            Thread() {
+                savePCMInputStreamOnSDCard(pcmStorage!!, pcmStorage!!.sampleRate, 128000)
+            }.start()
         }
     }
 
@@ -151,6 +153,7 @@ class RecordActivity : AppCompatActivity(), RecordBufferListener {
         dummyView.insertColorLine(colors)
         dummyView.invalidate()
     }
+
 
 }
 
