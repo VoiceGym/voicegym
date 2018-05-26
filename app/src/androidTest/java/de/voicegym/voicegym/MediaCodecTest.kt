@@ -23,7 +23,7 @@ import java.nio.ByteOrder
 @SmallTest
 class MediaCodecTest {
 
-    val LOGTAG = "MEDIATEST"
+    private val LOGTAG = "MEDIATEST"
 
     @Test
     fun useAppContext() {
@@ -80,14 +80,14 @@ class MediaCodecTest {
 
                     val bytesRead = inputFile.read(tempBuffer, 0, buffer.limit())
                     if (bytesRead == -1) {
-                        mediaCodec.queueInputBuffer(inputBufferIndex, 0, 0, presentationTimeUs as Long, MediaCodec.BUFFER_FLAG_END_OF_STREAM)
+                        mediaCodec.queueInputBuffer(inputBufferIndex, 0, 0, presentationTimeUs, MediaCodec.BUFFER_FLAG_END_OF_STREAM)
                         hasMoreData = false
                         stop = true
                     } else {
                         totalBytesRead += bytesRead
                         currentBatchRead += bytesRead
                         buffer.put(tempBuffer, 0, bytesRead)
-                        mediaCodec.queueInputBuffer(inputBufferIndex, 0, bytesRead, presentationTimeUs as Long, 0)
+                        mediaCodec.queueInputBuffer(inputBufferIndex, 0, bytesRead, presentationTimeUs, 0)
                         presentationTimeUs = 1000000L * (totalBytesRead / 2L) / sampleRate
                     }
                 }

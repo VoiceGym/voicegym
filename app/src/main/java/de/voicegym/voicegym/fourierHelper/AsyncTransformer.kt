@@ -9,9 +9,9 @@ import java.util.concurrent.ConcurrentLinkedQueue
 import kotlin.concurrent.thread
 
 
-class AsyncTransformer(val fourierHelper: FourierHelper) : Observable() {
+class AsyncTransformer(private val fourierHelper: FourierHelper) : Observable() {
 
-    val lock = java.lang.Object()
+    private val lock = java.lang.Object()
 
     private val workerThread: Thread = thread(isDaemon = true, priority = 9, block = {
 

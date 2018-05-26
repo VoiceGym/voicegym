@@ -54,7 +54,7 @@ class InstrumentsFragment : Fragment() {
         } catch (e: ClassCastException) {
             throw ClassCastException("InstrumentsFragment")
         }
-        return view;
+        return view
     }
 
     // TODO: Rename method, update argument and hook method into UI event

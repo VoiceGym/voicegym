@@ -17,7 +17,6 @@ import kotlinx.android.synthetic.main.activity_main.recordActivityButton
 
 class MainActivity : AppCompatActivity() {
 
-    private val recorder = MediaRecorder()
     private var permissionToRecordAccepted = false
     private val permissions = arrayOf(Manifest.permission.RECORD_AUDIO)
 
@@ -54,6 +53,3 @@ class MainActivity : AppCompatActivity() {
     }
 }
 
-class MyRecordButton(ctx: Context, attrs: AttributeSet) : FloatingActionButton(ctx, attrs) {
-    var isRecording = false
-}

@@ -1,7 +1,6 @@
 package de.voicegym.voicegym
 
 import de.voicegym.voicegym.audioHelper.WavFile
-import junit.framework.Assert
 import org.hamcrest.CoreMatchers.equalTo
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.core.Is

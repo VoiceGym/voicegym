@@ -122,7 +122,7 @@ class FourierHelperTest {
 
     fun Double.format(digits: Int) = java.lang.String.format("%.${digits}f", this)
 
-    fun idxOfMax(arr: DoubleArray): Int? {
+    private fun idxOfMax(arr: DoubleArray): Int? {
         val max = arr.max()
         if (max != null && max != Double.NaN)
             return arr.indexOf(max)

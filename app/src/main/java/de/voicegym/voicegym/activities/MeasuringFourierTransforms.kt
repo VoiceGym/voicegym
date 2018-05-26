@@ -31,7 +31,7 @@ class MeasuringFourierTransforms : AppCompatActivity() {
         }
     }
 
-    fun getJTransformsExecutionTime(inputFrame: DoubleArray, binning: Int): Long {
+    private fun getJTransformsExecutionTime(inputFrame: DoubleArray, binning: Int): Long {
         val blocksize = inputFrame.size
         val fftDo = DoubleFFT_1D((blocksize / binning).toLong())
         val fft = DoubleArray(2 * (blocksize / binning))

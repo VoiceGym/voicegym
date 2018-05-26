@@ -27,32 +27,32 @@ import java.util.concurrent.ConcurrentLinkedQueue
 
 class RecordActivity : AppCompatActivity(), RecordBufferListener {
     // configuration
-    val sampleRate = 44100
-    val collectedSamples = 8192
-    val binning = 2
+    private val sampleRate = 44100
+    private val collectedSamples = 8192
+    private val binning = 2
     val fromFrequency: Double = 10.0
-    val tillFrequency: Double = 1000.0
-    val numberDataPoints: Int = 200
+    private val tillFrequency: Double = 1000.0
+    private val numberDataPoints: Int = 200
 
     // start class fixed objects
-    val blockSize = collectedSamples / binning
-    val inputQueue = ConcurrentLinkedQueue<ShortArray>()
-    val fourierHelper = FourierHelper(blockSize, binning, collectedSamples, sampleRate)
-    val interpolator = LinearInterpolator()
-    val frequencyArray: DoubleArray = fourierHelper.frequencyArray()
+    private val blockSize = collectedSamples / binning
+    private val inputQueue = ConcurrentLinkedQueue<ShortArray>()
+    private val fourierHelper = FourierHelper(blockSize, binning, collectedSamples, sampleRate)
+    private val interpolator = LinearInterpolator()
+    private val frequencyArray: DoubleArray = fourierHelper.frequencyArray()
 
     // variables
     private var deltaFrequency: Double = 0.0
 
     fun getDeltaFrequency() = deltaFrequency
 
-    var fromIndexF: Int = 0
-    var tillIndexF: Int = 0
-    var frequencyRangeArray: DoubleArray? = null
+    private var fromIndexF: Int = 0
+    private var tillIndexF: Int = 0
+    private var frequencyRangeArray: DoubleArray? = null
     // FIXME I don't see why this has to be nullable and cannot be declared on initialization.
     // Can we please reduce the number of nullable variables.
-    var recorder: RecordHelper? = null
-    var activityState: ActivityState = WAITING
+    private var recorder: RecordHelper? = null
+    private var activityState: ActivityState = WAITING
 
     init {
         onRangeChanged()
@@ -89,7 +89,7 @@ class RecordActivity : AppCompatActivity(), RecordBufferListener {
         this.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE)
         window.decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_FULLSCREEN
         setContentView(R.layout.activity_record)
-        getWindow().getDecorView().setBackgroundColor(Color.BLACK);
+        getWindow().getDecorView().setBackgroundColor(Color.BLACK)
         dummyView.xDataPoints = numberDataPoints
         dummyView.invalidate()
         Log.i("Activity", "onCreate")
@@ -111,7 +111,7 @@ class RecordActivity : AppCompatActivity(), RecordBufferListener {
         super.onDestroy()
     }
 
-    var pcmStorage: PCMStorage? = null
+    private var pcmStorage: PCMStorage? = null
 
     private fun storePCMSamples() {
         activityState = RECORDING
@@ -128,7 +128,7 @@ class RecordActivity : AppCompatActivity(), RecordBufferListener {
             Log.e("RecordActivity", "Back to waiting")
             pcmStorage!!.stopListening()
             recorder?.unSubscribeListener(pcmStorage!!)
-            Thread() {
+            Thread {
                 savePCMInputStreamOnSDCard(pcmStorage!!, pcmStorage!!.sampleRate, 128000)
             }.start()
         }
