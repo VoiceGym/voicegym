@@ -4,7 +4,6 @@ import android.content.pm.ActivityInfo
 import android.content.res.ColorStateList
 import android.graphics.Color
 import android.os.Bundle
-import android.os.Environment
 import android.os.Handler
 import android.support.v7.app.AppCompatActivity
 import android.util.Log
@@ -13,21 +12,17 @@ import de.voicegym.voicegym.R
 import de.voicegym.voicegym.activities.ActivityState.DONE
 import de.voicegym.voicegym.activities.ActivityState.RECORDING
 import de.voicegym.voicegym.activities.ActivityState.WAITING
-import de.voicegym.voicegym.audioHelper.PCMEncoder
 import de.voicegym.voicegym.audioHelper.PCMStorage
 import de.voicegym.voicegym.audioHelper.RecordBufferListener
 import de.voicegym.voicegym.audioHelper.RecordHelper
 import de.voicegym.voicegym.audioHelper.getDezibelFromAmplitude
+import de.voicegym.voicegym.audioHelper.savePCMInputStreamOnSDCard
 import de.voicegym.voicegym.fourierHelper.FourierHelper
 import de.voicegym.voicegym.fourierHelper.getDoubleArrayFromShortArray
 import de.voicegym.voicegym.views.util.HotGradientColorPicker
 import kotlinx.android.synthetic.main.activity_record.dummyView
 import kotlinx.android.synthetic.main.activity_record.floatingActionButton
 import org.apache.commons.math3.analysis.interpolation.LinearInterpolator
-import java.io.File
-import java.io.InputStream
-import java.text.SimpleDateFormat
-import java.util.Calendar
 import java.util.concurrent.ConcurrentLinkedQueue
 
 class RecordActivity : AppCompatActivity(), RecordBufferListener {
@@ -127,27 +122,16 @@ class RecordActivity : AppCompatActivity(), RecordBufferListener {
     }
 
     private fun stopRecordToFile() {
-        activityState = WAITING
-        floatingActionButton.backgroundTintList = ColorStateList.valueOf(Color.GREEN)
-        Log.e("RecordActivity", "Back to waiting")
-        pcmStorage?.stopListening()
-        recorder?.unSubscribeListener(pcmStorage!!)
-        if (isExternalStorageWritable()) {
-
-            val timestamp = SimpleDateFormat("yyyy-MM-dd'T'HH-mm-ss").format(Calendar.getInstance().getTime())
-
-            val pcmEncoder = PCMEncoder(128000, pcmStorage!!.sampleRate, 1)
-            val outFile = File(getVoiceGymFolder(), timestamp + ".mp4")
-            if (outFile.exists()) outFile.delete()
-            outFile.createNewFile()
-            if (!outFile.canWrite()) throw Error("Cannot write file")
-            pcmEncoder.outputPath = outFile.path
-            pcmEncoder.prepare()
-            pcmEncoder.encode(pcmStorage as InputStream, pcmStorage!!.sampleRate)
-            pcmEncoder.stop()
+        if (pcmStorage != null) {
+            activityState = WAITING
+            floatingActionButton.backgroundTintList = ColorStateList.valueOf(Color.GREEN)
+            Log.e("RecordActivity", "Back to waiting")
+            pcmStorage!!.stopListening()
+            recorder?.unSubscribeListener(pcmStorage!!)
+            savePCMInputStreamOnSDCard(pcmStorage!!, pcmStorage!!.sampleRate, 128000)
         }
-        Log.e("PCMEncoder", "Done encoding")
     }
+
 
     override fun canHandleBufferSize(bufferSize: Int): Boolean = (collectedSamples == bufferSize)
 
@@ -167,28 +151,6 @@ class RecordActivity : AppCompatActivity(), RecordBufferListener {
         dummyView.insertColorLine(colors)
         dummyView.invalidate()
     }
-
-
-    fun getVoiceGymFolder(): File? {
-        // Get the directory for the user's public pictures directory.
-        val file = File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MUSIC), "VoiceGym")
-        if (!file.exists()) {
-            if (!file?.mkdirs()) throw Error("Error creating VoiceGym folder")
-        }
-        return file
-    }
-
-
-    /* Checks if external storage is available for read and write */
-    fun isExternalStorageWritable(): Boolean {
-        return Environment.getExternalStorageState() == Environment.MEDIA_MOUNTED
-    }
-
-    /* Checks if external storage is available to at least read */
-    fun isExternalStorageReadable(): Boolean {
-        return Environment.getExternalStorageState() in setOf(Environment.MEDIA_MOUNTED, Environment.MEDIA_MOUNTED_READ_ONLY)
-    }
-
 
 }
 

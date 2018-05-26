@@ -85,7 +85,7 @@ class RecordHelper(val preferredBufferSize: Int) {
             // locks the thread while reading from microphone
             recordObject?.read(audioBuffer, 0, bufferSize)
             // pass it on to the listeners
-            listenerList.forEach { item -> item.onBufferReady(audioBuffer) }
+            listenerList.forEach { it.onBufferReady(audioBuffer) }
         }
         recordObject?.stop()
         recordObject?.release()
