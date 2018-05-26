@@ -120,8 +120,6 @@ class FourierHelperTest {
         assertEquals(880.0, helper.frequencyArray()[163], helper.deltaFrequency())
     }
 
-    fun Double.format(digits: Int) = java.lang.String.format("%.${digits}f", this)
-
     private fun idxOfMax(arr: DoubleArray): Int? {
         val max = arr.max()
         if (max != null && max != Double.NaN)
