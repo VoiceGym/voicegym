@@ -46,7 +46,7 @@ class PCMStorage(val sampleRate: Int) : RecordBufferListener, InputStream() {
 
     override fun onBufferReady(data: ShortArray) {
         if (data.isEmpty()) throw Error("No empty arrays allowed in storage")
-        if (!sealed) inputQueue.add(data.copyOf())
+        if (!sealed) inputQueue.add(data)
     }
 
     override fun canHandleBufferSize(bufferSize: Int): Boolean = true

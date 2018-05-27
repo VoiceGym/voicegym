@@ -24,6 +24,7 @@ import kotlinx.android.synthetic.main.activity_record.dummyView
 import kotlinx.android.synthetic.main.activity_record.floatingActionButton
 import org.apache.commons.math3.analysis.interpolation.LinearInterpolator
 import java.util.concurrent.ConcurrentLinkedQueue
+import kotlin.concurrent.thread
 
 class RecordActivity : AppCompatActivity(), RecordBufferListener {
     // configuration
@@ -89,7 +90,7 @@ class RecordActivity : AppCompatActivity(), RecordBufferListener {
         this.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE)
         window.decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_FULLSCREEN
         setContentView(R.layout.activity_record)
-        getWindow().getDecorView().setBackgroundColor(Color.BLACK)
+        window.decorView.setBackgroundColor(Color.BLACK)
         dummyView.xDataPoints = numberDataPoints
         dummyView.invalidate()
         Log.i("Activity", "onCreate")
@@ -128,9 +129,9 @@ class RecordActivity : AppCompatActivity(), RecordBufferListener {
             Log.e("RecordActivity", "Back to waiting")
             pcmStorage!!.stopListening()
             recorder?.unSubscribeListener(pcmStorage!!)
-            Thread {
+            thread {
                 savePCMInputStreamOnSDCard(pcmStorage!!, pcmStorage!!.sampleRate, 128000)
-            }.start()
+            }
         }
     }
 

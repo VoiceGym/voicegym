@@ -2,7 +2,6 @@ package de.voicegym.voicegym.audioHelper
 
 import android.media.AudioFormat.CHANNEL_IN_MONO
 import android.media.AudioFormat.ENCODING_PCM_16BIT
-import android.media.AudioFormat.ENCODING_PCM_8BIT
 import android.media.AudioRecord
 import android.media.AudioRecord.STATE_INITIALIZED
 import android.media.AudioRecord.getMinBufferSize
@@ -13,28 +12,34 @@ import android.util.Log
 
 class RecordHelper(private val preferredBufferSize: Int) {
 
-    // Config, could be in constructor
-    private val sampleRate = 44100
-    private val channelConfig = CHANNEL_IN_MONO
-    private val audioFormat = ENCODING_PCM_16BIT
+    companion object {
+        private const val sampleRate = 44100
+        private const val channelConfig = CHANNEL_IN_MONO
+        private const val audioFormat = ENCODING_PCM_16BIT
+    }
 
-    // depending on config
     private val bytesPerBufferSlot = when (audioFormat) {
-        ENCODING_PCM_8BIT  -> 1
         ENCODING_PCM_16BIT -> 2
         else               -> throw Error("Unsupported AudioFormat")
     }
+
     // we are using the number of slots as a bufferSize, and recalculate it for the recordObject
     private val minimumBufferSize = getMinBufferSize(sampleRate, channelConfig, audioFormat) / bytesPerBufferSlot
 
-
+    // preferredBufferSize is possible (only impossible if too small)
     private val bufferSize = if (preferredBufferSize > minimumBufferSize) preferredBufferSize else minimumBufferSize
 
-    private var recordObject: AudioRecord? = null
-    private var audioBuffer = ShortArray(bufferSize)
-    private var shouldRecord: Boolean = true
+    // private array that records the pcm samples, only copies of this shall be handed to the listeners
+    private val audioBuffer = ShortArray(bufferSize)
 
+    // list of all objects interested in obtaining copies of the audioBuffer
     private val listenerList = ArrayList<RecordBufferListener>()
+
+    // the object that obtains pcm samples from the microphone
+    private var recordObject: AudioRecord? = null
+
+    // control variable to stop the background thread that collects samples from the microphone
+    private var shouldRecord: Boolean = true
 
     init {
         Log.e("RecordHelper", "Recordhelper initialized")
@@ -79,13 +84,14 @@ class RecordHelper(private val preferredBufferSize: Int) {
         }
     }
 
+
     private fun record() {
         recordObject?.startRecording()
         while (shouldRecord) {
             // locks the thread while reading from microphone
             recordObject?.read(audioBuffer, 0, bufferSize)
-            // pass it on to the listeners
-            listenerList.forEach { it.onBufferReady(audioBuffer) }
+            // pass copies on to the listeners
+            listenerList.forEach { it.onBufferReady(audioBuffer.copyOf()) }
         }
         recordObject?.stop()
         recordObject?.release()
