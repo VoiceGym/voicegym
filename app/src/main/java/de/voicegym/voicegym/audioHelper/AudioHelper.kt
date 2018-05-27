@@ -12,17 +12,27 @@ fun getDezibelFromAmplitude(amplitude: Double): Double = 20 * Math.log10(amplitu
 
 fun savePCMInputStreamOnSDCard(pcmStorage: InputStream, sampleRate: Int, bitRate: Int) {
     if (isExternalStorageWritable()) {
-        val timestamp = SimpleDateFormat("yyyy-MM-dd'T'HH-mm-ss", Locale.ENGLISH).format(Calendar.getInstance().time)
         val pcmEncoder = PCMEncoder(bitRate, sampleRate, 1)
-        val outFile = File(getVoiceGymFolder(), timestamp + ".m4a")
-        if (outFile.exists()) outFile.delete()
-        outFile.createNewFile()
-        if (!outFile.canWrite()) throw Error("Cannot write file")
-        pcmEncoder.outputPath = outFile.path
+        pcmEncoder.outputPath = getOutFile("m4a").path
         pcmEncoder.prepare()
         pcmEncoder.encode(pcmStorage, sampleRate)
         pcmEncoder.stop()
     }
+}
+
+/**
+ * Creates a file with the current date and the given extension. If the file already exists, it is overwritten.
+ * @param fileExtension: the file extension used to create the file.
+ *
+ * @return: created an empty File
+ */
+private fun getOutFile(fileExtension: String): File {
+    val dateString = SimpleDateFormat("yyyy-MM-dd'T'HH-mm-ss", Locale.ENGLISH).format(Calendar.getInstance().time)
+    val outFile = File(getVoiceGymFolder(), "$dateString.$fileExtension")
+    if (outFile.exists()) outFile.delete()
+    outFile.createNewFile()
+    if (!outFile.canWrite()) throw Error("Cannot write file")
+    return outFile
 }
 
 

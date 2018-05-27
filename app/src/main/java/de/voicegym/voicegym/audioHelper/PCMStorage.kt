@@ -27,8 +27,7 @@ class PCMStorage(val sampleRate: Int) : RecordBufferListener, InputStream() {
 
     private fun getNextBuffer(): Boolean {
         if (inputQueue.isNotEmpty()) {
-            buffer = ByteBuffer.allocate(2 * inputQueue.peek().size)
-            buffer?.order(ByteOrder.LITTLE_ENDIAN)
+            buffer = ByteBuffer.allocate(2 * inputQueue.peek().size).order(ByteOrder.LITTLE_ENDIAN)
             buffer?.asShortBuffer()?.put(inputQueue.poll())
             return true
         } else {

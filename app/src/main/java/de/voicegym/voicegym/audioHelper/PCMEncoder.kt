@@ -151,8 +151,8 @@ class PCMEncoder
     }
 
     companion object {
-        private val TAG = "PCMEncoder"
-        private val COMPRESSED_AUDIO_FILE_MIME_TYPE = "audio/mp4a-latm"
-        private val CODEC_TIMEOUT = 5000
+        private const val TAG = "PCMEncoder"
+        private const val COMPRESSED_AUDIO_FILE_MIME_TYPE = "audio/mp4a-latm"
+        private const val CODEC_TIMEOUT = 5000
     }
 }
