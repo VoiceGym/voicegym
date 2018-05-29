@@ -2,7 +2,13 @@ version: 2
 machine:
   environment:
     QEMU_AUDIO_DRV: none
-
+jobs:
+   build:
+     docker:
+       - image: circleci/openjdk:8-jdk-node-browsers
+     steps:
+       - checkout
+       - run: echo "hello world"
 test:
   pre:
     - emulator -avd circleci-android24 -no-window:
