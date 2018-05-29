@@ -1,6 +1,6 @@
 package de.voicegym.voicegym
 
-import de.voicegym.voicegym.audioHelper.PCMStorage
+import de.voicegym.voicegym.util.audio.PCMStorage
 import junit.framework.Assert.assertEquals
 import org.junit.Test
 

@@ -6,7 +6,7 @@
     android:layout_height="match_parent"
     android:id="@+id/content_area"
     app:layout_behavior="@string/appbar_scrolling_view_behavior"
-    tools:context=".activities.NavigationDrawerActivity"
+    tools:context=".menu.NavigationDrawerActivity"
     tools:showIn="@layout/app_bar_navigation_drawer">
 
 </android.support.constraint.ConstraintLayout>

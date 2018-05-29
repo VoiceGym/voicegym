@@ -2,8 +2,8 @@ package de.voicegym.voicegym
 
 //import com.google.common.base.Stopwatch
 
-import de.voicegym.voicegym.audioHelper.WavFile
-import de.voicegym.voicegym.fourierHelper.getDoubleArrayFromShortArray
+import de.voicegym.voicegym.util.audio.WavFile
+import de.voicegym.voicegym.util.audio.getDoubleArrayFromShortArray
 import org.jtransforms.fft.DoubleFFT_1D
 import org.junit.Test
 import java.io.File
