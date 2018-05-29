@@ -1,7 +1,6 @@
 package de.voicegym.voicegym.recordActivity
 
 import android.content.pm.ActivityInfo
-import android.content.res.ColorStateList
 import android.graphics.Color
 import android.os.Bundle
 import android.os.Handler
@@ -9,9 +8,9 @@ import android.support.v7.app.AppCompatActivity
 import android.util.Log
 import android.view.View
 import de.voicegym.voicegym.R
-import de.voicegym.voicegym.recordActivity.ActivityState.DONE
-import de.voicegym.voicegym.recordActivity.ActivityState.RECORDING
-import de.voicegym.voicegym.recordActivity.ActivityState.WAITING
+import de.voicegym.voicegym.recordActivity.RecorderState.RECORDING
+import de.voicegym.voicegym.recordActivity.RecorderState.WAITING
+import de.voicegym.voicegym.recordActivity.fragments.RecordeModeControlListener
 import de.voicegym.voicegym.recordActivity.fragments.SpectrogramFragment
 import de.voicegym.voicegym.util.RecordBufferListener
 import de.voicegym.voicegym.util.audio.PCMStorage
@@ -19,11 +18,23 @@ import de.voicegym.voicegym.util.audio.RecordHelper
 import de.voicegym.voicegym.util.audio.getDoubleArrayFromShortArray
 import de.voicegym.voicegym.util.audio.savePCMInputStreamOnSDCard
 import de.voicegym.voicegym.util.math.FourierHelper
-import kotlinx.android.synthetic.main.activity_record.floatingActionButton
 import java.util.concurrent.ConcurrentLinkedQueue
 import kotlin.concurrent.thread
 
-class RecordActivity : AppCompatActivity(), RecordBufferListener {
+class RecordActivity : AppCompatActivity(), RecordBufferListener, RecordeModeControlListener {
+    override fun toggleRecordMode() {
+        when (recorderState) {
+            WAITING   -> storePCMSamples()
+            RECORDING -> saveStoredPCMSamplesOnSDCard()
+        }
+    }
+
+    override fun isRecording(): Boolean = when (recorderState) {
+        WAITING   -> false
+        RECORDING -> true
+    }
+
+
     // configuration
     private val sampleRate = 44100
     private val collectedSamples = 8192
@@ -36,7 +47,7 @@ class RecordActivity : AppCompatActivity(), RecordBufferListener {
 
 
     private var recorder: RecordHelper? = null
-    private var activityState: ActivityState = WAITING
+    private var recorderState: RecorderState = WAITING
 
     val spectrogramBundle = Bundle()
 
@@ -65,14 +76,6 @@ class RecordActivity : AppCompatActivity(), RecordBufferListener {
         }
 
 
-        floatingActionButton.backgroundTintList = ColorStateList.valueOf(Color.GREEN)
-        floatingActionButton.setOnClickListener {
-            when (activityState) {
-                WAITING   -> storePCMSamples()
-                RECORDING -> saveStoredPCMSamplesOnSDCard()
-                DONE      -> throw NotImplementedError()
-            }
-        }
     }
 
 
@@ -84,8 +87,7 @@ class RecordActivity : AppCompatActivity(), RecordBufferListener {
     private var pcmStorage: PCMStorage? = null
 
     private fun storePCMSamples() {
-        activityState = RECORDING
-        floatingActionButton.backgroundTintList = ColorStateList.valueOf(Color.RED)
+        recorderState = RECORDING
         Log.e("RecordActivity", "Switched to record")
         pcmStorage = PCMStorage(sampleRate)
         recorder?.subscribeListener(pcmStorage!!)
@@ -93,8 +95,7 @@ class RecordActivity : AppCompatActivity(), RecordBufferListener {
 
     private fun saveStoredPCMSamplesOnSDCard() {
         if (pcmStorage != null) {
-            activityState = WAITING
-            floatingActionButton.backgroundTintList = ColorStateList.valueOf(Color.GREEN)
+            recorderState = WAITING
             Log.e("RecordActivity", "Back to waiting")
             pcmStorage!!.stopListening()
             recorder?.unSubscribeListener(pcmStorage!!)
@@ -124,10 +125,9 @@ class RecordActivity : AppCompatActivity(), RecordBufferListener {
 
 }
 
-enum class ActivityState {
+enum class RecorderState {
     WAITING,
-    RECORDING,
-    DONE
+    RECORDING
 }
 
 

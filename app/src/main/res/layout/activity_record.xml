@@ -11,26 +11,20 @@
     <fragment
         android:id="@+id/spectrogramFragment"
         android:name="de.voicegym.voicegym.recordActivity.fragments.SpectrogramFragment"
-        android:layout_height="match_parent"
         android:layout_width="match_parent"
+        android:layout_height="match_parent"
         android:layout_marginRight="66dp"
         app:layout_constraintLeft_toLeftOf="parent" />
 
-    <android.support.design.widget.FloatingActionButton
-        android:id="@+id/floatingActionButton"
-        android:layout_width="50dp"
+
+    <fragment
+        android:id="@+id/recordModeControl"
+        android:name="de.voicegym.voicegym.recordActivity.fragments.RecordModeControlFragment"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="8dp"
-        android:layout_marginEnd="8dp"
-        android:layout_marginStart="8dp"
-        android:layout_marginTop="8dp"
-        android:clickable="true"
-        android:focusable="true"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toEndOf="@+id/spectrogramFragment"
-        app:layout_constraintTop_toTopOf="parent"
-        app:srcCompat="@android:drawable/presence_audio_busy" />
-
+        app:layout_constraintTop_toTopOf="parent" />
 
 </android.support.constraint.ConstraintLayout>
