@@ -12,17 +12,14 @@ import de.voicegym.voicegym.R
 import de.voicegym.voicegym.recordActivity.ActivityState.DONE
 import de.voicegym.voicegym.recordActivity.ActivityState.RECORDING
 import de.voicegym.voicegym.recordActivity.ActivityState.WAITING
-import de.voicegym.voicegym.util.audio.PCMStorage
+import de.voicegym.voicegym.recordActivity.fragments.SpectrogramFragment
 import de.voicegym.voicegym.util.RecordBufferListener
+import de.voicegym.voicegym.util.audio.PCMStorage
 import de.voicegym.voicegym.util.audio.RecordHelper
-import de.voicegym.voicegym.util.audio.getDezibelFromAmplitude
+import de.voicegym.voicegym.util.audio.getDoubleArrayFromShortArray
 import de.voicegym.voicegym.util.audio.savePCMInputStreamOnSDCard
 import de.voicegym.voicegym.util.math.FourierHelper
-import de.voicegym.voicegym.util.audio.getDoubleArrayFromShortArray
-import de.voicegym.voicegym.recordActivity.views.util.HotGradientColorPicker
-import kotlinx.android.synthetic.main.activity_record.dummyView
 import kotlinx.android.synthetic.main.activity_record.floatingActionButton
-import org.apache.commons.math3.analysis.interpolation.LinearInterpolator
 import java.util.concurrent.ConcurrentLinkedQueue
 import kotlin.concurrent.thread
 
@@ -31,57 +28,22 @@ class RecordActivity : AppCompatActivity(), RecordBufferListener {
     private val sampleRate = 44100
     private val collectedSamples = 8192
     private val binning = 2
-    val fromFrequency: Double = 10.0
-    private val tillFrequency: Double = 1000.0
-    private val numberDataPoints: Int = 200
 
     // start class fixed objects
     private val blockSize = collectedSamples / binning
     private val inputQueue = ConcurrentLinkedQueue<ShortArray>()
     private val fourierHelper = FourierHelper(blockSize, binning, collectedSamples, sampleRate)
-    private val interpolator = LinearInterpolator()
-    private val frequencyArray: DoubleArray = fourierHelper.frequencyArray()
 
-    // variables
-    private var deltaFrequency: Double = 0.0
 
-    fun getDeltaFrequency() = deltaFrequency
-
-    private var fromIndexF: Int = 0
-    private var tillIndexF: Int = 0
-    private var frequencyRangeArray: DoubleArray? = null
-    // FIXME I don't see why this has to be nullable and cannot be declared on initialization.
-    // Can we please reduce the number of nullable variables.
     private var recorder: RecordHelper? = null
     private var activityState: ActivityState = WAITING
 
+    val spectrogramBundle = Bundle()
+
+    var spectrogramFragment: SpectrogramFragment? = null
+
     init {
-        onRangeChanged()
-    }
-
-    private fun onRangeChanged() {
-        if (fromFrequency > tillFrequency) throw RuntimeException("fromFrequency must be smaller than tillFrequency")
-        if (frequencyArray[0] > fromFrequency) throw RuntimeException("you choose a frequency below available range")
-        if (frequencyArray[frequencyArray.size - 1] < tillFrequency) throw RuntimeException("you choose a frequency above available range")
-
-        // find range for which values are displayed
-        var idx = 0
-        while (frequencyArray[idx] < fromFrequency) idx++
-        fromIndexF = idx - 1 // just keep one data point outside of range
-        while (frequencyArray[idx] < tillFrequency) idx++
-        tillIndexF = idx + 1 // just keep two data points outside of range
-        frequencyRangeArray = frequencyArray.copyOfRange(fromIndexF, tillIndexF)
-    }
-
-    private fun calculateColorArrayForSpectrum(amplitude: DoubleArray, normalizationConstant: Double): IntArray {
-        val interpolatingFunction = interpolator.interpolate(frequencyRangeArray, amplitude.copyOfRange(fromIndexF, tillIndexF))
-        val colors = IntArray(dummyView.getDrawAreaHeight().toInt())
-        deltaFrequency = (tillFrequency - fromFrequency) / colors.size
-        for (i in 0 until colors.size) {
-            val amplitudeVal = interpolatingFunction.value(fromFrequency + i * deltaFrequency)
-            colors[i] = HotGradientColorPicker.pickColor(getDezibelFromAmplitude(amplitudeVal) / normalizationConstant)
-        }
-        return colors
+        spectrogramBundle.putDoubleArray("frequencyArray", fourierHelper.frequencyArray())
     }
 
 
@@ -91,12 +53,18 @@ class RecordActivity : AppCompatActivity(), RecordBufferListener {
         window.decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_FULLSCREEN
         setContentView(R.layout.activity_record)
         window.decorView.setBackgroundColor(Color.BLACK)
-        dummyView.xDataPoints = numberDataPoints
-        dummyView.invalidate()
-        Log.i("Activity", "onCreate")
+
+        spectrogramFragment = supportFragmentManager.findFragmentById(R.id.spectrogramFragment) as SpectrogramFragment
+        spectrogramFragment?.let {
+            it.arguments = spectrogramBundle
+        }
         recorder = RecordHelper(collectedSamples)
-        recorder?.subscribeListener(this)
-        recorder?.start()
+        recorder?.let {
+            it.subscribeListener(this)
+            it.start()
+        }
+
+
         floatingActionButton.backgroundTintList = ColorStateList.valueOf(Color.GREEN)
         floatingActionButton.setOnClickListener {
             when (activityState) {
@@ -106,6 +74,7 @@ class RecordActivity : AppCompatActivity(), RecordBufferListener {
             }
         }
     }
+
 
     override fun onDestroy() {
         recorder?.stopRecording()
@@ -149,10 +118,7 @@ class RecordActivity : AppCompatActivity(), RecordBufferListener {
     private fun updateActivity() {
         val shortArray = inputQueue.poll()
         fourierHelper.fft(getDoubleArrayFromShortArray(1.0, shortArray))
-        val spectrum = fourierHelper.amplitudeArray()
-        val colors = calculateColorArrayForSpectrum(spectrum, 55.0)
-        dummyView.insertColorLine(colors)
-        dummyView.invalidate()
+        spectrogramFragment?.insertNewAmplitudes(fourierHelper.amplitudeArray())
     }
 
 

@@ -9,6 +9,7 @@ import android.view.MotionEvent.ACTION_DOWN
 import android.view.MotionEvent.ACTION_MOVE
 import android.view.MotionEvent.ACTION_UP
 import de.voicegym.voicegym.recordActivity.RecordActivity
+import de.voicegym.voicegym.recordActivity.fragments.SpectrogramFragment
 
 class SpectrogramView : InstrumentView {
 
@@ -28,8 +29,8 @@ class SpectrogramView : InstrumentView {
         mPaint.textSize = 24f
         canvas?.drawLine(left_margin, yPosLine, width + left_margin, yPosLine, mPaint)
         if (context is RecordActivity) {
-            val deltaFrequency = (context as RecordActivity).getDeltaFrequency()
-            val frequency = (context as RecordActivity).fromFrequency + (bottom_margin + getDrawAreaHeight() - yPosLine) * deltaFrequency
+            val deltaFrequency = (context as SpectrogramFragment).deltaFrequency
+            val frequency = (context as SpectrogramFragment).userSpectrogramSettings.fromFrequency + (bottom_margin + getDrawAreaHeight() - yPosLine) * deltaFrequency
             canvas?.drawText("${frequency.toInt()} Hz", left_margin + 5, yPosLine - 5, mPaint)
         }
     }

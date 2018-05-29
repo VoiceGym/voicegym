@@ -7,29 +7,28 @@
 
     tools:context=".recordActivity.RecordActivity">
 
-    <android.support.constraint.Guideline
-        android:id="@+id/guideline"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        app:layout_constraintGuide_end="66dp" />
 
-    <de.voicegym.voicegym.recordActivity.views.SpectrogramView
-        android:id="@+id/dummyView"
-        android:layout_width="0dp"
+    <fragment
+        android:id="@+id/spectrogramFragment"
+        android:name="de.voicegym.voicegym.recordActivity.fragments.SpectrogramFragment"
         android:layout_height="match_parent"
-        app:layout_constraintEnd_toStartOf="@+id/guideline"
-        app:layout_constraintStart_toStartOf="parent" />
+        android:layout_width="match_parent"
+        android:layout_marginRight="66dp"
+        app:layout_constraintLeft_toLeftOf="parent" />
 
     <android.support.design.widget.FloatingActionButton
         android:id="@+id/floatingActionButton"
         android:layout_width="50dp"
         android:layout_height="wrap_content"
+        android:layout_marginBottom="8dp"
         android:layout_marginEnd="8dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="8dp"
         android:clickable="true"
         android:focusable="true"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/spectrogramFragment"
         app:layout_constraintTop_toTopOf="parent"
         app:srcCompat="@android:drawable/presence_audio_busy" />
 
