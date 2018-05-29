@@ -8,7 +8,7 @@ import android.support.test.InstrumentationRegistry
 import android.support.test.filters.SmallTest
 import android.support.test.runner.AndroidJUnit4
 import android.util.Log
-import de.voicegym.voicegym.audioHelper.PCMStorage
+import de.voicegym.voicegym.util.audio.PCMStorage
 import junit.framework.Assert.assertEquals
 import org.junit.Assert
 import org.junit.Test

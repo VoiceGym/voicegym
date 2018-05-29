@@ -15,7 +15,7 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
         <activity
-            android:name=".activities.NavigationDrawerActivity"
+            android:name=".menu.NavigationDrawerActivity"
             android:label="@string/title_activity_navigation_drawer"
             android:theme="@style/Theme.AppCompat.Light.NoActionBar">
             <intent-filter>
@@ -26,12 +26,12 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".activities.RecordActivity"
+            android:name=".recordActivity.RecordActivity"
             android:configChanges="orientation|keyboardHidden|screenSize"
             android:label="@string/title_activity_record"
             android:theme="@style/FullscreenNoActionbar" />
         <activity
-            android:name=".activities.SettingsActivity"
+            android:name=".menu.SettingsActivity"
             android:label="@string/title_activity_settings"></activity>
     </application>
 

@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
 
-    tools:context=".activities.RecordActivity">
+    tools:context=".recordActivity.RecordActivity">
 
     <android.support.constraint.Guideline
         android:id="@+id/guideline"
@@ -14,7 +14,7 @@
         android:orientation="vertical"
         app:layout_constraintGuide_end="66dp" />
 
-    <de.voicegym.voicegym.views.SpectrogramView
+    <de.voicegym.voicegym.recordActivity.views.SpectrogramView
         android:id="@+id/dummyView"
         android:layout_width="0dp"
         android:layout_height="match_parent"
