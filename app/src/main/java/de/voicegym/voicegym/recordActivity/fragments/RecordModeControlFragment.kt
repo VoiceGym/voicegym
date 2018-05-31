@@ -13,6 +13,7 @@ import de.voicegym.voicegym.R
 
 
 class RecordModeControlFragment : Fragment() {
+
     var recordActivity: RecordeModeControlListener? = null
 
     override fun onAttach(context: Context?) {

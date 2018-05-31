@@ -8,8 +8,12 @@ import android.support.v7.app.AppCompatActivity
 import android.util.Log
 import android.view.View
 import de.voicegym.voicegym.R
-import de.voicegym.voicegym.recordActivity.RecorderState.RECORDING
-import de.voicegym.voicegym.recordActivity.RecorderState.WAITING
+import de.voicegym.voicegym.recordActivity.RecordActivityState.PLAYBACK
+import de.voicegym.voicegym.recordActivity.RecordActivityState.RECORDING
+import de.voicegym.voicegym.recordActivity.RecordActivityState.WAITING
+import de.voicegym.voicegym.recordActivity.fragments.PlaybackModeControlFragment
+import de.voicegym.voicegym.recordActivity.fragments.PlaybackModeControlListener
+import de.voicegym.voicegym.recordActivity.fragments.RecordModeControlFragment
 import de.voicegym.voicegym.recordActivity.fragments.RecordeModeControlListener
 import de.voicegym.voicegym.recordActivity.fragments.SpectrogramFragment
 import de.voicegym.voicegym.util.RecordBufferListener
@@ -21,17 +25,36 @@ import de.voicegym.voicegym.util.math.FourierHelper
 import java.util.concurrent.ConcurrentLinkedQueue
 import kotlin.concurrent.thread
 
-class RecordActivity : AppCompatActivity(), RecordBufferListener, RecordeModeControlListener {
+class RecordActivity : AppCompatActivity(), RecordBufferListener, RecordeModeControlListener, PlaybackModeControlListener {
+    override fun playPause() {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
+
+    override fun rate() {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
+
+    override fun saveToSdCard() {
+        thread {
+            savePCMInputStreamOnSDCard(pcmStorage!!, pcmStorage!!.sampleRate, 128000)
+        }
+    }
+
+    fun restart() {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
+
     override fun toggleRecordMode() {
         when (recorderState) {
             WAITING   -> storePCMSamples()
-            RECORDING -> saveStoredPCMSamplesOnSDCard()
+            RECORDING -> doneRecordingSwitchToPlayback()
         }
     }
 
     override fun isRecording(): Boolean = when (recorderState) {
         WAITING   -> false
         RECORDING -> true
+        PLAYBACK  -> false
     }
 
 
@@ -47,11 +70,13 @@ class RecordActivity : AppCompatActivity(), RecordBufferListener, RecordeModeCon
 
 
     private var recorder: RecordHelper? = null
-    private var recorderState: RecorderState = WAITING
+    private var recorderState: RecordActivityState = WAITING
 
     val spectrogramBundle = Bundle()
 
     var spectrogramFragment: SpectrogramFragment? = null
+    val recorderControlFragment = RecordModeControlFragment()
+    val playbackControlFragment = PlaybackModeControlFragment()
 
     init {
         spectrogramBundle.putDoubleArray("frequencyArray", fourierHelper.frequencyArray())
@@ -65,10 +90,13 @@ class RecordActivity : AppCompatActivity(), RecordBufferListener, RecordeModeCon
         setContentView(R.layout.activity_record)
         window.decorView.setBackgroundColor(Color.BLACK)
 
+        // handle fragments
+        switchToRecordControlFragment()
         spectrogramFragment = supportFragmentManager.findFragmentById(R.id.spectrogramFragment) as SpectrogramFragment
         spectrogramFragment?.let {
             it.arguments = spectrogramBundle
         }
+        // start microphone listening
         recorder = RecordHelper(collectedSamples)
         recorder?.let {
             it.subscribeListener(this)
@@ -93,15 +121,13 @@ class RecordActivity : AppCompatActivity(), RecordBufferListener, RecordeModeCon
         recorder?.subscribeListener(pcmStorage!!)
     }
 
-    private fun saveStoredPCMSamplesOnSDCard() {
+    private fun doneRecordingSwitchToPlayback() {
         if (pcmStorage != null) {
-            recorderState = WAITING
+            recorderState = PLAYBACK
             Log.e("RecordActivity", "Back to waiting")
             pcmStorage!!.stopListening()
             recorder?.unSubscribeListener(pcmStorage!!)
-            thread {
-                savePCMInputStreamOnSDCard(pcmStorage!!, pcmStorage!!.sampleRate, 128000)
-            }
+            switchToPlaybackControlFragment()
         }
     }
 
@@ -123,11 +149,24 @@ class RecordActivity : AppCompatActivity(), RecordBufferListener, RecordeModeCon
     }
 
 
+    private fun switchToRecordControlFragment() = supportFragmentManager.beginTransaction().let {
+        it.replace(R.id.controlFragmentSpace, recorderControlFragment)
+        it.addToBackStack(null)
+        it.commit()
+    }
+
+    private fun switchToPlaybackControlFragment() = supportFragmentManager.beginTransaction().let {
+        it.replace(R.id.controlFragmentSpace, playbackControlFragment)
+        it.addToBackStack(null)
+        it.commit()
+    }
+
 }
 
-enum class RecorderState {
+enum class RecordActivityState {
     WAITING,
-    RECORDING
+    RECORDING,
+    PLAYBACK
 }
 
 
