@@ -60,8 +60,6 @@ class PCMStorage(val sampleRate: Int) : RecordBufferListener, InputStream() {
     fun stopListening() {
         if (!sealed) {
             sealed = true
-        } else {
-            throw RuntimeException("PCMStorage already sealed")
         }
     }
 

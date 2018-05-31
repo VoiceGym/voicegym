@@ -5,7 +5,6 @@ import android.graphics.Color
 import android.os.Bundle
 import android.os.Handler
 import android.support.v7.app.AppCompatActivity
-import android.util.Log
 import android.view.View
 import de.voicegym.voicegym.R
 import de.voicegym.voicegym.recordActivity.RecordActivityState.PLAYBACK
@@ -39,13 +38,22 @@ class RecordActivity : AppCompatActivity(), RecordBufferListener, RecordeModeCon
 
     override fun saveToSdCard() {
         thread {
-            pcmStorage!!.rewind()
-            savePCMInputStreamOnSDCard(dateString, pcmStorage!!, pcmStorage!!.sampleRate, 128000)
+            pcmStorage?.let {
+                it.rewind()
+                savePCMInputStreamOnSDCard(dateString, it, it.sampleRate, 128000)
+            }
         }
     }
 
     fun restart() {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+        // Clean up
+        pcmStorage?.let { recorder?.unSubscribeListener(it) }
+        pcmStorage = null
+        stopListeningAndFreeRessource()
+        // Start up
+        recorderState = WAITING
+        startListening()
+        switchToRecordControlFragment()
     }
 
     override fun toggleRecordMode() {
@@ -100,38 +108,60 @@ class RecordActivity : AppCompatActivity(), RecordBufferListener, RecordeModeCon
         spectrogramFragment?.let {
             it.arguments = spectrogramBundle
         }
+
+        startListening()
+    }
+
+
+    override fun onBackPressed() {
+        when (recorderState) {
+            WAITING   -> if (pcmStorage == null) finish()
+            RECORDING -> doneRecordingSwitchToPlayback()
+            PLAYBACK  -> restart()
+        }
+    }
+
+    override fun onDestroy() {
+        pcmStorage?.stopListening()
+        this.stopListeningAndFreeRessource()
+        super.onDestroy()
+    }
+
+    private fun startListening() {
         // start microphone listening
         recorder = RecordHelper(collectedSamples)
         recorder?.let {
             it.subscribeListener(this)
             it.start()
         }
-
-
     }
 
-
-    override fun onDestroy() {
-        recorder?.stopRecording()
-        super.onDestroy()
+    private fun stopListeningAndFreeRessource() {
+        recorder?.let {
+            it.unSubscribeListener(this)
+            it.stopRecording()
+        }
+        recorder = null
     }
+
 
     private var pcmStorage: PCMStorage? = null
 
     private fun storePCMSamples() {
         recorderState = RECORDING
-        Log.e("RecordActivity", "Switched to record")
         pcmStorage = PCMStorage(sampleRate)
         recorder?.subscribeListener(pcmStorage!!)
     }
 
+
     var dateString = ""
+
     private fun doneRecordingSwitchToPlayback() {
-        if (pcmStorage != null) {
+        pcmStorage?.let {
             recorderState = PLAYBACK
-            Log.e("RecordActivity", "Back to waiting")
-            pcmStorage!!.stopListening()
-            recorder?.unSubscribeListener(pcmStorage!!)
+            it.stopListening()
+            this.stopListeningAndFreeRessource()
+            recorder?.unSubscribeListener(it)
             dateString = SimpleDateFormat("yyyy-MM-dd'T'HH-mm-ss", Locale.ENGLISH).format(Calendar.getInstance().time)
             switchToPlaybackControlFragment()
         }
