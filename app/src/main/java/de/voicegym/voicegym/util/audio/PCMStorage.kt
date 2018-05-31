@@ -5,6 +5,7 @@ import java.io.InputStream
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.util.concurrent.ConcurrentLinkedQueue
+import java.util.concurrent.LinkedBlockingDeque
 
 fun Byte.toPositiveInt() = toInt() and 0xFF
 
@@ -29,7 +30,9 @@ class PCMStorage(val sampleRate: Int) : RecordBufferListener, InputStream() {
     private fun getNextBuffer(): Boolean {
         if (inputQueue.isNotEmpty()) {
             buffer = ByteBuffer.allocate(2 * inputQueue.peek().size).order(ByteOrder.LITTLE_ENDIAN)
-            buffer?.asShortBuffer()?.put(inputQueue.poll())
+            val array = inputQueue.poll()
+            usedDeque.add(array)
+            buffer?.asShortBuffer()?.put(array)
             return true
         } else {
             return false
@@ -37,6 +40,8 @@ class PCMStorage(val sampleRate: Int) : RecordBufferListener, InputStream() {
     }
 
     private val inputQueue = ConcurrentLinkedQueue<ShortArray>()
+
+    private val usedDeque = LinkedBlockingDeque<ShortArray>()
 
     private var sealed: Boolean = false
 
@@ -57,6 +62,12 @@ class PCMStorage(val sampleRate: Int) : RecordBufferListener, InputStream() {
             sealed = true
         } else {
             throw RuntimeException("PCMStorage already sealed")
+        }
+    }
+
+    fun rewind() {
+        if (sealed) {
+            while (usedDeque.isNotEmpty()) inputQueue.add(usedDeque.poll())
         }
     }
 }

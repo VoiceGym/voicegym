@@ -22,6 +22,9 @@ import de.voicegym.voicegym.util.audio.RecordHelper
 import de.voicegym.voicegym.util.audio.getDoubleArrayFromShortArray
 import de.voicegym.voicegym.util.audio.savePCMInputStreamOnSDCard
 import de.voicegym.voicegym.util.math.FourierHelper
+import java.text.SimpleDateFormat
+import java.util.Calendar
+import java.util.Locale
 import java.util.concurrent.ConcurrentLinkedQueue
 import kotlin.concurrent.thread
 
@@ -36,7 +39,8 @@ class RecordActivity : AppCompatActivity(), RecordBufferListener, RecordeModeCon
 
     override fun saveToSdCard() {
         thread {
-            savePCMInputStreamOnSDCard(pcmStorage!!, pcmStorage!!.sampleRate, 128000)
+            pcmStorage!!.rewind()
+            savePCMInputStreamOnSDCard(dateString, pcmStorage!!, pcmStorage!!.sampleRate, 128000)
         }
     }
 
@@ -121,12 +125,14 @@ class RecordActivity : AppCompatActivity(), RecordBufferListener, RecordeModeCon
         recorder?.subscribeListener(pcmStorage!!)
     }
 
+    var dateString = ""
     private fun doneRecordingSwitchToPlayback() {
         if (pcmStorage != null) {
             recorderState = PLAYBACK
             Log.e("RecordActivity", "Back to waiting")
             pcmStorage!!.stopListening()
             recorder?.unSubscribeListener(pcmStorage!!)
+            dateString = SimpleDateFormat("yyyy-MM-dd'T'HH-mm-ss", Locale.ENGLISH).format(Calendar.getInstance().time)
             switchToPlaybackControlFragment()
         }
     }

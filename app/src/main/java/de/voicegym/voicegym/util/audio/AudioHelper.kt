@@ -3,19 +3,16 @@ package de.voicegym.voicegym.util.audio
 import android.os.Environment
 import java.io.File
 import java.io.InputStream
-import java.text.SimpleDateFormat
-import java.util.Calendar
-import java.util.Locale
 
 fun getDezibelFromAmplitude(amplitude: Double): Double = 20 * Math.log10(amplitude)
 
 
-fun savePCMInputStreamOnSDCard(pcmStorage: InputStream, sampleRate: Int, bitRate: Int) {
+fun savePCMInputStreamOnSDCard(fileName: String, inputStream: InputStream, sampleRate: Int, bitRate: Int) {
     if (isExternalStorageWritable()) {
         val pcmEncoder = PCMEncoder(bitRate, sampleRate, 1)
-        pcmEncoder.outputPath = getOutFile("m4a").path
+        pcmEncoder.outputPath = getOutFile(fileName, "m4a").path
         pcmEncoder.prepare()
-        pcmEncoder.encode(pcmStorage, sampleRate)
+        pcmEncoder.encode(inputStream, sampleRate)
         pcmEncoder.stop()
     }
 }
@@ -26,9 +23,8 @@ fun savePCMInputStreamOnSDCard(pcmStorage: InputStream, sampleRate: Int, bitRate
  *
  * @return: created an empty File
  */
-private fun getOutFile(fileExtension: String): File {
-    val dateString = SimpleDateFormat("yyyy-MM-dd'T'HH-mm-ss", Locale.ENGLISH).format(Calendar.getInstance().time)
-    val outFile = File(getVoiceGymFolder(), "$dateString.$fileExtension")
+private fun getOutFile(fileString: String, fileExtension: String): File {
+    val outFile = File(getVoiceGymFolder(), "$fileString.$fileExtension")
     if (outFile.exists()) outFile.delete()
     outFile.createNewFile()
     if (!outFile.canWrite()) throw Error("Cannot write file")
