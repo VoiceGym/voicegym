@@ -28,12 +28,13 @@ import java.util.concurrent.ConcurrentLinkedQueue
 import kotlin.concurrent.thread
 
 class RecordActivity : AppCompatActivity(), RecordBufferListener, RecordeModeControlListener, PlaybackModeControlListener {
+
     override fun playPause() {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+
     }
 
     override fun rate() {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+
     }
 
     override fun saveToSdCard() {
@@ -197,6 +198,7 @@ class RecordActivity : AppCompatActivity(), RecordBufferListener, RecordeModeCon
         it.commit()
     }
 
+    fun getInstrumentFragment() = supportFragmentManager.findFragmentById(R.id.spectrogramFragment)
 }
 
 enum class RecordActivityState {
