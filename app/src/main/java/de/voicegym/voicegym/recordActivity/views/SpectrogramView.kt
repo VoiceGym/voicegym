@@ -22,7 +22,7 @@ class SpectrogramView : View {
     /**
      * needs to be smaller or equal the number of pixels available
      */
-    var xDataPoints: Int? = null
+    var xDataPoints: Int = 10
 
     /**
      *  The instrument is drawn below the top_margin
@@ -94,35 +94,41 @@ class SpectrogramView : View {
     fun moveBitmap(numberOfPixels: Int) {
         if (numberOfPixels > 0) {
             // forward
-            if (numberOfPixels > rightPixelStore.size) throw Error("Not enough pixels prepared to the right")
-            buffer?.let {
-                // save the pixels moved out of screen to the left
-                for (i in 0 until numberOfPixels) {
-                    val pixelLine = IntArray(getDrawAreaHeight().toInt())
-                    mBitmap?.getPixels(pixelLine, 0, 1, i, 0, 1, getDrawAreaHeight().toInt())
-                    leftPixelStore.push(pixelLine)
-                }
-                mBitmap?.getPixels(it, 0, getDrawAreaWidth().toInt(), numberOfPixels, 0, getDrawAreaWidth().toInt() - numberOfPixels, getDrawAreaHeight().toInt())
-                mBitmap?.setPixels(it, 0, getDrawAreaWidth().toInt(), 0, 0, getDrawAreaWidth().toInt() - numberOfPixels, getDrawAreaHeight().toInt())
-                // paint the prepared pixels to the right
-                for (i in 0 until numberOfPixels) {
-                    val pixelLine = rightPixelStore.poll()
-                    mBitmap?.setPixels(pixelLine, 0, 1, getDrawAreaWidth().toInt() - numberOfPixels + i, 0, 1, getDrawAreaHeight().toInt())
-                }
-            }
+            rotateBitmapToLeft(numberOfPixels)
+            paintRightStackOnBitmap(numberOfPixels)
+
         } else if (numberOfPixels < 0) {
             if ((-1) * numberOfPixels > leftPixelStore.size) throw Error("Not enough pixels prepared to the left")
             // backward
         } else {
             // do not move
         }
-
-
     }
 
+    private fun paintRightStackOnBitmap(numberOfPixels: Int) {
+        if (numberOfPixels > rightPixelStore.size) throw Error("Not enough pixels prepared to the right")
+        for (i in 0 until numberOfPixels) {
+            val pixelLine = rightPixelStore.poll()
+            // store the pixels while recording for playbackmode
+            if (context is RecordActivity && (context as RecordActivity).isRecording()) leftPixelStore.push(pixelLine)
+            mBitmap?.setPixels(pixelLine, 0, 1, getDrawAreaWidth().toInt() - numberOfPixels + i, 0, 1, getDrawAreaHeight().toInt())
+        }
+    }
+
+    private fun rotateBitmapToLeft(numberOfPixels: Int) {
+        buffer?.let {
+            // Rolling through pixels
+            //TODO if in playback rotate pixels on right and leftDeque
+            mBitmap?.getPixels(it, 0, getDrawAreaWidth().toInt(), numberOfPixels, 0, getDrawAreaWidth().toInt() - numberOfPixels, getDrawAreaHeight().toInt())
+            mBitmap?.setPixels(it, 0, getDrawAreaWidth().toInt(), 0, 0, getDrawAreaWidth().toInt() - numberOfPixels, getDrawAreaHeight().toInt())
+        }
+    }
+
+    fun pixelPerFFTBlock(): Int = (getDrawAreaWidth() / xDataPoints).toInt()
+
+
     fun insertColorLine(colorValues: IntArray) {
-        val deltaX: Float = getDrawAreaWidth() / xDataPoints as Int
-        val lx = deltaX * (xDataPoints as Int - 1)
+        val lx = pixelPerFFTBlock() * (xDataPoints as Int - 1)
         val lowerY = getDrawAreaHeight()
 
         val drawLine = Bitmap.createBitmap(1, getDrawAreaHeight().toInt(), Bitmap.Config.ARGB_8888)
@@ -134,8 +140,9 @@ class SpectrogramView : View {
         }
         val pixels = IntArray(getDrawAreaHeight().toInt())
         drawLine.getPixels(pixels, 0, 1, 0, 0, 1, getDrawAreaHeight().toInt())
-        for (i in 0 until deltaX.toInt()) rightPixelStore.push(pixels)
-        moveBitmap(deltaX.toInt())
+        for (i in 0 until pixelPerFFTBlock()) rightPixelStore.push(pixels)
+        moveBitmap(pixelPerFFTBlock())
+        currentDequePosition += (context as RecordActivity).collectedSamples
     }
 
     private fun drawFrequencyLine(canvas: Canvas?) {
@@ -210,11 +217,30 @@ class SpectrogramView : View {
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
         super.onSizeChanged(w, h, oldw, oldh)
 
+        clearBitmapAndBuffer()
+        leftPixelStore.clear()
+        rightPixelStore.clear()
+    }
+
+    fun clearBitmapAndBuffer() {
         mBitmap = Bitmap.createBitmap((width - left_margin - right_margin).toInt(), (height - top_margin - bottom_margin).toInt(), Bitmap.Config.ARGB_8888)
         mCanvas = Canvas(mBitmap)
         buffer = IntArray((getDrawAreaHeight() * getDrawAreaWidth()).toInt())
-        leftPixelStore.clear()
-        rightPixelStore.clear()
+    }
+
+    var currentDequePosition: Long = 0
+
+    fun rewindDequesSkippingImage() {
+        currentDequePosition = 0
+        while (leftPixelStore.isNotEmpty()) rightPixelStore.push(leftPixelStore.poll())
+    }
+
+    fun windForward(samples: Long) {
+        val blocks: Int = (samples / (context as RecordActivity).collectedSamples).toInt()
+        if (blocks > 0) {
+            val pixels = blocks * pixelPerFFTBlock()
+            if (rightPixelStore.size >= pixels) moveBitmap(pixels)
+        }
     }
 
 

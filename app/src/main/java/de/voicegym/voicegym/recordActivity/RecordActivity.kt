@@ -72,9 +72,10 @@ class RecordActivity : AppCompatActivity(), RecordBufferListener, RecordeModeCon
 
 
     // configuration
-    private val sampleRate = 44100
-    private val collectedSamples = 8192
-    private val binning = 2
+    val sampleRate = 44100
+    val collectedSamples = 8192
+    val binning = 2
+
 
     // start class fixed objects
     private val blockSize = collectedSamples / binning
@@ -165,6 +166,15 @@ class RecordActivity : AppCompatActivity(), RecordBufferListener, RecordeModeCon
             recorder?.unSubscribeListener(it)
             dateString = SimpleDateFormat("yyyy-MM-dd'T'HH-mm-ss", Locale.ENGLISH).format(Calendar.getInstance().time)
             switchToPlaybackControlFragment()
+
+            spectrogramFragment?.spectrogramView?.let {
+                it.rewindDequesSkippingImage()
+                it.clearBitmapAndBuffer()
+                val samples = pcmStorage?.size ?: 0
+                it.windForward(samples)
+                it.invalidate()
+            }
+
         }
     }
 
