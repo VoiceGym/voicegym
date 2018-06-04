@@ -235,8 +235,8 @@ class SpectrogramView : View {
         while (leftPixelStore.isNotEmpty()) rightPixelStore.push(leftPixelStore.poll())
     }
 
-    fun windForward(samples: Long) {
-        val blocks: Int = (samples / (context as RecordActivity).collectedSamples).toInt()
+    fun windForward(samples: Int) {
+        val blocks: Int = (samples / (context as RecordActivity).collectedSamples)
         if (blocks > 0) {
             val pixels = blocks * pixelPerFFTBlock()
             if (rightPixelStore.size >= pixels) moveBitmap(pixels)

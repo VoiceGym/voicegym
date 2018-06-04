@@ -16,6 +16,7 @@ import de.voicegym.voicegym.recordActivity.fragments.RecordModeControlFragment
 import de.voicegym.voicegym.recordActivity.fragments.RecordeModeControlListener
 import de.voicegym.voicegym.recordActivity.fragments.SpectrogramFragment
 import de.voicegym.voicegym.util.RecordBufferListener
+import de.voicegym.voicegym.util.audio.PCMPlayer
 import de.voicegym.voicegym.util.audio.PCMStorage
 import de.voicegym.voicegym.util.audio.RecordHelper
 import de.voicegym.voicegym.util.audio.getDoubleArrayFromShortArray
@@ -30,7 +31,12 @@ import kotlin.concurrent.thread
 class RecordActivity : AppCompatActivity(), RecordBufferListener, RecordeModeControlListener, PlaybackModeControlListener {
 
     override fun playPause() {
-
+        pcmPlayer?.let {
+            when (it.playing) {
+                true  -> it.stop()
+                false -> it.play()
+            }
+        }
     }
 
     override fun rate() {
@@ -50,6 +56,8 @@ class RecordActivity : AppCompatActivity(), RecordBufferListener, RecordeModeCon
         // Clean up
         pcmStorage?.let { recorder?.unSubscribeListener(it) }
         pcmStorage = null
+        pcmPlayer?.destroy()
+        pcmPlayer = null
         stopListeningAndFreeRessource()
         // Start up
         recorderState = WAITING
@@ -84,6 +92,7 @@ class RecordActivity : AppCompatActivity(), RecordBufferListener, RecordeModeCon
 
 
     private var recorder: RecordHelper? = null
+    private var pcmPlayer: PCMPlayer? = null
     private var recorderState: RecordActivityState = WAITING
 
     val spectrogramBundle = Bundle()
@@ -125,6 +134,7 @@ class RecordActivity : AppCompatActivity(), RecordBufferListener, RecordeModeCon
 
     override fun onDestroy() {
         pcmStorage?.stopListening()
+        pcmPlayer?.destroy()
         this.stopListeningAndFreeRessource()
         super.onDestroy()
     }
@@ -174,6 +184,8 @@ class RecordActivity : AppCompatActivity(), RecordBufferListener, RecordeModeCon
                 it.windForward(samples)
                 it.invalidate()
             }
+
+            pcmPlayer = PCMPlayer(it.sampleRate, it.asShortBuffer())
 
         }
     }
