@@ -1,15 +1,17 @@
 package de.voicegym.voicegym.util.audio
 
+import android.content.Context
 import android.media.AudioAttributes
 import android.media.AudioFormat
 import android.media.AudioManager
 import android.media.AudioTrack
 import android.os.Build
+import org.jetbrains.anko.runOnUiThread
 import java.nio.ShortBuffer
 import kotlin.concurrent.thread
 
 
-class PCMPlayer(val sampleRate: Int, private val buffer: ShortBuffer) {
+class PCMPlayer(val sampleRate: Int, private val buffer: ShortBuffer, val context: Context) {
 
     private var currentPosition: Int = 0
     var playing: Boolean = false
@@ -17,7 +19,7 @@ class PCMPlayer(val sampleRate: Int, private val buffer: ShortBuffer) {
     private val player: AudioTrack
     private var playerThread: Thread? = null
     private val playBuffer: ShortArray
-
+    private val subscribers = ArrayList<PCMPlayerListener>()
 
     init {
         val minBufSizeOrError = AudioTrack.getMinBufferSize(sampleRate, AudioFormat.CHANNEL_OUT_MONO, AudioFormat.ENCODING_PCM_16BIT)
@@ -75,6 +77,7 @@ class PCMPlayer(val sampleRate: Int, private val buffer: ShortBuffer) {
                         playing = false
                     }
                     currentPosition = buffer.position()
+                    informListeners(currentPosition)
                 }
             }
         }
@@ -101,4 +104,18 @@ class PCMPlayer(val sampleRate: Int, private val buffer: ShortBuffer) {
         stop()
         player.release()
     }
+
+    fun subscribeListener(subscriber: PCMPlayerListener) = subscribers.add(subscriber)
+
+    fun unSubscribeListener(subscriber: PCMPlayerListener) = subscribers.remove(subscriber)
+
+    private fun informListeners(position: Int) = subscribers.forEach { listener ->
+        context.runOnUiThread { listener.isAtPosition(position) }
+    }
+
+}
+
+
+interface PCMPlayerListener {
+    fun isAtPosition(sampleNumber: Int)
 }

@@ -16,6 +16,7 @@ import de.voicegym.voicegym.recordActivity.RecordActivity
 import de.voicegym.voicegym.recordActivity.fragments.SpectrogramFragment
 import org.jetbrains.anko.backgroundColor
 import java.util.concurrent.LinkedBlockingDeque
+import kotlin.math.roundToInt
 
 class SpectrogramView : View {
 
@@ -236,9 +237,9 @@ class SpectrogramView : View {
     }
 
     fun windForward(samples: Int) {
-        val blocks: Int = (samples / (context as RecordActivity).collectedSamples)
+        val blocks: Float = (samples.toFloat() / (context as RecordActivity).collectedSamples)
         if (blocks > 0) {
-            val pixels = blocks * pixelPerFFTBlock()
+            val pixels = (blocks * pixelPerFFTBlock()).roundToInt()
             if (rightPixelStore.size >= pixels) moveBitmap(pixels)
         }
     }

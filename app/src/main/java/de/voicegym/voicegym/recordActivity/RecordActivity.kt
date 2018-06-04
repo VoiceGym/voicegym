@@ -17,6 +17,7 @@ import de.voicegym.voicegym.recordActivity.fragments.RecordeModeControlListener
 import de.voicegym.voicegym.recordActivity.fragments.SpectrogramFragment
 import de.voicegym.voicegym.util.RecordBufferListener
 import de.voicegym.voicegym.util.audio.PCMPlayer
+import de.voicegym.voicegym.util.audio.PCMPlayerListener
 import de.voicegym.voicegym.util.audio.PCMStorage
 import de.voicegym.voicegym.util.audio.RecordHelper
 import de.voicegym.voicegym.util.audio.getDoubleArrayFromShortArray
@@ -28,7 +29,7 @@ import java.util.Locale
 import java.util.concurrent.ConcurrentLinkedQueue
 import kotlin.concurrent.thread
 
-class RecordActivity : AppCompatActivity(), RecordBufferListener, RecordeModeControlListener, PlaybackModeControlListener {
+class RecordActivity : AppCompatActivity(), RecordBufferListener, RecordeModeControlListener, PlaybackModeControlListener, PCMPlayerListener {
 
     override fun playPause() {
         pcmPlayer?.let {
@@ -56,6 +57,7 @@ class RecordActivity : AppCompatActivity(), RecordBufferListener, RecordeModeCon
         // Clean up
         pcmStorage?.let { recorder?.unSubscribeListener(it) }
         pcmStorage = null
+        pcmPlayer?.unSubscribeListener(this)
         pcmPlayer?.destroy()
         pcmPlayer = null
         stopListeningAndFreeRessource()
@@ -134,6 +136,7 @@ class RecordActivity : AppCompatActivity(), RecordBufferListener, RecordeModeCon
 
     override fun onDestroy() {
         pcmStorage?.stopListening()
+        pcmPlayer?.unSubscribeListener(this)
         pcmPlayer?.destroy()
         this.stopListeningAndFreeRessource()
         super.onDestroy()
@@ -157,7 +160,7 @@ class RecordActivity : AppCompatActivity(), RecordBufferListener, RecordeModeCon
     }
 
 
-    private var pcmStorage: PCMStorage? = null
+    var pcmStorage: PCMStorage? = null
 
     private fun storePCMSamples() {
         recorderState = RECORDING
@@ -180,16 +183,26 @@ class RecordActivity : AppCompatActivity(), RecordBufferListener, RecordeModeCon
             spectrogramFragment?.spectrogramView?.let {
                 it.rewindDequesSkippingImage()
                 it.clearBitmapAndBuffer()
-                val samples = pcmStorage?.size ?: 0
-                it.windForward(samples)
                 it.invalidate()
             }
 
-            pcmPlayer = PCMPlayer(it.sampleRate, it.asShortBuffer())
+            pcmPlayer = PCMPlayer(it.sampleRate, it.asShortBuffer(), this)
+            pcmPlayer?.subscribeListener(this)
 
         }
     }
 
+    private var lastPosition = 0
+
+    override fun isAtPosition(sampleNumber: Int) {
+        val samples = sampleNumber - lastPosition
+        lastPosition = sampleNumber
+        spectrogramFragment?.spectrogramView?.let {
+            it.windForward(samples)
+            it.invalidate()
+        }
+
+    }
 
     override fun canHandleBufferSize(bufferSize: Int): Boolean = (collectedSamples == bufferSize)
 
