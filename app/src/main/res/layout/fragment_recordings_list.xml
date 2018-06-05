@@ -6,8 +6,7 @@
     android:name="de.voicegym.voicegym.fragments.RecordingsFragment"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:layout_marginLeft="16dp"
-    android:layout_marginRight="16dp"
-    app:layoutManager="LinearLayoutManager"
+    app:layoutManager="android.support.v7.widget.LinearLayoutManager"
     tools:context=".menu.RecordingsFragment"
-    tools:listitem="@layout/fragment_recordings" />
+    tools:listitem="@layout/fragment_recordings"
+    />

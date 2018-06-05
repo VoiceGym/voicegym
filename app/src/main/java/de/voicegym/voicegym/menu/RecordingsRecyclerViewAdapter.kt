@@ -6,12 +6,13 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.View.OnClickListener
 import android.view.ViewGroup
-import android.widget.TextView
 import de.voicegym.voicegym.R
 import de.voicegym.voicegym.menu.RecordingsFragment.OnListFragmentInteractionListener
-import de.voicegym.voicegym.menu.dummy.RecordingsContent.RecordingItem
-import kotlinx.android.synthetic.main.fragment_recordings.view.content
-import kotlinx.android.synthetic.main.fragment_recordings.view.item_number
+import de.voicegym.voicegym.model.Recording
+import kotlinx.android.extensions.LayoutContainer
+import kotlinx.android.synthetic.main.fragment_recordings.createdView
+import kotlinx.android.synthetic.main.fragment_recordings.durationView
+import kotlinx.android.synthetic.main.fragment_recordings.nameView
 
 /**
  * [RecyclerView.Adapter] that can display a [DummyItem] and makes a call to the
@@ -19,18 +20,18 @@ import kotlinx.android.synthetic.main.fragment_recordings.view.item_number
  * TODO: Replace the implementation with code for your data type.
  */
 class RecordingsRecyclerViewAdapter(
-        private val mValues: List<RecordingItem>,
-        private val mListener: OnListFragmentInteractionListener?)
+        private val values: List<Recording>,
+        private val listener: OnListFragmentInteractionListener?)
     : RecyclerView.Adapter<RecordingsRecyclerViewAdapter.ViewHolder>() {
 
     private val mOnClickListener: OnClickListener
 
     init {
         mOnClickListener = OnClickListener { v ->
-            val item = v.tag as RecordingItem
+            val item = v.tag as Recording
             // Notify the active callbacks interface (the activity, if the fragment is attached to
             // one) that an item has been selected.
-            mListener?.onListFragmentInteraction(item)
+            listener?.onListFragmentInteraction(item)
         }
     }
 
@@ -41,24 +42,27 @@ class RecordingsRecyclerViewAdapter(
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-        val item = mValues[position]
-        holder.mIdView.text = item.id
-        holder.mContentView.text = item.content
+        val item = values[position]
+        holder.bindRecording(item)
 
-        with(holder.mView) {
+        with(holder.containerView) {
             tag = item
             setOnClickListener(mOnClickListener)
         }
     }
 
-    override fun getItemCount(): Int = mValues.size
+    override fun getItemCount(): Int = values.size
 
-    inner class ViewHolder(val mView: View) : RecyclerView.ViewHolder(mView) {
-        val mIdView: TextView = mView.item_number
-        val mContentView: TextView = mView.content
+    class ViewHolder(override val containerView: View) : RecyclerView.ViewHolder(containerView), LayoutContainer {
 
-        override fun toString(): String {
-            return super.toString() + " '" + mContentView.text + "'"
+        fun bindRecording(recording: Recording) {
+            durationView.text = "${recording.duration}s"
+            createdView.text = recording.fileName
+                    .split("/")
+                    .last()
+                    .replace("_"," ")
+                    .dropLast(4)
+//            nameView.text = recording.id.toString()
         }
     }
 }
