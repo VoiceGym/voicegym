@@ -1,6 +1,7 @@
 package de.voicegym.voicegym.menu
 
 
+import android.support.design.widget.Snackbar
 import android.support.v7.widget.RecyclerView
 import android.view.LayoutInflater
 import android.view.View
@@ -12,6 +13,7 @@ import de.voicegym.voicegym.model.Recording
 import kotlinx.android.extensions.LayoutContainer
 import kotlinx.android.synthetic.main.fragment_recordings.createdView
 import kotlinx.android.synthetic.main.fragment_recordings.durationView
+import kotlinx.android.synthetic.main.fragment_recordings.floatingActionButton2
 import kotlinx.android.synthetic.main.fragment_recordings.nameView
 
 /**
@@ -63,6 +65,9 @@ class RecordingsRecyclerViewAdapter(
                     .replace("_"," ")
                     .dropLast(4)
 //            nameView.text = recording.id.toString()
+            floatingActionButton2.setOnClickListener {
+                Snackbar.make(it, recording.fileName, Snackbar.LENGTH_SHORT ).show()
+            }
         }
     }
 }
