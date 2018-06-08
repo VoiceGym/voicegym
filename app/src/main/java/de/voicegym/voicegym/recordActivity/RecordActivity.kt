@@ -31,7 +31,11 @@ import java.util.Locale
 import java.util.concurrent.ConcurrentLinkedQueue
 import kotlin.concurrent.thread
 
-class RecordActivity : AppCompatActivity(), RecordBufferListener, RecordeModeControlListener, PlaybackModeControlListener, PCMPlayerListener {
+class RecordActivity : AppCompatActivity(),
+        RecordBufferListener,
+        RecordeModeControlListener,
+        PlaybackModeControlListener,
+        PCMPlayerListener {
 
     override fun playPause() {
         pcmPlayer?.let {
@@ -230,16 +234,21 @@ class RecordActivity : AppCompatActivity(), RecordBufferListener, RecordeModeCon
     }
 
 
-    private fun switchToRecordControlFragment() = supportFragmentManager.beginTransaction().let {
-        it.replace(R.id.controlFragmentSpace, recorderControlFragment)
-        it.addToBackStack(null)
-        it.commit()
+    private fun switchToRecordControlFragment() {
+        supportFragmentManager
+                .beginTransaction()
+                .replace(R.id.controlFragmentSpace, recorderControlFragment)
+                .addToBackStack(null)
+                .commit()
     }
 
-    private fun switchToPlaybackControlFragment() = supportFragmentManager.beginTransaction().let {
-        it.replace(R.id.controlFragmentSpace, playbackControlFragment)
-        it.addToBackStack(null)
-        it.commit()
+
+    private fun switchToPlaybackControlFragment() {
+        supportFragmentManager
+                .beginTransaction()
+                .replace(R.id.controlFragmentSpace, playbackControlFragment)
+                .addToBackStack(null)
+                .commit()
     }
 
     fun getInstrumentFragment() = supportFragmentManager.findFragmentById(R.id.spectrogramFragment)
