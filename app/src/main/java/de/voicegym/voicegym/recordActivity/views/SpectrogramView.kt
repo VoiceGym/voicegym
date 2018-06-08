@@ -18,6 +18,7 @@ import de.voicegym.voicegym.recordActivity.views.SpectrogramViewState.LIVE_DISPL
 import de.voicegym.voicegym.recordActivity.views.SpectrogramViewState.PLAYBACK
 import org.jetbrains.anko.backgroundColor
 import java.util.concurrent.LinkedBlockingDeque
+import kotlin.math.absoluteValue
 import kotlin.math.roundToInt
 
 class SpectrogramView : View {
@@ -116,8 +117,8 @@ class SpectrogramView : View {
             // Rolling through pixels
             val cutSpaceLeft = if (numberOfPixels >= 0) numberOfPixels else 0
             val cutSpaceRight = if (numberOfPixels < 0) -numberOfPixels else 0
-            mBitmap?.getPixels(it, 0, getDrawAreaWidth().toInt(), cutSpaceLeft, 0, getDrawAreaWidth().toInt() - numberOfPixels, getDrawAreaHeight().toInt())
-            mBitmap?.setPixels(it, 0, getDrawAreaWidth().toInt(), cutSpaceRight, 0, getDrawAreaWidth().toInt() - numberOfPixels, getDrawAreaHeight().toInt())
+            mBitmap?.getPixels(it, 0, getDrawAreaWidth().toInt(), cutSpaceLeft, 0, getDrawAreaWidth().toInt() - numberOfPixels.absoluteValue, getDrawAreaHeight().toInt())
+            mBitmap?.setPixels(it, 0, getDrawAreaWidth().toInt(), cutSpaceRight, 0, getDrawAreaWidth().toInt() - numberOfPixels.absoluteValue, getDrawAreaHeight().toInt())
         }
     }
 
@@ -129,7 +130,7 @@ class SpectrogramView : View {
         if (spectrogramViewState != PLAYBACK) {
             rightDeque.addLast(colorValues)
             left()
-        } else throw Error("Cannot insert colorlines to SpectrogramView not in recording mode")
+        } else throw Error("View already in Playback mode")
     }
 
     private fun drawFrequencyLine(canvas: Canvas?) {
