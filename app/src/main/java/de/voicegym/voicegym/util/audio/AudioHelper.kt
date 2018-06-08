@@ -50,7 +50,8 @@ fun getVoiceGymFolder(): File? {
     // Get the directory for the user's public pictures directory.
     val file = File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MUSIC), "VoiceGym")
     if (!file.exists()) {
-        if (!file.mkdirs()) throw Error("Error creating VoiceGym folder")
+        if (!file.mkdirs())
+            throw Error("Error creating VoiceGym folder")
     }
     return file
 }

@@ -15,13 +15,20 @@ import de.voicegym.voicegym.R
 import de.voicegym.voicegym.recordActivity.RecordActivity
 import de.voicegym.voicegym.util.SwitchToRecordingViewListener
 import de.voicegym.voicegym.menu.dummy.ExerciseContent
-import de.voicegym.voicegym.menu.dummy.RecordingsContent
+import de.voicegym.voicegym.model.Recording
 import kotlinx.android.synthetic.main.activity_navigation_drawer.drawer_layout
 import kotlinx.android.synthetic.main.activity_navigation_drawer.nav_view
 import kotlinx.android.synthetic.main.app_bar_navigation_drawer.toolbar
 import org.jetbrains.anko.contentView
 
-class NavigationDrawerActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListener, RecordingsFragment.OnListFragmentInteractionListener, InstrumentsFragment.OnFragmentInteractionListener, ExercisesFragment.OnListFragmentInteractionListener, ReportsFragment.OnFragmentInteractionListener, SwitchToRecordingViewListener {
+class NavigationDrawerActivity :
+        AppCompatActivity(),
+        NavigationView.OnNavigationItemSelectedListener,
+        RecordingsFragment.OnListFragmentInteractionListener,
+        InstrumentsFragment.OnFragmentInteractionListener,
+        ExercisesFragment.OnListFragmentInteractionListener,
+        ReportsFragment.OnFragmentInteractionListener,
+        SwitchToRecordingViewListener {
 
     override fun switchToRecordingView() {
         val intent = Intent(this, RecordActivity::class.java).apply { }
@@ -133,7 +140,7 @@ class NavigationDrawerActivity : AppCompatActivity(), NavigationView.OnNavigatio
         Log.d("foo", "bar")
     }
 
-    override fun onListFragmentInteraction(item: RecordingsContent.RecordingItem?) {
+    override fun onListFragmentInteraction(item: Recording) {
         Log.d("foo", "bar")
     }
 
