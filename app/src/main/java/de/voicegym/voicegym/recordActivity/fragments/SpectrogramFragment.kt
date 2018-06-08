@@ -14,7 +14,7 @@ import org.apache.commons.math3.analysis.interpolation.LinearInterpolator
 
 class SpectrogramFragment() : Fragment() {
 
-    val userSpectrogramSettings = UserSpectrogramSettings(10.0, 1000.0, 200)
+    var userSpectrogramSettings: UserSpectrogramSettings? = null
     var frequencyArray: DoubleArray? = null
     var deltaFrequency: Double = 0.0
 
@@ -24,6 +24,12 @@ class SpectrogramFragment() : Fragment() {
 
     var spectrogramView: SpectrogramView? = null
 
+    fun updateUserSettings(userSettings: UserSpectrogramSettings) {
+        userSpectrogramSettings = userSettings
+        spectrogramView?.xDataPoints = userSettings.numberDataPoints
+        spectrogramView?.samplesPerDataPoint = userSettings.samplesPerDatapoint
+        if (frequencyArray != null) onRangeChanged()
+    }
 
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
@@ -40,7 +46,7 @@ class SpectrogramFragment() : Fragment() {
 
         spectrogramView = view.findViewById<SpectrogramView>(R.id.spectrogramView)
         spectrogramView?.let {
-            it.xDataPoints = userSpectrogramSettings.numberDataPoints
+            it.xDataPoints = userSpectrogramSettings?.numberDataPoints ?: 10
             it.invalidate()
         }
         return view
@@ -66,9 +72,9 @@ class SpectrogramFragment() : Fragment() {
 
             colors = IntArray(spectrogramView!!.getDrawAreaHeight().toInt())
             colors?.let {
-                deltaFrequency = (userSpectrogramSettings.tillFrequency - userSpectrogramSettings.fromFrequency) / it.size
+                deltaFrequency = (userSpectrogramSettings!!.tillFrequency - userSpectrogramSettings!!.fromFrequency) / it.size
                 for (i in 0 until it.size) {
-                    val amplitudeVal = interpolatingFunction.value(userSpectrogramSettings.fromFrequency + i * deltaFrequency)
+                    val amplitudeVal = interpolatingFunction.value(userSpectrogramSettings!!.fromFrequency + i * deltaFrequency)
                     it[i] = HotGradientColorPicker.pickColor(getDezibelFromAmplitude(amplitudeVal) / normalizationConstant)
                 }
             }
@@ -80,19 +86,21 @@ class SpectrogramFragment() : Fragment() {
         return colors!!
     }
 
-    fun onRangeChanged() {
-        if (userSpectrogramSettings.fromFrequency > userSpectrogramSettings.tillFrequency) throw RuntimeException("fromFrequency must be smaller than tillFrequency")
-        if (frequencyArray!![0] > userSpectrogramSettings.fromFrequency) throw RuntimeException("you choose a frequency below available range")
-        if (frequencyArray!![frequencyArray!!.size - 1] < userSpectrogramSettings.tillFrequency) throw RuntimeException("you choose a frequency above available range")
+    private fun onRangeChanged() {
+        userSpectrogramSettings?.let {
+            if (it.fromFrequency > it.tillFrequency) throw RuntimeException("fromFrequency must be smaller than tillFrequency")
+            if (frequencyArray!![0] > it.fromFrequency) throw RuntimeException("you choose a frequency below available range")
+            if (frequencyArray!![frequencyArray!!.size - 1] < it.tillFrequency) throw RuntimeException("you choose a frequency above available range")
 
-        // find range for which values are displayed
-        var idx = 0
-        while (frequencyArray!![idx] < userSpectrogramSettings.fromFrequency) idx++
-        val fromIndexF = idx - 1 // just keep one data point outside of range
-        while (frequencyArray!![idx] < userSpectrogramSettings.tillFrequency) idx++
-        val tillIndexF = idx + 1 // just keep two data points outside of range
-        val frequencyRangeArray = frequencyArray!!.copyOfRange(fromIndexF, tillIndexF)
-        internalSpectrogramSettings = RawSpectrogramSettings(frequencyArray!!, fromIndexF, tillIndexF, frequencyRangeArray)
+            // find range for which values are displayed
+            var idx = 0
+            while (frequencyArray!![idx] < it.fromFrequency) idx++
+            val fromIndexF = idx - 1 // just keep one data point outside of range
+            while (frequencyArray!![idx] < it.tillFrequency) idx++
+            val tillIndexF = idx + 1 // just keep two data points outside of range
+            val frequencyRangeArray = frequencyArray!!.copyOfRange(fromIndexF, tillIndexF)
+            internalSpectrogramSettings = RawSpectrogramSettings(frequencyArray!!, fromIndexF, tillIndexF, frequencyRangeArray)
+        }
     }
 
 }

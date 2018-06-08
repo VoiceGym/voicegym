@@ -14,7 +14,8 @@ import android.view.MotionEvent.ACTION_UP
 import android.view.View
 import de.voicegym.voicegym.recordActivity.RecordActivity
 import de.voicegym.voicegym.recordActivity.fragments.SpectrogramFragment
-import de.voicegym.voicegym.recordActivity.views.SpectrogramViewState.RECORDING
+import de.voicegym.voicegym.recordActivity.views.SpectrogramViewState.LIVE_DISPLAY
+import de.voicegym.voicegym.recordActivity.views.SpectrogramViewState.PLAYBACK
 import org.jetbrains.anko.backgroundColor
 import java.util.concurrent.LinkedBlockingDeque
 import kotlin.math.roundToInt
@@ -77,7 +78,11 @@ class SpectrogramView : View {
      */
     var border_thickness = 3f
 
-    var spectrogramViewState = RECORDING
+    var spectrogramViewState = LIVE_DISPLAY
+
+    val leftDeque = LinkedBlockingDeque<IntArray>()
+    val rightDeque = LinkedBlockingDeque<IntArray>()
+    val currentDeque = LinkedBlockingDeque<IntArray>()
 
 
     private var mCanvas: Canvas? = null
@@ -105,10 +110,6 @@ class SpectrogramView : View {
     constructor(context: Context, attrs: AttributeSet?) : this(context, attrs, 0)
     constructor(context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0) : super(context, attrs, defStyleAttr)
 
-    val leftDeque = LinkedBlockingDeque<IntArray>()
-    val rightDeque = LinkedBlockingDeque<IntArray>()
-    val currentDeque = LinkedBlockingDeque<IntArray>()
-
 
     private fun rotateBitmap(numberOfPixels: Int) {
         buffer?.let {
@@ -122,10 +123,10 @@ class SpectrogramView : View {
 
 
     /**
-     * Inserts one datapoint represented by its colorvalues when the view is in RECORDING MODE
+     * Inserts one datapoint represented by its colorvalues when the view is in LIVE_DISPLAY MODE
      */
     fun insertNewDataPoint(colorValues: IntArray) {
-        if (spectrogramViewState == RECORDING) {
+        if (spectrogramViewState != PLAYBACK) {
             rightDeque.addLast(colorValues)
             left()
         } else throw Error("Cannot insert colorlines to SpectrogramView not in recording mode")
@@ -141,7 +142,7 @@ class SpectrogramView : View {
             val fragment = (context as RecordActivity).getInstrumentFragment()
             if (fragment is SpectrogramFragment) {
                 val deltaFrequency = (fragment as SpectrogramFragment).deltaFrequency
-                val frequency = (fragment as SpectrogramFragment).userSpectrogramSettings.fromFrequency + (bottom_margin + getDrawAreaHeight() - yPosLine) * deltaFrequency
+                val frequency = (fragment as SpectrogramFragment).userSpectrogramSettings!!.fromFrequency + (bottom_margin + getDrawAreaHeight() - yPosLine) * deltaFrequency
                 canvas?.drawText("${frequency.toInt()} Hz", left_margin + 5, yPosLine - 5, mPaint)
             } else {
                 throw Error("InstrumentFragment was not a SpectrogramFragment, please expand SpectrogramView")
@@ -179,7 +180,7 @@ class SpectrogramView : View {
 
 
     override fun onTouchEvent(event: MotionEvent?): Boolean {
-        if (spectrogramViewState == RECORDING) {
+        if (spectrogramViewState == LIVE_DISPLAY) {
             when (event?.action) {
                 ACTION_DOWN -> {
                     drawLine = !drawLine
@@ -217,6 +218,12 @@ class SpectrogramView : View {
         buffer = IntArray((getDrawAreaHeight() * getDrawAreaWidth()).toInt())
     }
 
+    fun clearForRestart() {
+        currentDequePosition = 0
+        leftDeque.clear()
+        currentDeque.clear()
+        rightDeque.clear()
+    }
 
     fun totalSamples() = currentDeque.size + leftDeque.size + rightDeque.size
     var currentDequePosition: Int = 0
@@ -227,12 +234,28 @@ class SpectrogramView : View {
         while (leftDeque.isNotEmpty()) rightDeque.push(leftDeque.poll())
     }
 
+    fun seekTo(sampleNumber: Int) {
+        val position = sampleNumber / samplesPerDataPoint
+        windToPosition(position)
+    }
+
+    private fun windToPosition(position: Int) {
+        if (position < 0) throw IllegalArgumentException("SpectrogramView.kt: sampleNumber has to be positive or zero")
+
+        if (position < currentDequePosition) {
+            while (currentDequePosition > position) right()
+        } else if (position > currentDequePosition) {
+            if (position > totalSamples()) {
+                throw IllegalArgumentException("SpectrogramView.kt: sampleNumber must be smaller than total collected samples")
+            }
+            while (currentDequePosition < position) left()
+        }
+    }
+
     private fun left() {
         rotateBitmap((getDrawAreaWidth() / xDataPoints).roundToInt())
         if (rightDeque.size > 0) {
             val newDataPoint = rightDeque.poll()
-            currentDeque.push(newDataPoint)
-            if (currentDeque.size > xDataPoints) leftDeque.push(currentDeque.removeLast())
             val deltaX: Float = getDrawAreaWidth() / xDataPoints as Int
             val lx = deltaX * (xDataPoints as Int - 1)
             val lowerY = getDrawAreaHeight()
@@ -242,12 +265,18 @@ class SpectrogramView : View {
                 mCanvas?.drawLine(lx, lowerY - i, lx + deltaX, lowerY - i, mPaint)
             }
 
+            if (spectrogramViewState != LIVE_DISPLAY) {
+                currentDeque.push(newDataPoint)
+                if (currentDeque.size > xDataPoints) leftDeque.push(currentDeque.removeLast())
+                currentDequePosition += 1
+            }
+
         } else throw Error("Stack has reached the end to the right")
-        currentDequePosition += 1
         this.invalidate()
     }
 
     private fun right() {
+        if (spectrogramViewState == LIVE_DISPLAY) throw Error("Should not be used during LIVE_DISPLAY")
         if (currentDeque.size + leftDeque.size > 0) {
             val newDataPoint = if (leftDeque.size > 0) leftDeque.poll() else null
             rightDeque.push(currentDeque.poll())
@@ -268,26 +297,11 @@ class SpectrogramView : View {
         this.invalidate()
     }
 
-    fun seekTo(sampleNumber: Int) {
-        val position = sampleNumber / samplesPerDataPoint
-        windToPosition(position)
-    }
-
-    private fun windToPosition(position: Int) {
-        if (position < 0) throw IllegalArgumentException("SpectrogramView.kt: sampleNumber has to be positive or zero")
-
-        if (position < currentDequePosition) {
-            while (currentDequePosition > position) right()
-        } else if (position > currentDequePosition) {
-            if (position > totalSamples()) throw IllegalArgumentException("SpectrogramView.kt: sampleNumber must be smaller than total collected samples")
-            while (currentDequePosition < position) left()
-        }
-    }
-
 
 }
 
 enum class SpectrogramViewState {
     PLAYBACK,
-    RECORDING
+    LIVE_DISPLAY,
+    KEEP_SAMPLES
 }

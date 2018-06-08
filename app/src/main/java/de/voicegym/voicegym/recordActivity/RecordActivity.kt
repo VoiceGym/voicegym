@@ -15,6 +15,7 @@ import de.voicegym.voicegym.recordActivity.fragments.PlaybackModeControlListener
 import de.voicegym.voicegym.recordActivity.fragments.RecordModeControlFragment
 import de.voicegym.voicegym.recordActivity.fragments.RecordeModeControlListener
 import de.voicegym.voicegym.recordActivity.fragments.SpectrogramFragment
+import de.voicegym.voicegym.recordActivity.fragments.UserSpectrogramSettings
 import de.voicegym.voicegym.recordActivity.views.SpectrogramViewState
 import de.voicegym.voicegym.util.RecordBufferListener
 import de.voicegym.voicegym.util.audio.PCMPlayer
@@ -58,7 +59,7 @@ class RecordActivity : AppCompatActivity(), RecordBufferListener, RecordeModeCon
         // Clean up
         spectrogramFragment?.spectrogramView?.let {
             it.clearBitmapAndBuffer()
-            it.spectrogramViewState = SpectrogramViewState.RECORDING
+            it.spectrogramViewState = SpectrogramViewState.LIVE_DISPLAY
             it.invalidate()
         }
         pcmStorage?.let { recorder?.unSubscribeListener(it) }
@@ -89,14 +90,14 @@ class RecordActivity : AppCompatActivity(), RecordBufferListener, RecordeModeCon
 
     // configuration
     val sampleRate = 44100
-    val collectedSamples = 8192
+    val samplesPerDatapoint = 8192
     val binning = 2
 
 
     // start class fixed objects
-    private val blockSize = collectedSamples / binning
+    private val blockSize = samplesPerDatapoint / binning
     private val inputQueue = ConcurrentLinkedQueue<ShortArray>()
-    private val fourierHelper = FourierHelper(blockSize, binning, collectedSamples, sampleRate)
+    private val fourierHelper = FourierHelper(blockSize, binning, samplesPerDatapoint, sampleRate)
 
 
     private var recorder: RecordHelper? = null
@@ -127,7 +128,6 @@ class RecordActivity : AppCompatActivity(), RecordBufferListener, RecordeModeCon
         spectrogramFragment?.let {
             it.arguments = spectrogramBundle
         }
-
         startListening()
     }
 
@@ -150,11 +150,13 @@ class RecordActivity : AppCompatActivity(), RecordBufferListener, RecordeModeCon
 
     private fun startListening() {
         // start microphone listening
-        recorder = RecordHelper(collectedSamples)
+        recorder = RecordHelper(samplesPerDatapoint)
         recorder?.let {
             it.subscribeListener(this)
             it.start()
         }
+        spectrogramFragment?.updateUserSettings(UserSpectrogramSettings(10.0, 1000.0, 100, samplesPerDatapoint))
+
     }
 
     private fun stopListeningAndFreeRessource() {
@@ -172,6 +174,7 @@ class RecordActivity : AppCompatActivity(), RecordBufferListener, RecordeModeCon
         recorderState = RECORDING
         pcmStorage = PCMStorage(sampleRate)
         recorder?.subscribeListener(pcmStorage!!)
+        spectrogramFragment?.spectrogramView?.spectrogramViewState = SpectrogramViewState.KEEP_SAMPLES
     }
 
 
@@ -210,7 +213,7 @@ class RecordActivity : AppCompatActivity(), RecordBufferListener, RecordeModeCon
 
     }
 
-    override fun canHandleBufferSize(bufferSize: Int): Boolean = (collectedSamples == bufferSize)
+    override fun canHandleBufferSize(bufferSize: Int): Boolean = (samplesPerDatapoint == bufferSize)
 
     override fun onBufferReady(data: ShortArray) {
         inputQueue.add(data)
