@@ -14,6 +14,7 @@ import android.view.MotionEvent.ACTION_UP
 import android.view.View
 import de.voicegym.voicegym.recordActivity.RecordActivity
 import de.voicegym.voicegym.recordActivity.fragments.SpectrogramFragment
+import de.voicegym.voicegym.recordActivity.views.SpectrogramViewState.RECORDING
 import org.jetbrains.anko.backgroundColor
 import java.util.concurrent.LinkedBlockingDeque
 import kotlin.math.roundToInt
@@ -21,9 +22,21 @@ import kotlin.math.roundToInt
 class SpectrogramView : View {
 
     /**
+     * The number of datapoints (blocks) to be displayed,
      * needs to be smaller or equal the number of pixels available
      */
     var xDataPoints: Int = 10
+
+    /**
+     * The number of PCM Samples per datapoint (block)
+     */
+    var samplesPerDataPoint: Int = 4096
+
+    /**
+     * the number of pixels per datapoint aka block
+     */
+    fun pixelPerFFTBlock(): Int = (getDrawAreaWidth() / xDataPoints).toInt()
+
 
     /**
      *  The instrument is drawn below the top_margin
@@ -64,6 +77,9 @@ class SpectrogramView : View {
      */
     var border_thickness = 3f
 
+    var spectrogramViewState = RECORDING
+
+
     private var mCanvas: Canvas? = null
     private var mBitmap: Bitmap? = null
     private var mPath = Path()
@@ -89,61 +105,30 @@ class SpectrogramView : View {
     constructor(context: Context, attrs: AttributeSet?) : this(context, attrs, 0)
     constructor(context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0) : super(context, attrs, defStyleAttr)
 
-    val leftPixelStore = LinkedBlockingDeque<IntArray>()
-    val rightPixelStore = LinkedBlockingDeque<IntArray>()
+    val leftDeque = LinkedBlockingDeque<IntArray>()
+    val rightDeque = LinkedBlockingDeque<IntArray>()
+    val currentDeque = LinkedBlockingDeque<IntArray>()
 
-    fun moveBitmap(numberOfPixels: Int) {
-        if (numberOfPixels > 0) {
-            // forward
-            rotateBitmapToLeft(numberOfPixels)
-            paintRightStackOnBitmap(numberOfPixels)
 
-        } else if (numberOfPixels < 0) {
-            if ((-1) * numberOfPixels > leftPixelStore.size) throw Error("Not enough pixels prepared to the left")
-            // backward
-        } else {
-            // do not move
-        }
-    }
-
-    private fun paintRightStackOnBitmap(numberOfPixels: Int) {
-        if (numberOfPixels > rightPixelStore.size) throw Error("Not enough pixels prepared to the right")
-        for (i in 0 until numberOfPixels) {
-            val pixelLine = rightPixelStore.poll()
-            // store the pixels while recording for playbackmode
-            if (context is RecordActivity && (context as RecordActivity).isRecording()) leftPixelStore.push(pixelLine)
-            mBitmap?.setPixels(pixelLine, 0, 1, getDrawAreaWidth().toInt() - numberOfPixels + i, 0, 1, getDrawAreaHeight().toInt())
-        }
-    }
-
-    private fun rotateBitmapToLeft(numberOfPixels: Int) {
+    private fun rotateBitmap(numberOfPixels: Int) {
         buffer?.let {
             // Rolling through pixels
-            //TODO if in playback rotate pixels on right and leftDeque
-            mBitmap?.getPixels(it, 0, getDrawAreaWidth().toInt(), numberOfPixels, 0, getDrawAreaWidth().toInt() - numberOfPixels, getDrawAreaHeight().toInt())
-            mBitmap?.setPixels(it, 0, getDrawAreaWidth().toInt(), 0, 0, getDrawAreaWidth().toInt() - numberOfPixels, getDrawAreaHeight().toInt())
+            val cutSpaceLeft = if (numberOfPixels >= 0) numberOfPixels else 0
+            val cutSpaceRight = if (numberOfPixels < 0) -numberOfPixels else 0
+            mBitmap?.getPixels(it, 0, getDrawAreaWidth().toInt(), cutSpaceLeft, 0, getDrawAreaWidth().toInt() - numberOfPixels, getDrawAreaHeight().toInt())
+            mBitmap?.setPixels(it, 0, getDrawAreaWidth().toInt(), cutSpaceRight, 0, getDrawAreaWidth().toInt() - numberOfPixels, getDrawAreaHeight().toInt())
         }
     }
 
-    fun pixelPerFFTBlock(): Int = (getDrawAreaWidth() / xDataPoints).toInt()
 
-
-    fun insertColorLine(colorValues: IntArray) {
-        val lx = pixelPerFFTBlock() * (xDataPoints as Int - 1)
-        val lowerY = getDrawAreaHeight()
-
-        val drawLine = Bitmap.createBitmap(1, getDrawAreaHeight().toInt(), Bitmap.Config.ARGB_8888)
-        val canvas = Canvas(drawLine)
-
-        colorValues.forEachIndexed { i, color ->
-            mPaint.color = color
-            canvas.drawLine(0.0f, lowerY - i, 1.0f, lowerY - i, mPaint)
-        }
-        val pixels = IntArray(getDrawAreaHeight().toInt())
-        drawLine.getPixels(pixels, 0, 1, 0, 0, 1, getDrawAreaHeight().toInt())
-        for (i in 0 until pixelPerFFTBlock()) rightPixelStore.push(pixels)
-        moveBitmap(pixelPerFFTBlock())
-        currentDequePosition += (context as RecordActivity).collectedSamples
+    /**
+     * Inserts one datapoint represented by its colorvalues when the view is in RECORDING MODE
+     */
+    fun insertNewDataPoint(colorValues: IntArray) {
+        if (spectrogramViewState == RECORDING) {
+            rightDeque.addLast(colorValues)
+            left()
+        } else throw Error("Cannot insert colorlines to SpectrogramView not in recording mode")
     }
 
     private fun drawFrequencyLine(canvas: Canvas?) {
@@ -194,23 +179,24 @@ class SpectrogramView : View {
 
 
     override fun onTouchEvent(event: MotionEvent?): Boolean {
-        when (event?.action) {
-            ACTION_DOWN -> {
-                drawLine = !drawLine
-                yPosLine = event.y
-                return super.onTouchEvent(event)
-            }
+        if (spectrogramViewState == RECORDING) {
+            when (event?.action) {
+                ACTION_DOWN -> {
+                    drawLine = !drawLine
+                    yPosLine = event.y
+                    return true
+                }
 
-            ACTION_MOVE -> {
-                yPosLine = event.y
-                return super.onTouchEvent(event)
-            }
+                ACTION_MOVE -> {
+                    yPosLine = event.y
+                    return true
+                }
 
-            ACTION_UP   -> {
-                yPosLine = event.y
-                return super.onTouchEvent(event)
+                ACTION_UP   -> {
+                    yPosLine = event.y
+                    return true
+                }
             }
-
         }
         return super.onTouchEvent(event)
     }
@@ -219,8 +205,10 @@ class SpectrogramView : View {
         super.onSizeChanged(w, h, oldw, oldh)
 
         clearBitmapAndBuffer()
-        leftPixelStore.clear()
-        rightPixelStore.clear()
+        //TODO recalulate the content in the deques
+        leftDeque.clear()
+        rightDeque.clear()
+        currentDeque.clear()
     }
 
     fun clearBitmapAndBuffer() {
@@ -229,20 +217,77 @@ class SpectrogramView : View {
         buffer = IntArray((getDrawAreaHeight() * getDrawAreaWidth()).toInt())
     }
 
-    var currentDequePosition: Long = 0
 
-    fun rewindDequesSkippingImage() {
+    fun totalSamples() = currentDeque.size + leftDeque.size + rightDeque.size
+    var currentDequePosition: Int = 0
+
+    fun rewindDeques() {
         currentDequePosition = 0
-        while (leftPixelStore.isNotEmpty()) rightPixelStore.push(leftPixelStore.poll())
+        while (currentDeque.isNotEmpty()) rightDeque.push(currentDeque.poll())
+        while (leftDeque.isNotEmpty()) rightDeque.push(leftDeque.poll())
     }
 
-    fun windForward(samples: Int) {
-        val blocks: Float = (samples.toFloat() / (context as RecordActivity).collectedSamples)
-        if (blocks > 0) {
-            val pixels = (blocks * pixelPerFFTBlock()).roundToInt()
-            if (rightPixelStore.size >= pixels) moveBitmap(pixels)
+    private fun left() {
+        rotateBitmap((getDrawAreaWidth() / xDataPoints).roundToInt())
+        if (rightDeque.size > 0) {
+            val newDataPoint = rightDeque.poll()
+            currentDeque.push(newDataPoint)
+            if (currentDeque.size > xDataPoints) leftDeque.push(currentDeque.removeLast())
+            val deltaX: Float = getDrawAreaWidth() / xDataPoints as Int
+            val lx = deltaX * (xDataPoints as Int - 1)
+            val lowerY = getDrawAreaHeight()
+
+            newDataPoint.forEachIndexed { i, colorValue ->
+                mPaint.color = colorValue
+                mCanvas?.drawLine(lx, lowerY - i, lx + deltaX, lowerY - i, mPaint)
+            }
+
+        } else throw Error("Stack has reached the end to the right")
+        currentDequePosition += 1
+        this.invalidate()
+    }
+
+    private fun right() {
+        if (currentDeque.size + leftDeque.size > 0) {
+            val newDataPoint = if (leftDeque.size > 0) leftDeque.poll() else null
+            rightDeque.push(currentDeque.poll())
+            rotateBitmap(-(getDrawAreaWidth() / xDataPoints).roundToInt())
+            newDataPoint?.let {
+                currentDeque.addLast(it)
+                val deltaX: Float = getDrawAreaWidth() / xDataPoints as Int
+                val lowerY = getDrawAreaHeight()
+
+                newDataPoint.forEachIndexed { i, colorValue ->
+                    mPaint.color = colorValue
+                    mCanvas?.drawLine(0f, lowerY - i, deltaX, lowerY - i, mPaint)
+                }
+            }
+
+        } else throw Error("Stack has reached its end to the left")
+        currentDequePosition -= 1
+        this.invalidate()
+    }
+
+    fun seekTo(sampleNumber: Int) {
+        val position = sampleNumber / samplesPerDataPoint
+        windToPosition(position)
+    }
+
+    private fun windToPosition(position: Int) {
+        if (position < 0) throw IllegalArgumentException("SpectrogramView.kt: sampleNumber has to be positive or zero")
+
+        if (position < currentDequePosition) {
+            while (currentDequePosition > position) right()
+        } else if (position > currentDequePosition) {
+            if (position > totalSamples()) throw IllegalArgumentException("SpectrogramView.kt: sampleNumber must be smaller than total collected samples")
+            while (currentDequePosition < position) left()
         }
     }
 
 
+}
+
+enum class SpectrogramViewState {
+    PLAYBACK,
+    RECORDING
 }

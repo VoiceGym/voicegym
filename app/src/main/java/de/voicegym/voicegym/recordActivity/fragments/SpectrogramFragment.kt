@@ -49,7 +49,7 @@ class SpectrogramFragment() : Fragment() {
     fun insertNewAmplitudes(spectrum: DoubleArray) {
         spectrogramView?.let {
             val colors = calculateColorArrayForSpectrum(spectrum, normalizationConstant = 55.0)
-            it.insertColorLine(colors)
+            it.insertNewDataPoint(colors)
             it.invalidate()
         }
         this.view?.invalidate()

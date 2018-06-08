@@ -15,6 +15,7 @@ import de.voicegym.voicegym.recordActivity.fragments.PlaybackModeControlListener
 import de.voicegym.voicegym.recordActivity.fragments.RecordModeControlFragment
 import de.voicegym.voicegym.recordActivity.fragments.RecordeModeControlListener
 import de.voicegym.voicegym.recordActivity.fragments.SpectrogramFragment
+import de.voicegym.voicegym.recordActivity.views.SpectrogramViewState
 import de.voicegym.voicegym.util.RecordBufferListener
 import de.voicegym.voicegym.util.audio.PCMPlayer
 import de.voicegym.voicegym.util.audio.PCMPlayerListener
@@ -55,6 +56,11 @@ class RecordActivity : AppCompatActivity(), RecordBufferListener, RecordeModeCon
 
     fun restart() {
         // Clean up
+        spectrogramFragment?.spectrogramView?.let {
+            it.clearBitmapAndBuffer()
+            it.spectrogramViewState = SpectrogramViewState.RECORDING
+            it.invalidate()
+        }
         pcmStorage?.let { recorder?.unSubscribeListener(it) }
         pcmStorage = null
         pcmPlayer?.unSubscribeListener(this)
@@ -181,8 +187,9 @@ class RecordActivity : AppCompatActivity(), RecordBufferListener, RecordeModeCon
             switchToPlaybackControlFragment()
 
             spectrogramFragment?.spectrogramView?.let {
-                it.rewindDequesSkippingImage()
+                it.rewindDeques()
                 it.clearBitmapAndBuffer()
+                it.spectrogramViewState = SpectrogramViewState.PLAYBACK
                 it.invalidate()
             }
 
@@ -195,10 +202,9 @@ class RecordActivity : AppCompatActivity(), RecordBufferListener, RecordeModeCon
     private var lastPosition = 0
 
     override fun isAtPosition(sampleNumber: Int) {
-        val samples = sampleNumber - lastPosition
         lastPosition = sampleNumber
         spectrogramFragment?.spectrogramView?.let {
-            it.windForward(samples)
+            it.seekTo(sampleNumber)
             it.invalidate()
         }
 
