@@ -5,6 +5,7 @@ import android.graphics.Color
 import android.os.Bundle
 import android.os.Handler
 import android.support.v7.app.AppCompatActivity
+import android.util.Log
 import android.view.View
 import de.voicegym.voicegym.R
 import de.voicegym.voicegym.recordActivity.RecordActivityState.PLAYBACK
@@ -36,6 +37,45 @@ class RecordActivity : AppCompatActivity(),
         RecordeModeControlListener,
         PlaybackModeControlListener,
         PCMPlayerListener {
+
+    // control variable to remember whether the player was active before touching the screen
+    private var playbackState = Pair(false, false);
+
+    override fun playbackTouched() {
+        playbackState = Pair(true, pcmPlayer?.playing ?: false)
+
+        if (playbackState.second) playPause()
+
+        if (spectrogramFragment != null && spectrogramFragment!!.spectrogramView != null && spectrogramFragment!!.userSpectrogramSettings != null) {
+            startingPosition = spectrogramFragment!!.spectrogramView!!.currentDequePosition * spectrogramFragment?.userSpectrogramSettings!!.samplesPerDatapoint
+        } else Error("Problem setting up the activity, missing spectrogramView, Fragment or settings")
+    }
+
+    private var startingPosition: Int = 0;
+    private var targetSamplePosition: Int = 0
+
+    override fun playbackSeekTo(relativeMovement: Float) {
+        Log.i("RecordActivity", "relativeMovement ${relativeMovement}")
+
+        spectrogramFragment?.let {
+            val relativeSamples = (relativeMovement * it.userSpectrogramSettings!!.numberDataPoints * it.userSpectrogramSettings!!.samplesPerDatapoint).toInt()
+            targetSamplePosition = startingPosition - relativeSamples
+            it.spectrogramView?.seekTo(targetSamplePosition)
+            it.spectrogramView?.invalidate()
+        }
+    }
+
+    override fun playbackReleased() {
+        Log.i("RecordActivity", "playback released aiming at ${targetSamplePosition}")
+        spectrogramFragment?.spectrogramView?.let {
+            it.seekTo(targetSamplePosition)
+            it.invalidate()
+        }
+        pcmPlayer?.seekTo(targetSamplePosition)
+
+        if (playbackState.second) playPause()
+        playbackState = Pair(false, false)
+    }
 
     override fun playPause() {
         pcmPlayer?.let {

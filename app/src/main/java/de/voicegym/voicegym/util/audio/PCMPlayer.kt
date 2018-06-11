@@ -106,6 +106,12 @@ class PCMPlayer(val sampleRate: Int, private val buffer: ShortBuffer, val contex
         if (wasPlaying) play()
     }
 
+    fun seekToRelative(samples: Int): Int {
+        //TODO check if possible seek to maximum possible
+        seekTo(currentPosition + samples)
+        return currentPosition
+    }
+
     fun destroy() {
         stop()
         player.release()

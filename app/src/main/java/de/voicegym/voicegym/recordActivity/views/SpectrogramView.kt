@@ -13,7 +13,9 @@ import android.view.MotionEvent.ACTION_MOVE
 import android.view.MotionEvent.ACTION_UP
 import android.view.View
 import de.voicegym.voicegym.recordActivity.RecordActivity
+import de.voicegym.voicegym.recordActivity.fragments.PlaybackModeControlListener
 import de.voicegym.voicegym.recordActivity.fragments.SpectrogramFragment
+import de.voicegym.voicegym.recordActivity.views.SpectrogramViewState.KEEP_SAMPLES
 import de.voicegym.voicegym.recordActivity.views.SpectrogramViewState.LIVE_DISPLAY
 import de.voicegym.voicegym.recordActivity.views.SpectrogramViewState.PLAYBACK
 import org.jetbrains.anko.backgroundColor
@@ -179,10 +181,10 @@ class SpectrogramView : View {
         if (drawLine) drawFrequencyLine(canvas)
     }
 
-
+    var touchedAtXpos: Float = 0f
     override fun onTouchEvent(event: MotionEvent?): Boolean {
-        if (spectrogramViewState == LIVE_DISPLAY) {
-            when (event?.action) {
+        when (spectrogramViewState) {
+            LIVE_DISPLAY, KEEP_SAMPLES -> when (event?.action) {
                 ACTION_DOWN -> {
                     drawLine = !drawLine
                     yPosLine = event.y
@@ -197,6 +199,28 @@ class SpectrogramView : View {
                 ACTION_UP   -> {
                     yPosLine = event.y
                     return true
+                }
+            }
+
+            PLAYBACK                   -> {
+                if (context !is PlaybackModeControlListener) throw Error("SpectrogramView can only be used within Activities that implement PlaybackModeControlListener")
+                val controller = (context as PlaybackModeControlListener)
+                when (event?.action) {
+                    ACTION_DOWN -> {
+                        controller.playbackTouched()
+                        touchedAtXpos = event.x
+                        return true
+                    }
+
+                    ACTION_MOVE -> {
+                        controller.playbackSeekTo((event.x - touchedAtXpos) / getDrawAreaWidth())
+
+                    }
+
+                    ACTION_UP   -> {
+                        controller.playbackReleased()
+                    }
+
                 }
             }
         }
@@ -234,6 +258,7 @@ class SpectrogramView : View {
         while (currentDeque.isNotEmpty()) rightDeque.push(currentDeque.poll())
         while (leftDeque.isNotEmpty()) rightDeque.push(leftDeque.poll())
     }
+
 
     fun seekTo(sampleNumber: Int) {
         val position = sampleNumber / samplesPerDataPoint

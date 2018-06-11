@@ -43,4 +43,8 @@ interface PlaybackModeControlListener {
     fun rate()
     fun playPause()
     fun saveToSdCard()
+
+    fun playbackTouched()
+    fun playbackReleased()
+    fun playbackSeekTo(relativeMovement: Float)
 }
