@@ -1,7 +1,6 @@
 package de.voicegym.voicegym.recordActivity
 
 import android.content.pm.ActivityInfo
-import android.content.res.ColorStateList
 import android.graphics.Color
 import android.os.Bundle
 import android.os.Handler
@@ -9,79 +8,154 @@ import android.support.v7.app.AppCompatActivity
 import android.util.Log
 import android.view.View
 import de.voicegym.voicegym.R
-import de.voicegym.voicegym.recordActivity.ActivityState.DONE
-import de.voicegym.voicegym.recordActivity.ActivityState.RECORDING
-import de.voicegym.voicegym.recordActivity.ActivityState.WAITING
-import de.voicegym.voicegym.util.audio.PCMStorage
+import de.voicegym.voicegym.recordActivity.RecordActivityState.PLAYBACK
+import de.voicegym.voicegym.recordActivity.RecordActivityState.RECORDING
+import de.voicegym.voicegym.recordActivity.RecordActivityState.WAITING
+import de.voicegym.voicegym.recordActivity.fragments.PlaybackModeControlFragment
+import de.voicegym.voicegym.recordActivity.fragments.PlaybackModeControlListener
+import de.voicegym.voicegym.recordActivity.fragments.RecordModeControlFragment
+import de.voicegym.voicegym.recordActivity.fragments.RecordeModeControlListener
+import de.voicegym.voicegym.recordActivity.fragments.SpectrogramFragment
+import de.voicegym.voicegym.recordActivity.fragments.UserSpectrogramSettings
+import de.voicegym.voicegym.recordActivity.views.SpectrogramViewState
 import de.voicegym.voicegym.util.RecordBufferListener
+import de.voicegym.voicegym.util.audio.PCMPlayer
+import de.voicegym.voicegym.util.audio.PCMPlayerListener
+import de.voicegym.voicegym.util.audio.PCMStorage
 import de.voicegym.voicegym.util.audio.RecordHelper
-import de.voicegym.voicegym.util.audio.getDezibelFromAmplitude
+import de.voicegym.voicegym.util.audio.getDoubleArrayFromShortArray
 import de.voicegym.voicegym.util.audio.savePCMInputStreamOnSDCard
 import de.voicegym.voicegym.util.math.FourierHelper
-import de.voicegym.voicegym.util.audio.getDoubleArrayFromShortArray
-import de.voicegym.voicegym.recordActivity.views.util.HotGradientColorPicker
-import kotlinx.android.synthetic.main.activity_record.dummyView
-import kotlinx.android.synthetic.main.activity_record.floatingActionButton
-import org.apache.commons.math3.analysis.interpolation.LinearInterpolator
+import java.text.SimpleDateFormat
+import java.util.Calendar
+import java.util.Locale
 import java.util.concurrent.ConcurrentLinkedQueue
 import kotlin.concurrent.thread
 
-class RecordActivity : AppCompatActivity(), RecordBufferListener {
+class RecordActivity : AppCompatActivity(),
+        RecordBufferListener,
+        RecordeModeControlListener,
+        PlaybackModeControlListener,
+        PCMPlayerListener {
+
+    // control variable to remember whether the player was active before touching the screen
+    private var playbackState = Pair(false, false);
+
+    override fun playbackTouched() {
+        playbackState = Pair(true, pcmPlayer?.playing ?: false)
+
+        if (playbackState.second) playPause()
+
+        if (spectrogramFragment != null && spectrogramFragment!!.spectrogramView != null && spectrogramFragment!!.userSpectrogramSettings != null) {
+            startingPosition = spectrogramFragment!!.spectrogramView!!.currentDequePosition * spectrogramFragment?.userSpectrogramSettings!!.samplesPerDatapoint
+        } else Error("Problem setting up the activity, missing spectrogramView, Fragment or settings")
+    }
+
+    private var startingPosition: Int = 0;
+    private var targetSamplePosition: Int = 0
+
+    override fun playbackSeekTo(relativeMovement: Float) {
+        Log.i("RecordActivity", "relativeMovement ${relativeMovement}")
+
+        spectrogramFragment?.let {
+            val relativeSamples = (relativeMovement * it.userSpectrogramSettings!!.numberDataPoints * it.userSpectrogramSettings!!.samplesPerDatapoint).toInt()
+            targetSamplePosition = startingPosition - relativeSamples
+            it.spectrogramView?.seekTo(targetSamplePosition)
+            it.spectrogramView?.invalidate()
+        }
+    }
+
+    override fun playbackReleased() {
+        Log.i("RecordActivity", "playback released aiming at ${targetSamplePosition}")
+        spectrogramFragment?.spectrogramView?.let {
+            it.seekTo(targetSamplePosition)
+            it.invalidate()
+        }
+        pcmPlayer?.seekTo(targetSamplePosition)
+
+        if (playbackState.second) playPause()
+        playbackState = Pair(false, false)
+    }
+
+    override fun playPause() {
+        pcmPlayer?.let {
+            when (it.playing) {
+                true  -> it.stop()
+                false -> it.play()
+            }
+        }
+    }
+
+    override fun rate() {
+
+    }
+
+    override fun saveToSdCard() {
+        thread {
+            pcmStorage?.let {
+                it.rewind()
+                savePCMInputStreamOnSDCard(dateString, it, it.sampleRate, 128000)
+            }
+        }
+    }
+
+    fun restart() {
+        // Clean up
+        spectrogramFragment?.spectrogramView?.let {
+            it.clearBitmapAndBuffer()
+            it.spectrogramViewState = SpectrogramViewState.LIVE_DISPLAY
+            it.invalidate()
+        }
+        pcmStorage?.let { recorder?.unSubscribeListener(it) }
+        pcmStorage = null
+        pcmPlayer?.unSubscribeListener(this)
+        pcmPlayer?.destroy()
+        pcmPlayer = null
+        stopListeningAndFreeRessource()
+        // Start up
+        recorderState = WAITING
+        startListening()
+        switchToRecordControlFragment()
+    }
+
+    override fun toggleRecordMode() {
+        when (recorderState) {
+            WAITING   -> storePCMSamples()
+            RECORDING -> doneRecordingSwitchToPlayback()
+        }
+    }
+
+    override fun isRecording(): Boolean = when (recorderState) {
+        WAITING   -> false
+        RECORDING -> true
+        PLAYBACK  -> false
+    }
+
+
     // configuration
-    private val sampleRate = 44100
-    private val collectedSamples = 8192
-    private val binning = 2
-    val fromFrequency: Double = 10.0
-    private val tillFrequency: Double = 1000.0
-    private val numberDataPoints: Int = 200
+    val sampleRate = 44100
+    val samplesPerDatapoint = 8192
+    val binning = 2
+
 
     // start class fixed objects
-    private val blockSize = collectedSamples / binning
+    private val blockSize = samplesPerDatapoint / binning
     private val inputQueue = ConcurrentLinkedQueue<ShortArray>()
-    private val fourierHelper = FourierHelper(blockSize, binning, collectedSamples, sampleRate)
-    private val interpolator = LinearInterpolator()
-    private val frequencyArray: DoubleArray = fourierHelper.frequencyArray()
+    private val fourierHelper = FourierHelper(blockSize, binning, samplesPerDatapoint, sampleRate)
 
-    // variables
-    private var deltaFrequency: Double = 0.0
 
-    fun getDeltaFrequency() = deltaFrequency
-
-    private var fromIndexF: Int = 0
-    private var tillIndexF: Int = 0
-    private var frequencyRangeArray: DoubleArray? = null
-    // FIXME I don't see why this has to be nullable and cannot be declared on initialization.
-    // Can we please reduce the number of nullable variables.
     private var recorder: RecordHelper? = null
-    private var activityState: ActivityState = WAITING
+    private var pcmPlayer: PCMPlayer? = null
+    private var recorderState: RecordActivityState = WAITING
+
+    val spectrogramBundle = Bundle()
+
+    var spectrogramFragment: SpectrogramFragment? = null
+    val recorderControlFragment = RecordModeControlFragment()
+    val playbackControlFragment = PlaybackModeControlFragment()
 
     init {
-        onRangeChanged()
-    }
-
-    private fun onRangeChanged() {
-        if (fromFrequency > tillFrequency) throw RuntimeException("fromFrequency must be smaller than tillFrequency")
-        if (frequencyArray[0] > fromFrequency) throw RuntimeException("you choose a frequency below available range")
-        if (frequencyArray[frequencyArray.size - 1] < tillFrequency) throw RuntimeException("you choose a frequency above available range")
-
-        // find range for which values are displayed
-        var idx = 0
-        while (frequencyArray[idx] < fromFrequency) idx++
-        fromIndexF = idx - 1 // just keep one data point outside of range
-        while (frequencyArray[idx] < tillFrequency) idx++
-        tillIndexF = idx + 1 // just keep two data points outside of range
-        frequencyRangeArray = frequencyArray.copyOfRange(fromIndexF, tillIndexF)
-    }
-
-    private fun calculateColorArrayForSpectrum(amplitude: DoubleArray, normalizationConstant: Double): IntArray {
-        val interpolatingFunction = interpolator.interpolate(frequencyRangeArray, amplitude.copyOfRange(fromIndexF, tillIndexF))
-        val colors = IntArray(dummyView.getDrawAreaHeight().toInt())
-        deltaFrequency = (tillFrequency - fromFrequency) / colors.size
-        for (i in 0 until colors.size) {
-            val amplitudeVal = interpolatingFunction.value(fromFrequency + i * deltaFrequency)
-            colors[i] = HotGradientColorPicker.pickColor(getDezibelFromAmplitude(amplitudeVal) / normalizationConstant)
-        }
-        return colors
+        spectrogramBundle.putDoubleArray("frequencyArray", fourierHelper.frequencyArray())
     }
 
 
@@ -91,52 +165,99 @@ class RecordActivity : AppCompatActivity(), RecordBufferListener {
         window.decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_FULLSCREEN
         setContentView(R.layout.activity_record)
         window.decorView.setBackgroundColor(Color.BLACK)
-        dummyView.xDataPoints = numberDataPoints
-        dummyView.invalidate()
-        Log.i("Activity", "onCreate")
-        recorder = RecordHelper(collectedSamples)
-        recorder?.subscribeListener(this)
-        recorder?.start()
-        floatingActionButton.backgroundTintList = ColorStateList.valueOf(Color.GREEN)
-        floatingActionButton.setOnClickListener {
-            when (activityState) {
-                WAITING   -> storePCMSamples()
-                RECORDING -> saveStoredPCMSamplesOnSDCard()
-                DONE      -> throw NotImplementedError()
-            }
+
+        // handle fragments
+        switchToRecordControlFragment()
+        spectrogramFragment = supportFragmentManager.findFragmentById(R.id.spectrogramFragment) as SpectrogramFragment
+        spectrogramFragment?.let {
+            it.arguments = spectrogramBundle
+        }
+        startListening()
+    }
+
+
+    override fun onBackPressed() {
+        when (recorderState) {
+            WAITING   -> if (pcmStorage == null) finish()
+            RECORDING -> doneRecordingSwitchToPlayback()
+            PLAYBACK  -> restart()
         }
     }
 
     override fun onDestroy() {
-        recorder?.stopRecording()
+        pcmStorage?.stopListening()
+        pcmPlayer?.unSubscribeListener(this)
+        pcmPlayer?.destroy()
+        this.stopListeningAndFreeRessource()
         super.onDestroy()
     }
 
-    private var pcmStorage: PCMStorage? = null
+    private fun startListening() {
+        // start microphone listening
+        recorder = RecordHelper(samplesPerDatapoint)
+        recorder?.let {
+            it.subscribeListener(this)
+            it.start()
+        }
+        spectrogramFragment?.updateUserSettings(UserSpectrogramSettings(10.0, 1000.0, 100, samplesPerDatapoint))
 
-    private fun storePCMSamples() {
-        activityState = RECORDING
-        floatingActionButton.backgroundTintList = ColorStateList.valueOf(Color.RED)
-        Log.e("RecordActivity", "Switched to record")
-        pcmStorage = PCMStorage(sampleRate)
-        recorder?.subscribeListener(pcmStorage!!)
     }
 
-    private fun saveStoredPCMSamplesOnSDCard() {
-        if (pcmStorage != null) {
-            activityState = WAITING
-            floatingActionButton.backgroundTintList = ColorStateList.valueOf(Color.GREEN)
-            Log.e("RecordActivity", "Back to waiting")
-            pcmStorage!!.stopListening()
-            recorder?.unSubscribeListener(pcmStorage!!)
-            thread {
-                savePCMInputStreamOnSDCard(pcmStorage!!, pcmStorage!!.sampleRate, 128000)
+    private fun stopListeningAndFreeRessource() {
+        recorder?.let {
+            it.unSubscribeListener(this)
+            it.stopRecording()
+        }
+        recorder = null
+    }
+
+
+    var pcmStorage: PCMStorage? = null
+
+    private fun storePCMSamples() {
+        recorderState = RECORDING
+        pcmStorage = PCMStorage(sampleRate)
+        recorder?.subscribeListener(pcmStorage!!)
+        spectrogramFragment?.spectrogramView?.spectrogramViewState = SpectrogramViewState.KEEP_SAMPLES
+    }
+
+
+    var dateString = ""
+
+    private fun doneRecordingSwitchToPlayback() {
+        pcmStorage?.let {
+            recorderState = PLAYBACK
+            it.stopListening()
+            this.stopListeningAndFreeRessource()
+            recorder?.unSubscribeListener(it)
+            dateString = SimpleDateFormat("yyyy-MM-dd'T'HH-mm-ss", Locale.ENGLISH).format(Calendar.getInstance().time)
+            switchToPlaybackControlFragment()
+
+            spectrogramFragment?.spectrogramView?.let {
+                it.rewindDeques()
+                it.clearBitmapAndBuffer()
+                it.spectrogramViewState = SpectrogramViewState.PLAYBACK
+                it.invalidate()
             }
+
+            pcmPlayer = PCMPlayer(it.sampleRate, it.asShortBuffer(), this)
+            pcmPlayer?.subscribeListener(this)
+
         }
     }
 
+    private var lastPosition = 0
 
-    override fun canHandleBufferSize(bufferSize: Int): Boolean = (collectedSamples == bufferSize)
+    override fun isAtPosition(sampleNumber: Int) {
+        lastPosition = sampleNumber
+        spectrogramFragment?.spectrogramView?.let {
+            it.seekTo(sampleNumber)
+            it.invalidate()
+        }
+
+    }
+
+    override fun canHandleBufferSize(bufferSize: Int): Boolean = (samplesPerDatapoint == bufferSize)
 
     override fun onBufferReady(data: ShortArray) {
         inputQueue.add(data)
@@ -149,19 +270,34 @@ class RecordActivity : AppCompatActivity(), RecordBufferListener {
     private fun updateActivity() {
         val shortArray = inputQueue.poll()
         fourierHelper.fft(getDoubleArrayFromShortArray(1.0, shortArray))
-        val spectrum = fourierHelper.amplitudeArray()
-        val colors = calculateColorArrayForSpectrum(spectrum, 55.0)
-        dummyView.insertColorLine(colors)
-        dummyView.invalidate()
+        spectrogramFragment?.insertNewAmplitudes(fourierHelper.amplitudeArray())
     }
 
 
+    private fun switchToRecordControlFragment() {
+        supportFragmentManager
+                .beginTransaction()
+                .replace(R.id.controlFragmentSpace, recorderControlFragment)
+                .addToBackStack(null)
+                .commit()
+    }
+
+
+    private fun switchToPlaybackControlFragment() {
+        supportFragmentManager
+                .beginTransaction()
+                .replace(R.id.controlFragmentSpace, playbackControlFragment)
+                .addToBackStack(null)
+                .commit()
+    }
+
+    fun getInstrumentFragment() = supportFragmentManager.findFragmentById(R.id.spectrogramFragment)
 }
 
-enum class ActivityState {
+enum class RecordActivityState {
     WAITING,
     RECORDING,
-    DONE
+    PLAYBACK
 }
 
 
