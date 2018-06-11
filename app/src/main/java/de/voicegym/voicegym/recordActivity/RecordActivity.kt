@@ -121,7 +121,7 @@ class RecordActivity : AppCompatActivity(),
     override fun toggleRecordMode() {
         when (recorderState) {
             WAITING   -> storePCMSamples()
-            RECORDING -> doneRecordingSwitchToPlayback()
+            RECORDING -> switchToPlayback()
         }
     }
 
@@ -179,7 +179,7 @@ class RecordActivity : AppCompatActivity(),
     override fun onBackPressed() {
         when (recorderState) {
             WAITING   -> if (pcmStorage == null) finish()
-            RECORDING -> doneRecordingSwitchToPlayback()
+            RECORDING -> switchToPlayback()
             PLAYBACK  -> restart()
         }
     }
@@ -224,7 +224,7 @@ class RecordActivity : AppCompatActivity(),
 
     var dateString = ""
 
-    private fun doneRecordingSwitchToPlayback() {
+    private fun switchToPlayback() {
         pcmStorage?.let {
             recorderState = PLAYBACK
             it.stopListening()
@@ -234,8 +234,9 @@ class RecordActivity : AppCompatActivity(),
             switchToPlaybackControlFragment()
 
             spectrogramFragment?.spectrogramView?.let {
-                it.rewindDeques()
+                it.rewindDequesToStart()
                 it.clearBitmapAndBuffer()
+                it.forwardWindDequesToEnd()
                 it.spectrogramViewState = SpectrogramViewState.PLAYBACK
                 it.invalidate()
             }

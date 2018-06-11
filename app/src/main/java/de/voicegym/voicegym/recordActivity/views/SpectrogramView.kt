@@ -250,13 +250,17 @@ class SpectrogramView : View {
         rightDeque.clear()
     }
 
-    fun totalSamples() = currentDeque.size + leftDeque.size + rightDeque.size
+    fun totalDatapoints() = currentDeque.size + leftDeque.size + rightDeque.size
     var currentDequePosition: Int = 0
 
-    fun rewindDeques() {
+    fun rewindDequesToStart() {
         currentDequePosition = 0
         while (currentDeque.isNotEmpty()) rightDeque.push(currentDeque.poll())
         while (leftDeque.isNotEmpty()) rightDeque.push(leftDeque.poll())
+    }
+
+    fun forwardWindDequesToEnd() {
+        windToPosition(totalDatapoints())
     }
 
 
@@ -271,7 +275,7 @@ class SpectrogramView : View {
         if (position < currentDequePosition) {
             while (currentDequePosition > position) right()
         } else if (position > currentDequePosition) {
-            if (position > totalSamples()) {
+            if (position > totalDatapoints()) {
                 throw IllegalArgumentException("SpectrogramView.kt: sampleNumber must be smaller than total collected samples")
             }
             while (currentDequePosition < position) left()
