@@ -94,22 +94,26 @@ class PCMPlayer(val sampleRate: Int, private val buffer: ShortBuffer, val contex
         playerThread?.join()
     }
 
-    fun seekTo(sampleNumber: Int) {
+    fun seekTo(sampleNumber: Int): Int {
         val wasPlaying: Boolean = if (playing) {
             stop()
             true
         } else {
             false
         }
-        currentPosition = sampleNumber
+
+        currentPosition = when {
+            sampleNumber < 0                  -> 0
+            sampleNumber >= buffer.capacity() -> buffer.capacity() - 1
+            else                              -> sampleNumber
+        }
 
         if (wasPlaying) play()
+        return currentPosition
     }
 
     fun seekToRelative(samples: Int): Int {
-        //TODO check if possible seek to maximum possible
-        seekTo(currentPosition + samples)
-        return currentPosition
+        return seekTo(currentPosition + samples)
     }
 
     fun destroy() {

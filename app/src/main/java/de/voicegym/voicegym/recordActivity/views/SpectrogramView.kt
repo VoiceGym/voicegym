@@ -269,17 +269,14 @@ class SpectrogramView : View {
         windToPosition(position)
     }
 
-    private fun windToPosition(position: Int) {
-        if (position < 0) throw IllegalArgumentException("SpectrogramView.kt: sampleNumber has to be positive or zero")
-
-        if (position < currentDequePosition) {
-            while (currentDequePosition > position) right()
-        } else if (position > currentDequePosition) {
-            if (position > totalDatapoints()) {
-                throw IllegalArgumentException("SpectrogramView.kt: sampleNumber must be smaller than total collected samples")
-            }
-            while (currentDequePosition < position) left()
+    private fun windToPosition(position: Int): Int {
+        when {
+            position < 0                    -> rewindDequesToStart()
+            position < currentDequePosition -> while (currentDequePosition > position) right()
+            position > totalDatapoints()    -> forwardWindDequesToEnd()
+            position > currentDequePosition -> while (currentDequePosition < position) left()
         }
+        return currentDequePosition
     }
 
     private fun left() {
