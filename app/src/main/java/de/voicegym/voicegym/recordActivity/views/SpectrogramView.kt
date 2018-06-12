@@ -145,7 +145,7 @@ class SpectrogramView : View {
             val fragment = (context as RecordActivity).getInstrumentFragment()
             if (fragment is SpectrogramFragment) {
                 val deltaFrequency = (fragment as SpectrogramFragment).deltaFrequency
-                val frequency = (fragment as SpectrogramFragment).userSpectrogramSettings!!.fromFrequency + (bottom_margin + getDrawAreaHeight() - yPosLine) * deltaFrequency
+                val frequency = (fragment as SpectrogramFragment).userSettings!!.fromFrequency + (bottom_margin + getDrawAreaHeight() - yPosLine) * deltaFrequency
                 canvas?.drawText("${frequency.toInt()} Hz", left_margin + 5, yPosLine - 5, mPaint)
             } else {
                 throw Error("InstrumentFragment was not a SpectrogramFragment, please expand SpectrogramView")

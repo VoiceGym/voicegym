@@ -12,9 +12,9 @@ import de.voicegym.voicegym.util.audio.getDezibelFromAmplitude
 import org.apache.commons.math3.analysis.interpolation.LinearInterpolator
 
 
-class SpectrogramFragment() : Fragment() {
+class SpectrogramFragment() : Fragment(), InstrumentFragment {
 
-    var userSpectrogramSettings: UserSpectrogramSettings? = null
+    var userSettings: UserSettings? = null
     var frequencyArray: DoubleArray? = null
     var deltaFrequency: Double = 0.0
 
@@ -24,8 +24,8 @@ class SpectrogramFragment() : Fragment() {
 
     var spectrogramView: SpectrogramView? = null
 
-    fun updateUserSettings(userSettings: UserSpectrogramSettings) {
-        userSpectrogramSettings = userSettings
+    override fun updateUserSettings(userSettings: UserSettings) {
+        this.userSettings = userSettings
         spectrogramView?.xDataPoints = userSettings.numberDataPoints
         spectrogramView?.samplesPerDataPoint = userSettings.samplesPerDatapoint
         if (frequencyArray != null) onRangeChanged()
@@ -46,13 +46,13 @@ class SpectrogramFragment() : Fragment() {
 
         spectrogramView = view.findViewById<SpectrogramView>(R.id.spectrogramView)
         spectrogramView?.let {
-            it.xDataPoints = userSpectrogramSettings?.numberDataPoints ?: 10
+            it.xDataPoints = userSettings?.numberDataPoints ?: 10
             it.invalidate()
         }
         return view
     }
 
-    fun insertNewAmplitudes(spectrum: DoubleArray) {
+    override fun insertNewAmplitudes(spectrum: DoubleArray) {
         spectrogramView?.let {
             val colors = calculateColorArrayForSpectrum(spectrum, normalizationConstant = 55.0)
             it.insertNewDataPoint(colors)
@@ -72,9 +72,9 @@ class SpectrogramFragment() : Fragment() {
 
             colors = IntArray(spectrogramView!!.getDrawAreaHeight().toInt())
             colors?.let {
-                deltaFrequency = (userSpectrogramSettings!!.tillFrequency - userSpectrogramSettings!!.fromFrequency) / it.size
+                deltaFrequency = (userSettings!!.tillFrequency - userSettings!!.fromFrequency) / it.size
                 for (i in 0 until it.size) {
-                    val amplitudeVal = interpolatingFunction.value(userSpectrogramSettings!!.fromFrequency + i * deltaFrequency)
+                    val amplitudeVal = interpolatingFunction.value(userSettings!!.fromFrequency + i * deltaFrequency)
                     it[i] = HotGradientColorPicker.pickColor(getDezibelFromAmplitude(amplitudeVal) / normalizationConstant)
                 }
             }
@@ -87,7 +87,7 @@ class SpectrogramFragment() : Fragment() {
     }
 
     private fun onRangeChanged() {
-        userSpectrogramSettings?.let {
+        userSettings?.let {
             if (it.fromFrequency > it.tillFrequency) throw RuntimeException("fromFrequency must be smaller than tillFrequency")
             if (frequencyArray!![0] > it.fromFrequency) throw RuntimeException("you choose a frequency below available range")
             if (frequencyArray!![frequencyArray!!.size - 1] < it.tillFrequency) throw RuntimeException("you choose a frequency above available range")

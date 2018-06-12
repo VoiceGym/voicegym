@@ -16,7 +16,7 @@ import de.voicegym.voicegym.recordActivity.fragments.PlaybackModeControlListener
 import de.voicegym.voicegym.recordActivity.fragments.RecordModeControlFragment
 import de.voicegym.voicegym.recordActivity.fragments.RecordeModeControlListener
 import de.voicegym.voicegym.recordActivity.fragments.SpectrogramFragment
-import de.voicegym.voicegym.recordActivity.fragments.UserSpectrogramSettings
+import de.voicegym.voicegym.recordActivity.fragments.UserSettings
 import de.voicegym.voicegym.recordActivity.views.SpectrogramViewState
 import de.voicegym.voicegym.util.RecordBufferListener
 import de.voicegym.voicegym.util.audio.PCMPlayer
@@ -46,11 +46,12 @@ class RecordActivity : AppCompatActivity(),
             pcmPlayer?.playing == true -> TOUCHED_WHILE_PLAYING
             else                       -> TOUCHED
         }
-        
+
         if (playbackState == TOUCHED_WHILE_PLAYING) playPause()
 
-        if (spectrogramFragment != null && spectrogramFragment!!.spectrogramView != null && spectrogramFragment!!.userSpectrogramSettings != null) {
-            startingPosition = spectrogramFragment!!.spectrogramView!!.currentDequePosition * spectrogramFragment?.userSpectrogramSettings!!.samplesPerDatapoint
+        // TODO REMOVE DIRECT ACCESS TO SPECTROGRAMVIEW
+        if (instrumentFragment != null && instrumentFragment!!.spectrogramView != null && instrumentFragment!!.userSettings != null) {
+            startingPosition = instrumentFragment!!.spectrogramView!!.currentDequePosition * instrumentFragment?.userSettings!!.samplesPerDatapoint
         } else Error("Problem setting up the activity, missing spectrogramView, Fragment or settings")
     }
 
@@ -59,8 +60,10 @@ class RecordActivity : AppCompatActivity(),
 
     override fun playbackSeekTo(relativeMovement: Float) {
         if (playbackState != RELEASED) {
-            spectrogramFragment?.let {
-                val relativeSamples = (relativeMovement * it.userSpectrogramSettings!!.numberDataPoints * it.userSpectrogramSettings!!.samplesPerDatapoint).toInt()
+
+            //TODO REMOVE DIRECT ACCESS
+            instrumentFragment?.let {
+                val relativeSamples = (relativeMovement * it.userSettings!!.numberDataPoints * it.userSettings!!.samplesPerDatapoint).toInt()
                 targetSamplePosition = startingPosition - relativeSamples
                 it.spectrogramView?.seekTo(targetSamplePosition)
                 it.spectrogramView?.invalidate()
@@ -70,10 +73,12 @@ class RecordActivity : AppCompatActivity(),
 
     override fun playbackReleased() {
         if (playbackState != RELEASED) {
-            spectrogramFragment?.spectrogramView?.let {
+            //TODO REMOVE DIRECT ACCESS
+            instrumentFragment?.spectrogramView?.let {
                 it.seekTo(targetSamplePosition)
                 it.invalidate()
             }
+
             pcmPlayer?.seekTo(targetSamplePosition)
 
             if (playbackState == TOUCHED_WHILE_PLAYING) playPause()
@@ -105,7 +110,8 @@ class RecordActivity : AppCompatActivity(),
 
     fun restart() {
         // Clean up
-        spectrogramFragment?.spectrogramView?.let {
+        //TODO REMOVE DIRECT ACCESS
+        instrumentFragment?.spectrogramView?.let {
             it.clearBitmapAndBuffer()
             it.spectrogramViewState = SpectrogramViewState.LIVE_DISPLAY
             it.invalidate()
@@ -154,7 +160,7 @@ class RecordActivity : AppCompatActivity(),
 
     val spectrogramBundle = Bundle()
 
-    var spectrogramFragment: SpectrogramFragment? = null
+    var instrumentFragment: SpectrogramFragment? = null
     val recorderControlFragment = RecordModeControlFragment()
     val playbackControlFragment = PlaybackModeControlFragment()
 
@@ -172,8 +178,8 @@ class RecordActivity : AppCompatActivity(),
 
         // handle fragments
         switchToRecordControlFragment()
-        spectrogramFragment = supportFragmentManager.findFragmentById(R.id.spectrogramFragment) as SpectrogramFragment
-        spectrogramFragment?.let {
+        instrumentFragment = supportFragmentManager.findFragmentById(R.id.spectrogramFragment) as SpectrogramFragment
+        instrumentFragment?.let {
             it.arguments = spectrogramBundle
         }
         startListening()
@@ -203,7 +209,7 @@ class RecordActivity : AppCompatActivity(),
             it.subscribeListener(this)
             it.start()
         }
-        spectrogramFragment?.updateUserSettings(UserSpectrogramSettings(10.0, 1000.0, 100, samplesPerDatapoint))
+        instrumentFragment?.updateUserSettings(UserSettings(10.0, 1000.0, 100, samplesPerDatapoint))
 
     }
 
@@ -222,7 +228,8 @@ class RecordActivity : AppCompatActivity(),
         recorderState = RECORDING
         pcmStorage = PCMStorage(sampleRate)
         recorder?.subscribeListener(pcmStorage!!)
-        spectrogramFragment?.spectrogramView?.spectrogramViewState = SpectrogramViewState.KEEP_SAMPLES
+        // TODO REFACTOR the explicit access out of here -> INTERFACE?
+        instrumentFragment?.spectrogramView?.spectrogramViewState = SpectrogramViewState.KEEP_SAMPLES
     }
 
 
@@ -237,7 +244,8 @@ class RecordActivity : AppCompatActivity(),
             dateString = SimpleDateFormat("yyyy-MM-dd'T'HH-mm-ss", Locale.ENGLISH).format(Calendar.getInstance().time)
             switchToPlaybackControlFragment()
 
-            spectrogramFragment?.spectrogramView?.let {
+            // TODO REFACTOR the explicit access out of here -> INTERFACE?
+            instrumentFragment?.spectrogramView?.let {
                 it.rewindDequesToStart()
                 it.clearBitmapAndBuffer()
                 it.forwardWindDequesToEnd()
@@ -255,7 +263,8 @@ class RecordActivity : AppCompatActivity(),
 
     override fun isAtPosition(sampleNumber: Int) {
         lastPosition = sampleNumber
-        spectrogramFragment?.spectrogramView?.let {
+        //TODO REMOVE DIRECT ACCESS
+        instrumentFragment?.spectrogramView?.let {
             it.seekTo(sampleNumber)
             it.invalidate()
         }
@@ -275,7 +284,7 @@ class RecordActivity : AppCompatActivity(),
     private fun updateActivity() {
         val shortArray = inputQueue.poll()
         fourierHelper.fft(getDoubleArrayFromShortArray(1.0, shortArray))
-        spectrogramFragment?.insertNewAmplitudes(fourierHelper.amplitudeArray())
+        instrumentFragment?.insertNewAmplitudes(fourierHelper.amplitudeArray())
     }
 
 
