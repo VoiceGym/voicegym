@@ -13,11 +13,12 @@ import android.view.MotionEvent.ACTION_MOVE
 import android.view.MotionEvent.ACTION_UP
 import android.view.View
 import de.voicegym.voicegym.recordActivity.RecordActivity
+import de.voicegym.voicegym.recordActivity.fragments.InstrumentState
+import de.voicegym.voicegym.recordActivity.fragments.InstrumentState.LIVE_DISPLAY
+import de.voicegym.voicegym.recordActivity.fragments.InstrumentState.PLAYBACK
+import de.voicegym.voicegym.recordActivity.fragments.InstrumentState.RECORDING_DATA
 import de.voicegym.voicegym.recordActivity.fragments.PlaybackModeControlListener
 import de.voicegym.voicegym.recordActivity.fragments.SpectrogramFragment
-import de.voicegym.voicegym.recordActivity.views.SpectrogramViewState.KEEP_SAMPLES
-import de.voicegym.voicegym.recordActivity.views.SpectrogramViewState.LIVE_DISPLAY
-import de.voicegym.voicegym.recordActivity.views.SpectrogramViewState.PLAYBACK
 import org.jetbrains.anko.backgroundColor
 import java.util.concurrent.LinkedBlockingDeque
 import kotlin.math.absoluteValue
@@ -145,7 +146,7 @@ class SpectrogramView : View {
             val fragment = (context as RecordActivity).getInstrumentFragment()
             if (fragment is SpectrogramFragment) {
                 val deltaFrequency = (fragment as SpectrogramFragment).deltaFrequency
-                val frequency = (fragment as SpectrogramFragment).userSpectrogramSettings!!.fromFrequency + (bottom_margin + getDrawAreaHeight() - yPosLine) * deltaFrequency
+                val frequency = (fragment as SpectrogramFragment).userSettings!!.fromFrequency + (bottom_margin + getDrawAreaHeight() - yPosLine) * deltaFrequency
                 canvas?.drawText("${frequency.toInt()} Hz", left_margin + 5, yPosLine - 5, mPaint)
             } else {
                 throw Error("InstrumentFragment was not a SpectrogramFragment, please expand SpectrogramView")
@@ -184,7 +185,7 @@ class SpectrogramView : View {
     var touchedAtXpos: Float = 0f
     override fun onTouchEvent(event: MotionEvent?): Boolean {
         when (spectrogramViewState) {
-            LIVE_DISPLAY, KEEP_SAMPLES -> when (event?.action) {
+            LIVE_DISPLAY, RECORDING_DATA -> when (event?.action) {
                 ACTION_DOWN -> {
                     drawLine = !drawLine
                     yPosLine = event.y
@@ -202,7 +203,7 @@ class SpectrogramView : View {
                 }
             }
 
-            PLAYBACK                   -> {
+            PLAYBACK                                     -> {
                 if (context !is PlaybackModeControlListener) throw Error("SpectrogramView can only be used within Activities that implement PlaybackModeControlListener")
                 val controller = (context as PlaybackModeControlListener)
                 when (event?.action) {
@@ -250,13 +251,17 @@ class SpectrogramView : View {
         rightDeque.clear()
     }
 
-    fun totalSamples() = currentDeque.size + leftDeque.size + rightDeque.size
+    fun totalDatapoints() = currentDeque.size + leftDeque.size + rightDeque.size
     var currentDequePosition: Int = 0
 
-    fun rewindDeques() {
+    fun rewindDequesToStart() {
         currentDequePosition = 0
         while (currentDeque.isNotEmpty()) rightDeque.push(currentDeque.poll())
         while (leftDeque.isNotEmpty()) rightDeque.push(leftDeque.poll())
+    }
+
+    fun forwardWindDequesToEnd() {
+        windToPosition(totalDatapoints())
     }
 
 
@@ -265,17 +270,14 @@ class SpectrogramView : View {
         windToPosition(position)
     }
 
-    private fun windToPosition(position: Int) {
-        if (position < 0) throw IllegalArgumentException("SpectrogramView.kt: sampleNumber has to be positive or zero")
-
-        if (position < currentDequePosition) {
-            while (currentDequePosition > position) right()
-        } else if (position > currentDequePosition) {
-            if (position > totalSamples()) {
-                throw IllegalArgumentException("SpectrogramView.kt: sampleNumber must be smaller than total collected samples")
-            }
-            while (currentDequePosition < position) left()
+    private fun windToPosition(position: Int): Int {
+        when {
+            position < 0                    -> rewindDequesToStart()
+            position < currentDequePosition -> while (currentDequePosition > position) right()
+            position > totalDatapoints()    -> forwardWindDequesToEnd()
+            position > currentDequePosition -> while (currentDequePosition < position) left()
         }
+        return currentDequePosition
     }
 
     private fun left() {
@@ -324,10 +326,4 @@ class SpectrogramView : View {
     }
 
 
-}
-
-enum class SpectrogramViewState {
-    PLAYBACK,
-    LIVE_DISPLAY,
-    KEEP_SAMPLES
 }

@@ -1,6 +1,6 @@
 package de.voicegym.voicegym.recordActivity.fragments
 
-data class UserSpectrogramSettings(
+data class UserSettings(
         val fromFrequency: Double,
         val tillFrequency: Double,
         val numberDataPoints: Int,

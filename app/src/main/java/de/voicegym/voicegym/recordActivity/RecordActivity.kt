@@ -4,20 +4,23 @@ import android.content.pm.ActivityInfo
 import android.graphics.Color
 import android.os.Bundle
 import android.os.Handler
+import android.support.v4.app.Fragment
 import android.support.v7.app.AppCompatActivity
-import android.util.Log
 import android.view.View
 import de.voicegym.voicegym.R
 import de.voicegym.voicegym.recordActivity.RecordActivityState.PLAYBACK
 import de.voicegym.voicegym.recordActivity.RecordActivityState.RECORDING
 import de.voicegym.voicegym.recordActivity.RecordActivityState.WAITING
+import de.voicegym.voicegym.recordActivity.TouchPlaybackState.RELEASED
+import de.voicegym.voicegym.recordActivity.TouchPlaybackState.TOUCHED
+import de.voicegym.voicegym.recordActivity.TouchPlaybackState.TOUCHED_WHILE_PLAYING
+import de.voicegym.voicegym.recordActivity.fragments.AbstractInstrumentFragment
 import de.voicegym.voicegym.recordActivity.fragments.PlaybackModeControlFragment
 import de.voicegym.voicegym.recordActivity.fragments.PlaybackModeControlListener
 import de.voicegym.voicegym.recordActivity.fragments.RecordModeControlFragment
-import de.voicegym.voicegym.recordActivity.fragments.RecordeModeControlListener
+import de.voicegym.voicegym.recordActivity.fragments.RecordModeControlListener
 import de.voicegym.voicegym.recordActivity.fragments.SpectrogramFragment
-import de.voicegym.voicegym.recordActivity.fragments.UserSpectrogramSettings
-import de.voicegym.voicegym.recordActivity.views.SpectrogramViewState
+import de.voicegym.voicegym.recordActivity.fragments.UserSettings
 import de.voicegym.voicegym.util.RecordBufferListener
 import de.voicegym.voicegym.util.audio.PCMPlayer
 import de.voicegym.voicegym.util.audio.PCMPlayerListener
@@ -34,47 +37,47 @@ import kotlin.concurrent.thread
 
 class RecordActivity : AppCompatActivity(),
         RecordBufferListener,
-        RecordeModeControlListener,
+        RecordModeControlListener,
         PlaybackModeControlListener,
         PCMPlayerListener {
 
     // control variable to remember whether the player was active before touching the screen
-    private var playbackState = Pair(false, false);
+    private var playbackState = RELEASED
 
     override fun playbackTouched() {
-        playbackState = Pair(true, pcmPlayer?.playing ?: false)
+        playbackState = when {
+            pcmPlayer?.playing == true -> TOUCHED_WHILE_PLAYING
+            else                       -> TOUCHED
+        }
 
-        if (playbackState.second) playPause()
+        if (playbackState == TOUCHED_WHILE_PLAYING) playPause()
 
-        if (spectrogramFragment != null && spectrogramFragment!!.spectrogramView != null && spectrogramFragment!!.userSpectrogramSettings != null) {
-            startingPosition = spectrogramFragment!!.spectrogramView!!.currentDequePosition * spectrogramFragment?.userSpectrogramSettings!!.samplesPerDatapoint
-        } else Error("Problem setting up the activity, missing spectrogramView, Fragment or settings")
+
+        startingPosition = instrumentFragment?.getCurrentSamplePosition() ?: 0
+
     }
 
-    private var startingPosition: Int = 0;
+    private var startingPosition: Int = 0
     private var targetSamplePosition: Int = 0
 
     override fun playbackSeekTo(relativeMovement: Float) {
-        Log.i("RecordActivity", "relativeMovement ${relativeMovement}")
+        if (playbackState != RELEASED) {
 
-        spectrogramFragment?.let {
-            val relativeSamples = (relativeMovement * it.userSpectrogramSettings!!.numberDataPoints * it.userSpectrogramSettings!!.samplesPerDatapoint).toInt()
-            targetSamplePosition = startingPosition - relativeSamples
-            it.spectrogramView?.seekTo(targetSamplePosition)
-            it.spectrogramView?.invalidate()
+            instrumentFragment?.let {
+                val relativeSamples = (relativeMovement * it.userSettings.numberDataPoints * it.userSettings.samplesPerDatapoint).toInt()
+                targetSamplePosition = startingPosition - relativeSamples
+                it.seekToSamplePosition(targetSamplePosition)
+            }
         }
     }
 
     override fun playbackReleased() {
-        Log.i("RecordActivity", "playback released aiming at ${targetSamplePosition}")
-        spectrogramFragment?.spectrogramView?.let {
-            it.seekTo(targetSamplePosition)
-            it.invalidate()
+        if (playbackState != RELEASED) {
+            instrumentFragment?.seekToSamplePosition(targetSamplePosition)
+            pcmPlayer?.seekTo(targetSamplePosition)
+            if (playbackState == TOUCHED_WHILE_PLAYING) playPause()
+            playbackState = RELEASED
         }
-        pcmPlayer?.seekTo(targetSamplePosition)
-
-        if (playbackState.second) playPause()
-        playbackState = Pair(false, false)
     }
 
     override fun playPause() {
@@ -99,13 +102,9 @@ class RecordActivity : AppCompatActivity(),
         }
     }
 
-    fun restart() {
+    private fun restart() {
         // Clean up
-        spectrogramFragment?.spectrogramView?.let {
-            it.clearBitmapAndBuffer()
-            it.spectrogramViewState = SpectrogramViewState.LIVE_DISPLAY
-            it.invalidate()
-        }
+        instrumentFragment?.resetFragment()
         pcmStorage?.let { recorder?.unSubscribeListener(it) }
         pcmStorage = null
         pcmPlayer?.unSubscribeListener(this)
@@ -118,11 +117,12 @@ class RecordActivity : AppCompatActivity(),
         switchToRecordControlFragment()
     }
 
-    override fun toggleRecordMode() {
-        when (recorderState) {
-            WAITING   -> storePCMSamples()
-            RECORDING -> doneRecordingSwitchToPlayback()
-        }
+    override fun startRecording() {
+        if (recorderState == WAITING) storePCMSamples()
+    }
+
+    override fun finishRecording() {
+        if (recorderState == RECORDING) switchToPlayback()
     }
 
     override fun isRecording(): Boolean = when (recorderState) {
@@ -134,8 +134,8 @@ class RecordActivity : AppCompatActivity(),
 
     // configuration
     val sampleRate = 44100
-    val samplesPerDatapoint = 8192
-    val binning = 2
+    private val samplesPerDatapoint = 8192
+    private val binning = 2
 
 
     // start class fixed objects
@@ -148,11 +148,11 @@ class RecordActivity : AppCompatActivity(),
     private var pcmPlayer: PCMPlayer? = null
     private var recorderState: RecordActivityState = WAITING
 
-    val spectrogramBundle = Bundle()
+    private val spectrogramBundle = Bundle()
 
-    var spectrogramFragment: SpectrogramFragment? = null
-    val recorderControlFragment = RecordModeControlFragment()
-    val playbackControlFragment = PlaybackModeControlFragment()
+    private var instrumentFragment: AbstractInstrumentFragment? = null
+    private val recorderControlFragment = RecordModeControlFragment()
+    private val playbackControlFragment = PlaybackModeControlFragment()
 
     init {
         spectrogramBundle.putDoubleArray("frequencyArray", fourierHelper.frequencyArray())
@@ -161,15 +161,15 @@ class RecordActivity : AppCompatActivity(),
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        this.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE)
+        this.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
         window.decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_FULLSCREEN
         setContentView(R.layout.activity_record)
         window.decorView.setBackgroundColor(Color.BLACK)
 
         // handle fragments
         switchToRecordControlFragment()
-        spectrogramFragment = supportFragmentManager.findFragmentById(R.id.spectrogramFragment) as SpectrogramFragment
-        spectrogramFragment?.let {
+        instrumentFragment = supportFragmentManager.findFragmentById(R.id.spectrogramFragment) as SpectrogramFragment
+        instrumentFragment?.let {
             it.arguments = spectrogramBundle
         }
         startListening()
@@ -179,7 +179,7 @@ class RecordActivity : AppCompatActivity(),
     override fun onBackPressed() {
         when (recorderState) {
             WAITING   -> if (pcmStorage == null) finish()
-            RECORDING -> doneRecordingSwitchToPlayback()
+            RECORDING -> switchToPlayback()
             PLAYBACK  -> restart()
         }
     }
@@ -199,7 +199,7 @@ class RecordActivity : AppCompatActivity(),
             it.subscribeListener(this)
             it.start()
         }
-        spectrogramFragment?.updateUserSettings(UserSpectrogramSettings(10.0, 1000.0, 100, samplesPerDatapoint))
+        instrumentFragment?.updateUserSettings(UserSettings(10.0, 1000.0, 100, samplesPerDatapoint))
 
     }
 
@@ -212,19 +212,19 @@ class RecordActivity : AppCompatActivity(),
     }
 
 
-    var pcmStorage: PCMStorage? = null
+    private var pcmStorage: PCMStorage? = null
 
     private fun storePCMSamples() {
         recorderState = RECORDING
         pcmStorage = PCMStorage(sampleRate)
         recorder?.subscribeListener(pcmStorage!!)
-        spectrogramFragment?.spectrogramView?.spectrogramViewState = SpectrogramViewState.KEEP_SAMPLES
+        instrumentFragment?.startRecording()
     }
 
 
-    var dateString = ""
+    private var dateString = ""
 
-    private fun doneRecordingSwitchToPlayback() {
+    private fun switchToPlayback() {
         pcmStorage?.let {
             recorderState = PLAYBACK
             it.stopListening()
@@ -232,13 +232,7 @@ class RecordActivity : AppCompatActivity(),
             recorder?.unSubscribeListener(it)
             dateString = SimpleDateFormat("yyyy-MM-dd'T'HH-mm-ss", Locale.ENGLISH).format(Calendar.getInstance().time)
             switchToPlaybackControlFragment()
-
-            spectrogramFragment?.spectrogramView?.let {
-                it.rewindDeques()
-                it.clearBitmapAndBuffer()
-                it.spectrogramViewState = SpectrogramViewState.PLAYBACK
-                it.invalidate()
-            }
+            instrumentFragment?.doneRecordingSwitchToPlayback()
 
             pcmPlayer = PCMPlayer(it.sampleRate, it.asShortBuffer(), this)
             pcmPlayer?.subscribeListener(this)
@@ -246,15 +240,8 @@ class RecordActivity : AppCompatActivity(),
         }
     }
 
-    private var lastPosition = 0
-
     override fun isAtPosition(sampleNumber: Int) {
-        lastPosition = sampleNumber
-        spectrogramFragment?.spectrogramView?.let {
-            it.seekTo(sampleNumber)
-            it.invalidate()
-        }
-
+        instrumentFragment?.seekToSamplePosition(sampleNumber)
     }
 
     override fun canHandleBufferSize(bufferSize: Int): Boolean = (samplesPerDatapoint == bufferSize)
@@ -270,7 +257,7 @@ class RecordActivity : AppCompatActivity(),
     private fun updateActivity() {
         val shortArray = inputQueue.poll()
         fourierHelper.fft(getDoubleArrayFromShortArray(1.0, shortArray))
-        spectrogramFragment?.insertNewAmplitudes(fourierHelper.amplitudeArray())
+        instrumentFragment?.insertNewAmplitudes(fourierHelper.amplitudeArray())
     }
 
 
@@ -291,7 +278,7 @@ class RecordActivity : AppCompatActivity(),
                 .commit()
     }
 
-    fun getInstrumentFragment() = supportFragmentManager.findFragmentById(R.id.spectrogramFragment)
+    fun getInstrumentFragment(): Fragment? = supportFragmentManager.findFragmentById(R.id.spectrogramFragment)
 }
 
 enum class RecordActivityState {
@@ -301,3 +288,8 @@ enum class RecordActivityState {
 }
 
 
+enum class TouchPlaybackState {
+    TOUCHED,
+    TOUCHED_WHILE_PLAYING,
+    RELEASED
+}
