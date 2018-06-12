@@ -13,11 +13,12 @@ import android.view.MotionEvent.ACTION_MOVE
 import android.view.MotionEvent.ACTION_UP
 import android.view.View
 import de.voicegym.voicegym.recordActivity.RecordActivity
+import de.voicegym.voicegym.recordActivity.fragments.InstrumentState
+import de.voicegym.voicegym.recordActivity.fragments.InstrumentState.LIVE_DISPLAY
+import de.voicegym.voicegym.recordActivity.fragments.InstrumentState.PLAYBACK
+import de.voicegym.voicegym.recordActivity.fragments.InstrumentState.RECORDING_DATA
 import de.voicegym.voicegym.recordActivity.fragments.PlaybackModeControlListener
 import de.voicegym.voicegym.recordActivity.fragments.SpectrogramFragment
-import de.voicegym.voicegym.recordActivity.views.SpectrogramViewState.KEEP_SAMPLES
-import de.voicegym.voicegym.recordActivity.views.SpectrogramViewState.LIVE_DISPLAY
-import de.voicegym.voicegym.recordActivity.views.SpectrogramViewState.PLAYBACK
 import org.jetbrains.anko.backgroundColor
 import java.util.concurrent.LinkedBlockingDeque
 import kotlin.math.absoluteValue
@@ -184,7 +185,7 @@ class SpectrogramView : View {
     var touchedAtXpos: Float = 0f
     override fun onTouchEvent(event: MotionEvent?): Boolean {
         when (spectrogramViewState) {
-            LIVE_DISPLAY, KEEP_SAMPLES -> when (event?.action) {
+            LIVE_DISPLAY, RECORDING_DATA -> when (event?.action) {
                 ACTION_DOWN -> {
                     drawLine = !drawLine
                     yPosLine = event.y
@@ -202,7 +203,7 @@ class SpectrogramView : View {
                 }
             }
 
-            PLAYBACK                   -> {
+            PLAYBACK                                     -> {
                 if (context !is PlaybackModeControlListener) throw Error("SpectrogramView can only be used within Activities that implement PlaybackModeControlListener")
                 val controller = (context as PlaybackModeControlListener)
                 when (event?.action) {
@@ -325,10 +326,4 @@ class SpectrogramView : View {
     }
 
 
-}
-
-enum class SpectrogramViewState {
-    PLAYBACK,
-    LIVE_DISPLAY,
-    KEEP_SAMPLES
 }

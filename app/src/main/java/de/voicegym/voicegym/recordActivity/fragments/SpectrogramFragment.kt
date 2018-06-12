@@ -6,18 +6,20 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import de.voicegym.voicegym.R
+import de.voicegym.voicegym.recordActivity.fragments.InstrumentState.LIVE_DISPLAY
+import de.voicegym.voicegym.recordActivity.fragments.InstrumentState.RECORDING_DATA
 import de.voicegym.voicegym.recordActivity.views.SpectrogramView
 import de.voicegym.voicegym.recordActivity.views.util.HotGradientColorPicker
 import de.voicegym.voicegym.util.audio.getDezibelFromAmplitude
 import org.apache.commons.math3.analysis.interpolation.LinearInterpolator
 
 
-class SpectrogramFragment() : Fragment(), InstrumentFragment {
+class SpectrogramFragment() : AbstractInstrumentFragment() {
 
-    var userSettings: UserSettings? = null
+    override var userSettings: UserSettings? = null // TODO make not nullable
+
     var frequencyArray: DoubleArray? = null
     var deltaFrequency: Double = 0.0
-
     var internalSpectrogramSettings: RawSpectrogramSettings? = null
 
     private val interpolator = LinearInterpolator()
@@ -103,4 +105,35 @@ class SpectrogramFragment() : Fragment(), InstrumentFragment {
         }
     }
 
+    override fun getCurrentSamplePosition(): Int = spectrogramView?.currentDequePosition ?: 0
+
+    override fun seekToSamplePosition(samplePosition: Int) {
+        spectrogramView?.seekTo(samplePosition)
+        spectrogramView?.invalidate()
+    }
+
+    override fun resetFragment() {
+        spectrogramView?.let {
+            it.clearBitmapAndBuffer()
+            it.spectrogramViewState = LIVE_DISPLAY
+            it.invalidate()
+        }
+    }
+
+    override fun startRecording() {
+        spectrogramView?.spectrogramViewState = RECORDING_DATA
+    }
+
+    override fun doneRecordingSwitchToPlayback() {
+        spectrogramView?.let {
+            it.rewindDequesToStart()
+            it.clearBitmapAndBuffer()
+            it.forwardWindDequesToEnd()
+            it.spectrogramViewState = InstrumentState.PLAYBACK
+            it.invalidate()
+        }
+    }
+
+    override fun getInstrumentState(): InstrumentState = spectrogramView?.spectrogramViewState
+            ?: throw Error("Fragment not correctly initialized, no spectrogramview present")
 }

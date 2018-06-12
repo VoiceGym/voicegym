@@ -14,12 +14,12 @@ import de.voicegym.voicegym.R
 
 class RecordModeControlFragment : Fragment() {
 
-    var recordActivity: RecordeModeControlListener? = null
+    var recordActivity: RecordModeControlListener? = null
 
     override fun onAttach(context: Context?) {
         super.onAttach(context)
 
-        recordActivity = if (context is RecordeModeControlListener) {
+        recordActivity = if (context is RecordModeControlListener) {
             context
         } else {
             throw Error("Needs to be called from a context that implements RecordModeControlListener")
@@ -31,17 +31,21 @@ class RecordModeControlFragment : Fragment() {
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         // Inflate the layout for this fragment
         val view = inflater.inflate(R.layout.fragment_record_mode_control, container, false)
-        floatingActionButton = view.findViewById<FloatingActionButton>(R.id.floatingActionButton)
+        floatingActionButton = view.findViewById(R.id.floatingActionButton)
         floatingActionButton?.let {
             it.backgroundTintList = ColorStateList.valueOf(Color.GREEN)
-            it.setOnClickListener { toggleState() }
+            it.setOnClickListener { recordButtonPressed() }
         }
         return view
     }
 
-    fun toggleState() {
+    private fun recordButtonPressed() {
+        when (recordActivity?.isRecording()) {
+            false -> recordActivity?.startRecording()
+            else  -> recordActivity?.finishRecording()
+        }
+
         recordActivity?.let {
-            it.toggleRecordMode()
             if (it.isRecording()) {
                 floatingActionButton?.backgroundTintList = ColorStateList.valueOf(Color.RED)
             } else {
@@ -53,8 +57,10 @@ class RecordModeControlFragment : Fragment() {
 
 }
 
-interface RecordeModeControlListener {
-    fun toggleRecordMode()
+interface RecordModeControlListener {
+    fun startRecording()
+
+    fun finishRecording()
 
     fun isRecording(): Boolean
 }
