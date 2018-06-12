@@ -1,7 +1,6 @@
 package de.voicegym.voicegym.recordActivity.fragments
 
 import android.os.Bundle
-import android.support.v4.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -16,7 +15,7 @@ import org.apache.commons.math3.analysis.interpolation.LinearInterpolator
 
 class SpectrogramFragment() : AbstractInstrumentFragment() {
 
-    override var userSettings: UserSettings? = null // TODO make not nullable
+    override var userSettings = UserSettings(10.0, 1000.0, 100, 4096)
 
     var frequencyArray: DoubleArray? = null
     var deltaFrequency: Double = 0.0
@@ -105,7 +104,8 @@ class SpectrogramFragment() : AbstractInstrumentFragment() {
         }
     }
 
-    override fun getCurrentSamplePosition(): Int = spectrogramView?.currentDequePosition ?: 0
+    override fun getCurrentSamplePosition(): Int = (spectrogramView?.currentDequePosition
+            ?: 0) * userSettings.samplesPerDatapoint
 
     override fun seekToSamplePosition(samplePosition: Int) {
         spectrogramView?.seekTo(samplePosition)

@@ -52,10 +52,9 @@ class RecordActivity : AppCompatActivity(),
 
         if (playbackState == TOUCHED_WHILE_PLAYING) playPause()
 
-        // TODO LESS POSSIBLE NULLPOINTER EXCEPTIONS LESS CHECKS
-        if (instrumentFragment != null && instrumentFragment!!.userSettings != null) {
-            startingPosition = instrumentFragment!!.getCurrentSamplePosition() * instrumentFragment?.userSettings!!.samplesPerDatapoint
-        } else Error("Problem setting up the activity, Fragment or settings")
+
+        startingPosition = instrumentFragment?.getCurrentSamplePosition() ?: 0
+
     }
 
     private var startingPosition: Int = 0
@@ -64,9 +63,8 @@ class RecordActivity : AppCompatActivity(),
     override fun playbackSeekTo(relativeMovement: Float) {
         if (playbackState != RELEASED) {
 
-            //TODO REMOVE NULLABLE SETTINGS
             instrumentFragment?.let {
-                val relativeSamples = (relativeMovement * it.userSettings!!.numberDataPoints * it.userSettings!!.samplesPerDatapoint).toInt()
+                val relativeSamples = (relativeMovement * it.userSettings.numberDataPoints * it.userSettings.samplesPerDatapoint).toInt()
                 targetSamplePosition = startingPosition - relativeSamples
                 it.seekToSamplePosition(targetSamplePosition)
             }

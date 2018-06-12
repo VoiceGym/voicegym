@@ -5,7 +5,7 @@ interface InstrumentFragmentInterface {
 
     fun insertNewAmplitudes(spectrum: DoubleArray)
 
-    var userSettings: UserSettings?  // TODO make not nullable
+    var userSettings: UserSettings
 
     fun getCurrentSamplePosition(): Int
 
