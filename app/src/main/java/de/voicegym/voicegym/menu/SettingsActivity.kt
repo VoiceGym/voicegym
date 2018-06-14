@@ -8,6 +8,8 @@ import android.media.RingtoneManager
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.preference.CheckBoxPreference
+import android.preference.EditTextPreference
 import android.preference.ListPreference
 import android.preference.Preference
 import android.preference.PreferenceActivity
@@ -15,6 +17,7 @@ import android.preference.PreferenceFragment
 import android.preference.PreferenceManager
 import android.preference.RingtonePreference
 import android.text.TextUtils
+import android.util.Log
 import android.view.MenuItem
 import de.voicegym.voicegym.R
 
@@ -84,17 +87,18 @@ class SettingsActivity : AppCompatPreferenceActivity() {
      */
     @TargetApi(Build.VERSION_CODES.HONEYCOMB)
     class GeneralPreferenceFragment : PreferenceFragment() {
+
         override fun onCreate(savedInstanceState: Bundle?) {
             super.onCreate(savedInstanceState)
-            addPreferencesFromResource(R.xml.pref_general)
+            addPreferencesFromResource(R.xml.pref_fourier_instrumentview)
             setHasOptionsMenu(true)
 
-            // Bind the summaries of EditText/List/Dialog/Ringtone preferences
-            // to their values. When their values change, their summaries are
-            // updated to reflect the new value, per the Android Design
-            // guidelines.
-            bindPreferenceSummaryToValue(findPreference("example_text"))
-            bindPreferenceSummaryToValue(findPreference("example_list"))
+            bindPreferenceSummaryToValue(findPreference("fft_binning"))
+            bindPreferenceSummaryToValue(findPreference("fft_blocksize"))
+            bindPreferenceSummaryToValue(findPreference("display_logarithmic"))
+            bindPreferenceSummaryToValue(findPreference("from_frequency"))
+            bindPreferenceSummaryToValue(findPreference("till_frequency"))
+
         }
 
         override fun onOptionsItemSelected(item: MenuItem): Boolean {
@@ -113,6 +117,7 @@ class SettingsActivity : AppCompatPreferenceActivity() {
      */
     @TargetApi(Build.VERSION_CODES.HONEYCOMB)
     class NotificationPreferenceFragment : PreferenceFragment() {
+
         override fun onCreate(savedInstanceState: Bundle?) {
             super.onCreate(savedInstanceState)
             addPreferencesFromResource(R.xml.pref_notification)
@@ -141,6 +146,7 @@ class SettingsActivity : AppCompatPreferenceActivity() {
      */
     @TargetApi(Build.VERSION_CODES.HONEYCOMB)
     class DataSyncPreferenceFragment : PreferenceFragment() {
+
         override fun onCreate(savedInstanceState: Bundle?) {
             super.onCreate(savedInstanceState)
             addPreferencesFromResource(R.xml.pref_data_sync)
@@ -237,10 +243,26 @@ class SettingsActivity : AppCompatPreferenceActivity() {
 
             // Trigger the listener immediately with the preference's
             // current value.
-            sBindPreferenceSummaryToValueListener.onPreferenceChange(preference,
+
+            //Log.i("SettingsActivity", "preference of class" + preference.javaClass.toString())
+            val value = when (preference) {
+                is CheckBoxPreference -> {
                     PreferenceManager
                             .getDefaultSharedPreferences(preference.context)
-                            .getString(preference.key, ""))
+                            .getBoolean(preference.key, false)
+                }
+
+                is EditTextPreference -> {
+                    PreferenceManager
+                            .getDefaultSharedPreferences(preference.context)
+                            .getString(preference.key, "")
+                }
+
+                else                  -> throw Error("Introduced new type of preference, needs to be caught here")
+            }
+
+            sBindPreferenceSummaryToValueListener.onPreferenceChange(preference, value)
+
         }
     }
 }
