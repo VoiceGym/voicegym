@@ -6,12 +6,13 @@ import android.preference.PreferenceManager
 object SettingBundle {
     fun getFourierInstrumentViewSettings(context: Context): FourierInstrumentViewSettings {
         val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context)
-        val blocksize = sharedPreferences.getString("fft_blocksize", "4096").toInt()
+        // collect the values
+        val blockSize = sharedPreferences.getString("fft_blocksize", "4096").toInt()
         val binning = sharedPreferences.getString("fft_binning", "2").toInt()
         val fromFrequency = sharedPreferences.getString("from_frequency", "10").toDouble()
         val tillFrequency = sharedPreferences.getString("till_frequency", "1000").toDouble()
-        //TODO obtain logarithmic option
-        return FourierInstrumentViewSettings(blocksize, binning, fromFrequency, tillFrequency, false)
+        val isLogarithmic = sharedPreferences.getBoolean("display_logarithmic", false)
+        return FourierInstrumentViewSettings(blockSize, binning, fromFrequency, tillFrequency, isLogarithmic)
     }
 }
 

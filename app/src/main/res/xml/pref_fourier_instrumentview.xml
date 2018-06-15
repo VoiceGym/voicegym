@@ -28,11 +28,12 @@
             android:entryValues="@array/list_of_blockSizes"
             android:key="fft_blocksize"
             android:title="FFT Blocksize" />
-        <EditTextPreference
+
+        <ListPreference
             android:defaultValue="2"
+            android:entries="@array/list_of_binning_values"
+            android:entryValues="@array/list_of_binning_values"
             android:key="fft_binning"
-            android:selectAllOnFocus="true"
-            android:singleLine="true"
             android:title="FFT Binning" />
     </PreferenceCategory>
 </PreferenceScreen>
