@@ -8,6 +8,8 @@ import android.support.v4.app.Fragment
 import android.support.v7.app.AppCompatActivity
 import android.view.View
 import de.voicegym.voicegym.R
+import de.voicegym.voicegym.menu.FourierInstrumentViewSettings
+import de.voicegym.voicegym.menu.SettingBundle
 import de.voicegym.voicegym.recordActivity.RecordActivityState.PLAYBACK
 import de.voicegym.voicegym.recordActivity.RecordActivityState.RECORDING
 import de.voicegym.voicegym.recordActivity.RecordActivityState.WAITING
@@ -132,17 +134,13 @@ class RecordActivity : AppCompatActivity(),
     }
 
 
-    // configuration
     val sampleRate = 44100
-    private val samplesPerDatapoint = 8192
-    private val binning = 2
 
-
-    // start class fixed objects
-    private val blockSize = samplesPerDatapoint / binning
     private val inputQueue = ConcurrentLinkedQueue<ShortArray>()
-    private val fourierHelper = FourierHelper(blockSize, binning, samplesPerDatapoint, sampleRate)
 
+    private var fourierHelper = FourierHelper(4096, 2, 8192, sampleRate)
+
+    private var settings: FourierInstrumentViewSettings? = null
 
     private var recorder: RecordHelper? = null
     private var pcmPlayer: PCMPlayer? = null
@@ -155,7 +153,7 @@ class RecordActivity : AppCompatActivity(),
     private val playbackControlFragment = PlaybackModeControlFragment()
 
     init {
-        spectrogramBundle.putDoubleArray("frequencyArray", fourierHelper.frequencyArray())
+        spectrogramBundle.putDoubleArray("frequencyArray", fourierHelper.frequencyArray()) //TODO MOVE that out of here
     }
 
 
@@ -166,13 +164,29 @@ class RecordActivity : AppCompatActivity(),
         setContentView(R.layout.activity_record)
         window.decorView.setBackgroundColor(Color.BLACK)
 
+        settings = SettingBundle.getFourierInstrumentViewSettings(this)
+        fourierHelper = settings?.let { FourierHelper(it.blockSize, it.binning, it.samplesPerDatapoint, sampleRate) } ?: throw Error("Settings were not obtained")
+
         // handle fragments
         switchToRecordControlFragment()
         instrumentFragment = supportFragmentManager.findFragmentById(R.id.spectrogramFragment) as SpectrogramFragment
         instrumentFragment?.let {
             it.arguments = spectrogramBundle
         }
+
+        instrumentFragment?.updateFrequencyArray(fourierHelper.frequencyArray())
+        instrumentFragment?.updateUserSettings(getUserSettings())
         startListening()
+
+
+    }
+
+
+    private fun getUserSettings(): UserSettings {
+        // test obtaining settings
+        return settings?.let { UserSettings(it.fromFrequency, it.tillFrequency, 100, it.samplesPerDatapoint) }
+                ?: throw Error("Couldn't obtain settings")
+
     }
 
 
@@ -194,13 +208,12 @@ class RecordActivity : AppCompatActivity(),
 
     private fun startListening() {
         // start microphone listening
-        recorder = RecordHelper(samplesPerDatapoint)
+        recorder = RecordHelper(settings?.samplesPerDatapoint
+                ?: throw Error("settings not obtained"))
         recorder?.let {
             it.subscribeListener(this)
             it.start()
         }
-        instrumentFragment?.updateUserSettings(UserSettings(10.0, 1000.0, 100, samplesPerDatapoint))
-
     }
 
     private fun stopListeningAndFreeRessource() {
@@ -244,7 +257,7 @@ class RecordActivity : AppCompatActivity(),
         instrumentFragment?.seekToSamplePosition(sampleNumber)
     }
 
-    override fun canHandleBufferSize(bufferSize: Int): Boolean = (samplesPerDatapoint == bufferSize)
+    override fun canHandleBufferSize(bufferSize: Int): Boolean = (settings?.samplesPerDatapoint == bufferSize)
 
     override fun onBufferReady(data: ShortArray) {
         inputQueue.add(data)

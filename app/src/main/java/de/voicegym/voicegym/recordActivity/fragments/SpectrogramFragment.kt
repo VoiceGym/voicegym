@@ -14,6 +14,9 @@ import org.apache.commons.math3.analysis.interpolation.LinearInterpolator
 
 
 class SpectrogramFragment() : AbstractInstrumentFragment() {
+    override fun updateFrequencyArray(frequencies: DoubleArray) {
+        frequencyArray = frequencies
+    }
 
     override var userSettings = UserSettings(10.0, 1000.0, 100, 4096)
 
@@ -32,14 +35,6 @@ class SpectrogramFragment() : AbstractInstrumentFragment() {
         if (frequencyArray != null) onRangeChanged()
     }
 
-    override fun onActivityCreated(savedInstanceState: Bundle?) {
-        super.onActivityCreated(savedInstanceState)
-
-        frequencyArray = arguments?.getDoubleArray("frequencyArray")
-        if (frequencyArray == null) throw Error("Didn't pass required arguments to fragments, frequencyArray missing")
-
-        onRangeChanged()
-    }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         // Inflate the layout for this fragment
@@ -51,6 +46,15 @@ class SpectrogramFragment() : AbstractInstrumentFragment() {
             it.invalidate()
         }
         return view
+    }
+
+
+    override fun onActivityCreated(savedInstanceState: Bundle?) {
+        super.onActivityCreated(savedInstanceState)
+        if (frequencyArray == null) throw Error("Didn't pass required arguments to fragments, frequencyArray missing")
+
+        // all settings should have been after execution of activity onCreate
+        onRangeChanged()
     }
 
     override fun insertNewAmplitudes(spectrum: DoubleArray) {

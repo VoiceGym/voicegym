@@ -3,6 +3,8 @@ package de.voicegym.voicegym.recordActivity.fragments
 interface InstrumentFragmentInterface {
     fun updateUserSettings(userSettings: UserSettings)
 
+    fun updateFrequencyArray(frequencies: DoubleArray)
+
     fun insertNewAmplitudes(spectrum: DoubleArray)
 
     var userSettings: UserSettings
