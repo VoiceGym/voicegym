@@ -98,5 +98,5 @@
 
     <string name="permission_alert_dialog_title">Record Audio</string>
     <string name="permission_alert_dialog_text">We want to analyze your voice, and need your permission to record audio for that in the next dialog</string>
-
+    <string name="delete">DELETE</string>
 </resources>

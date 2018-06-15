@@ -1,29 +1,66 @@
-package de.voicegym.voicegym.menu
+package de.voicegym.voicegym.recordings
 
 import android.content.Context
+import android.graphics.Color
 import android.os.Bundle
+import android.support.design.widget.Snackbar
 import android.support.v4.app.Fragment
+import android.support.v7.widget.DefaultItemAnimator
 import android.support.v7.widget.DividerItemDecoration
 import android.support.v7.widget.GridLayoutManager
 import android.support.v7.widget.LinearLayoutManager
 import android.support.v7.widget.RecyclerView
+import android.support.v7.widget.helper.ItemTouchHelper
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import de.voicegym.voicegym.R
 import de.voicegym.voicegym.model.AppDatabase
 import de.voicegym.voicegym.model.Recording
+import kotlinx.android.synthetic.main.fragment_recordings.recordingsBackground
+import kotlinx.android.synthetic.main.fragment_recordings_list.recordingsList
 import kotlinx.coroutines.experimental.CommonPool
 import kotlinx.coroutines.experimental.android.UI
 import kotlinx.coroutines.experimental.async
 import kotlinx.coroutines.experimental.launch
+import org.jetbrains.anko.backgroundColor
 
 /**
  * A fragment representing a list of Items.
  * Activities containing this fragment MUST implement the
  * [RecordingsFragment.OnListFragmentInteractionListener] interface.
  */
-class RecordingsFragment : Fragment() {
+class RecordingsFragment : Fragment(),
+        RecyclerItemTouchHelperListener {
+
+    val recordings = mutableListOf<Recording>()
+    lateinit var  adapter: RecordingsRecyclerViewAdapter
+
+    override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int, position: Int) {
+        if (viewHolder is RecordingsRecyclerViewAdapter.ViewHolder) {
+            // get the removed item name to display it in snack bar
+            val name = recordings[viewHolder.getAdapterPosition()].fileName
+
+            // backup of removed item for undo purpose
+            val deletedItem = recordings.get(viewHolder.getAdapterPosition());
+            val deletedIndex = viewHolder.getAdapterPosition();
+
+            // remove the item from recycler view
+            adapter.removeItem(viewHolder.getAdapterPosition());
+
+//            // showing snack bar with Undo option
+            val snackbar = Snackbar
+                    .make(recordingsList, name + " removed from cart!", Snackbar.LENGTH_LONG).show()
+//            snackbar.setAction("UNDO", view ->
+//
+//                    // undo is selected, restore the deleted item
+//                    adapter.restoreItem(deletedItem, deletedIndex);
+//
+//            )
+//            snackbar.setActionTextColor(Color.YELLOW);
+//            snackbar.show();
+        }
+    }
 
     // TODO: Customize parameters
     private var columnCount = 1
@@ -46,22 +83,30 @@ class RecordingsFragment : Fragment() {
 
         // Set the adapter
         if (view is RecyclerView) {
-            with(view) {
-                layoutManager = when {
-                    columnCount <= 1 -> LinearLayoutManager(context)
-                    else -> GridLayoutManager(context, columnCount)
-                }
-                addItemDecoration(DividerItemDecoration(context,DividerItemDecoration.VERTICAL))
-                adapter = RecordingsRecyclerViewAdapter(emptyList(), listener)
-                launch(UI) {
-                    val recordings = async(CommonPool) {
-                        db.recordingDao().getAll()
-                    }.await()
-                    adapter = RecordingsRecyclerViewAdapter(recordings.sortedByDescending { it.createdAt }, listener)
-                }
+            view.layoutManager = when {
+                columnCount <= 1 -> LinearLayoutManager(context)
+                else -> GridLayoutManager(context, columnCount)
             }
+            view.addItemDecoration(DividerItemDecoration(context, DividerItemDecoration.VERTICAL))
+            val launch = launch(UI) {
+                val dbRecordings = async(CommonPool) {
+                    db.recordingDao().getAll()
+                }.await()
+                recordings.addAll(dbRecordings)
+                view.adapter = RecordingsRecyclerViewAdapter(recordings.sortedByDescending { it.createdAt }.toMutableList(), listener)
+                adapter = view.adapter as RecordingsRecyclerViewAdapter
+            }
+            view.itemAnimator = DefaultItemAnimator()
+            val itemTouchHelperCallback = RecyclerItemTouchHelper(0, ItemTouchHelper.LEFT, this)
+            ItemTouchHelper(itemTouchHelperCallback).attachToRecyclerView(view)
+
         }
+
         return view
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
     }
 
     override fun onAttach(context: Context) {
