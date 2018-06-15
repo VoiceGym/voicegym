@@ -13,7 +13,8 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:screenOrientation="sensorPortrait"
         android:supportsRtl="true"
-        android:theme="@style/AppTheme">
+        android:theme="@style/AppTheme"
+        android:name="de.voicegym.voicegym.App">
         <activity
             android:name=".menu.NavigationDrawerActivity"
             android:label="@string/title_activity_navigation_drawer"
@@ -32,7 +33,7 @@
             android:theme="@style/FullscreenNoActionbar" />
         <activity
             android:name=".menu.SettingsActivity"
-            android:label="@string/title_activity_settings"></activity>
+            android:label="@string/title_activity_settings" />
     </application>
 
 </manifest>

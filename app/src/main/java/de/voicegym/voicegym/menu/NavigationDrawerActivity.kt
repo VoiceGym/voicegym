@@ -21,7 +21,7 @@ import de.voicegym.voicegym.R
 import de.voicegym.voicegym.recordActivity.RecordActivity
 import de.voicegym.voicegym.util.SwitchToRecordingViewListener
 import de.voicegym.voicegym.menu.dummy.ExerciseContent
-import de.voicegym.voicegym.menu.dummy.RecordingsContent
+import de.voicegym.voicegym.model.Recording
 import kotlinx.android.synthetic.main.activity_navigation_drawer.drawer_layout
 import kotlinx.android.synthetic.main.activity_navigation_drawer.nav_view
 import kotlinx.android.synthetic.main.app_bar_navigation_drawer.toolbar
@@ -174,7 +174,7 @@ class NavigationDrawerActivity : AppCompatActivity(),
         Log.d("foo", "bar")
     }
 
-    override fun onListFragmentInteraction(item: RecordingsContent.RecordingItem?) {
+    override fun onListFragmentInteraction(item: Recording) {
         Log.d("foo", "bar")
     }
 

@@ -3,6 +3,7 @@ package de.voicegym.voicegym.menu
 import android.content.Context
 import android.os.Bundle
 import android.support.v4.app.Fragment
+import android.support.v7.widget.DividerItemDecoration
 import android.support.v7.widget.GridLayoutManager
 import android.support.v7.widget.LinearLayoutManager
 import android.support.v7.widget.RecyclerView
@@ -10,9 +11,12 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import de.voicegym.voicegym.R
-
-import de.voicegym.voicegym.menu.dummy.RecordingsContent
-import de.voicegym.voicegym.menu.dummy.RecordingsContent.RecordingItem
+import de.voicegym.voicegym.model.AppDatabase
+import de.voicegym.voicegym.model.Recording
+import kotlinx.coroutines.experimental.CommonPool
+import kotlinx.coroutines.experimental.android.UI
+import kotlinx.coroutines.experimental.async
+import kotlinx.coroutines.experimental.launch
 
 /**
  * A fragment representing a list of Items.
@@ -25,6 +29,7 @@ class RecordingsFragment : Fragment() {
     private var columnCount = 1
 
     private var listener: OnListFragmentInteractionListener? = null
+    private lateinit var db: AppDatabase
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -32,6 +37,7 @@ class RecordingsFragment : Fragment() {
         arguments?.let {
             columnCount = it.getInt(ARG_COLUMN_COUNT)
         }
+
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
@@ -45,7 +51,14 @@ class RecordingsFragment : Fragment() {
                     columnCount <= 1 -> LinearLayoutManager(context)
                     else -> GridLayoutManager(context, columnCount)
                 }
-                adapter = RecordingsRecyclerViewAdapter(RecordingsContent.ITEMS, listener)
+                addItemDecoration(DividerItemDecoration(context,DividerItemDecoration.VERTICAL))
+                adapter = RecordingsRecyclerViewAdapter(emptyList(), listener)
+                launch(UI) {
+                    val recordings = async(CommonPool) {
+                        db.recordingDao().getAll()
+                    }.await()
+                    adapter = RecordingsRecyclerViewAdapter(recordings.sortedByDescending { it.createdAt }, listener)
+                }
             }
         }
         return view
@@ -53,6 +66,8 @@ class RecordingsFragment : Fragment() {
 
     override fun onAttach(context: Context) {
         super.onAttach(context)
+        db = AppDatabase.getInstance(context)!!
+
         if (context is OnListFragmentInteractionListener) {
             listener = context
         } else {
@@ -78,7 +93,7 @@ class RecordingsFragment : Fragment() {
      */
     interface OnListFragmentInteractionListener {
         // TODO: Update argument type and name
-        fun onListFragmentInteraction(item: RecordingItem?)
+        fun onListFragmentInteraction(item: Recording)
     }
 
     companion object {

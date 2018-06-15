@@ -1,0 +1,15 @@
+{
+  "data" :[
+    {"time": "10s", "created" : "25.05.2018 - 9:13", "name" : "Aufnahme 1"},
+    {"time": "45s", "created" : "21.05.2018 - 12:33", "name" : "Aufnahme 2"},
+    {"time": "1m 5s", "created" : "18.05.2018 - 15:56", "name" : "Aufnahme 3"},
+
+    {"time": "21s", "created" : "25.05.2018 - 9:13", "name" : "Aufnahme 4"},
+    {"time": 4, "created" : "21.05.2018 - 12:33", "name" : "Aufnahme 5"},
+    {"time": 5, "created" : "18.05.2018 - 15:56", "name" : "Aufnahme 6"},
+
+    {"time": 7, "created" : "25.05.2018 - 9:13", "name" : "Aufnahme 7"},
+    {"time": 8, "created" : "21.05.2018 - 12:33", "name" : "Aufnahme 8"},
+    {"time": 9, "created" : "18.05.2018 - 15:56", "name" : "Aufnahme 9"}
+  ]
+}
