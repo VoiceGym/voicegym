@@ -10,6 +10,7 @@ import android.view.View
 import de.voicegym.voicegym.R
 import de.voicegym.voicegym.menu.FourierInstrumentViewSettings
 import de.voicegym.voicegym.menu.SettingBundle
+import de.voicegym.voicegym.menu.SettingBundle.sampleRate
 import de.voicegym.voicegym.recordActivity.RecordActivityState.PLAYBACK
 import de.voicegym.voicegym.recordActivity.RecordActivityState.RECORDING
 import de.voicegym.voicegym.recordActivity.RecordActivityState.WAITING
@@ -22,7 +23,6 @@ import de.voicegym.voicegym.recordActivity.fragments.PlaybackModeControlListener
 import de.voicegym.voicegym.recordActivity.fragments.RecordModeControlFragment
 import de.voicegym.voicegym.recordActivity.fragments.RecordModeControlListener
 import de.voicegym.voicegym.recordActivity.fragments.SpectrogramFragment
-import de.voicegym.voicegym.recordActivity.fragments.UserSettings
 import de.voicegym.voicegym.util.RecordBufferListener
 import de.voicegym.voicegym.util.audio.PCMPlayer
 import de.voicegym.voicegym.util.audio.PCMPlayerListener
@@ -66,7 +66,7 @@ class RecordActivity : AppCompatActivity(),
         if (playbackState != RELEASED) {
 
             instrumentFragment?.let {
-                val relativeSamples = (relativeMovement * it.userSettings.numberDataPoints * it.userSettings.samplesPerDatapoint).toInt()
+                val relativeSamples = (relativeMovement * it.settings.displayedDatapoints * it.settings.samplesPerDatapoint).toInt()
                 targetSamplePosition = startingPosition - relativeSamples
                 it.seekToSamplePosition(targetSamplePosition)
             }
@@ -134,8 +134,6 @@ class RecordActivity : AppCompatActivity(),
     }
 
 
-    val sampleRate = 44100
-
     private val inputQueue = ConcurrentLinkedQueue<ShortArray>()
 
     private var fourierHelper = FourierHelper(4096, 2, 8192, sampleRate)
@@ -146,16 +144,9 @@ class RecordActivity : AppCompatActivity(),
     private var pcmPlayer: PCMPlayer? = null
     private var recorderState: RecordActivityState = WAITING
 
-    private val spectrogramBundle = Bundle()
-
     private var instrumentFragment: AbstractInstrumentFragment? = null
     private val recorderControlFragment = RecordModeControlFragment()
     private val playbackControlFragment = PlaybackModeControlFragment()
-
-    init {
-        spectrogramBundle.putDoubleArray("frequencyArray", fourierHelper.frequencyArray()) //TODO MOVE that out of here
-    }
-
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -170,25 +161,14 @@ class RecordActivity : AppCompatActivity(),
         // handle fragments
         switchToRecordControlFragment()
         instrumentFragment = supportFragmentManager.findFragmentById(R.id.spectrogramFragment) as SpectrogramFragment
-        instrumentFragment?.let {
-            it.arguments = spectrogramBundle
-        }
-
         instrumentFragment?.updateFrequencyArray(fourierHelper.frequencyArray())
-        instrumentFragment?.updateUserSettings(getUserSettings())
+        settings?.let {
+            instrumentFragment?.updateInstrumentViewSettings(it)
+        }
         startListening()
 
 
     }
-
-
-    private fun getUserSettings(): UserSettings {
-        // test obtaining settings
-        return settings?.let { UserSettings(it.fromFrequency, it.tillFrequency, 100, it.samplesPerDatapoint) }
-                ?: throw Error("Couldn't obtain settings")
-
-    }
-
 
     override fun onBackPressed() {
         when (recorderState) {

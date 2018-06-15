@@ -1,13 +1,15 @@
 package de.voicegym.voicegym.recordActivity.fragments
 
+import de.voicegym.voicegym.menu.FourierInstrumentViewSettings
+
 interface InstrumentFragmentInterface {
-    fun updateUserSettings(userSettings: UserSettings)
+    fun updateInstrumentViewSettings(settings: FourierInstrumentViewSettings)
 
     fun updateFrequencyArray(frequencies: DoubleArray)
 
     fun insertNewAmplitudes(spectrum: DoubleArray)
 
-    var userSettings: UserSettings
+    var settings: FourierInstrumentViewSettings
 
     fun getCurrentSamplePosition(): Int
 
