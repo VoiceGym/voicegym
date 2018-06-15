@@ -182,7 +182,7 @@ class SettingsActivity : AppCompatPreferenceActivity() {
                     // Set the summary to reflect the new value.
                     preference.setSummary(when {
                         index >= 0 -> preference.entries[index]
-                        else       -> throw Error("SettingsActivity.kt: List indices smaller than 0 not allowed")
+                        else       -> "4096"
                     })
                 }
 
@@ -219,6 +219,10 @@ class SettingsActivity : AppCompatPreferenceActivity() {
                     .getDefaultSharedPreferences(preference.context)
 
             val value = when (preference) {
+                is ListPreference     -> {
+                    sharedPreferences.getString(preference.key, "")
+                }
+
                 is CheckBoxPreference -> {
                     sharedPreferences.getBoolean(preference.key, false)
                 }

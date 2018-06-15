@@ -22,11 +22,11 @@
     </PreferenceCategory>
 
     <PreferenceCategory android:title="Fourier Transformation Settings">
-        <EditTextPreference
-            android:defaultValue="8096"
+        <ListPreference
+            android:defaultValue="4096"
+            android:entries="@array/list_of_blockSizes"
+            android:entryValues="@array/list_of_blockSizes"
             android:key="fft_blocksize"
-            android:selectAllOnFocus="true"
-            android:singleLine="true"
             android:title="FFT Blocksize" />
         <EditTextPreference
             android:defaultValue="2"
