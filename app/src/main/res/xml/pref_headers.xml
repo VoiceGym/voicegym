@@ -5,7 +5,7 @@
     <header
         android:fragment="de.voicegym.voicegym.menu.SettingsActivity$GeneralPreferenceFragment"
         android:icon="@drawable/ic_info_black_24dp"
-        android:title="@string/pref_header_general" />
+        android:title="Instrument and Fourier Transform" />
 
     <header
         android:fragment="de.voicegym.voicegym.menu.SettingsActivity$NotificationPreferenceFragment"
