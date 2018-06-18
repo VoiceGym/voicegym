@@ -22,6 +22,7 @@ import de.voicegym.voicegym.recordActivity.RecordActivity
 import de.voicegym.voicegym.util.SwitchToRecordingViewListener
 import de.voicegym.voicegym.menu.dummy.ExerciseContent
 import de.voicegym.voicegym.model.Recording
+import de.voicegym.voicegym.recordings.RecordingsFragment
 import kotlinx.android.synthetic.main.activity_navigation_drawer.drawer_layout
 import kotlinx.android.synthetic.main.activity_navigation_drawer.nav_view
 import kotlinx.android.synthetic.main.app_bar_navigation_drawer.toolbar
