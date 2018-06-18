@@ -2,6 +2,7 @@ package de.voicegym.voicegym.recordActivity
 
 import android.content.pm.ActivityInfo
 import android.graphics.Color
+import android.graphics.drawable.ColorDrawable
 import android.os.Bundle
 import android.os.Handler
 import android.support.v4.app.Fragment
@@ -92,7 +93,10 @@ class RecordActivity : AppCompatActivity(),
     }
 
     override fun rate() {
-
+        var rating = 0
+        val ratingDialog = RatingDialog(this);
+        ratingDialog.window.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+        ratingDialog.show();
     }
 
     override fun saveToSdCard() {
