@@ -5,6 +5,7 @@
 
         <EditTextPreference
             android:defaultValue="10"
+            android:inputType="number"
             android:key="from_frequency"
             android:selectAllOnFocus="true"
             android:singleLine="true"
@@ -12,6 +13,7 @@
 
         <EditTextPreference
             android:defaultValue="1000"
+            android:inputType="number"
             android:key="till_frequency"
             android:selectAllOnFocus="true"
             android:singleLine="true"
@@ -19,6 +21,7 @@
 
         <EditTextPreference
             android:defaultValue="100"
+            android:inputType="number"
             android:key="display_sample_numbers"
             android:selectAllOnFocus="true"
             android:singleLine="true"
