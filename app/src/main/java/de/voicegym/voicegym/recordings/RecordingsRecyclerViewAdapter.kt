@@ -54,6 +54,14 @@ class RecordingsRecyclerViewAdapter(
 
     override fun getItemCount(): Int = values.size
 
+    fun removeItem(position: Int) {
+        values.removeAt(position)
+        // notify the item removed by position
+        // to perform recycler view delete animations
+        // NOTE: don't call notifyDataSetChanged()
+        notifyItemRemoved(position)
+    }
+
     class ViewHolder(override val containerView: View) : RecyclerView.ViewHolder(containerView), LayoutContainer {
 
         fun bindRecording(recording: Recording) {

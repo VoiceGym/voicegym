@@ -17,13 +17,11 @@ import android.view.ViewGroup
 import de.voicegym.voicegym.R
 import de.voicegym.voicegym.model.AppDatabase
 import de.voicegym.voicegym.model.Recording
-import kotlinx.android.synthetic.main.fragment_recordings.recordingsBackground
 import kotlinx.android.synthetic.main.fragment_recordings_list.recordingsList
 import kotlinx.coroutines.experimental.CommonPool
 import kotlinx.coroutines.experimental.android.UI
 import kotlinx.coroutines.experimental.async
 import kotlinx.coroutines.experimental.launch
-import org.jetbrains.anko.backgroundColor
 
 /**
  * A fragment representing a list of Items.
