@@ -9,6 +9,7 @@
             android:selectAllOnFocus="true"
             android:singleLine="true"
             android:title="from Frequency" />
+
         <EditTextPreference
             android:defaultValue="1000"
             android:key="till_frequency"

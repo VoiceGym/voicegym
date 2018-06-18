@@ -19,8 +19,8 @@ object SettingBundle {
         val fromFrequency = sharedPreferences.getString("from_frequency", "10").toDouble()
         val tillFrequency = sharedPreferences.getString("till_frequency", "1000").toDouble()
         val isLogarithmic = sharedPreferences.getBoolean("display_logarithmic", false)
-        //TODO obtain user defined value of displayedDatapoints
-        return FourierInstrumentViewSettings(blockSize, binning, fromFrequency, tillFrequency, 100, isLogarithmic)
+        val displayedDatapoints = sharedPreferences.getString("display_sample_numbers", "100").toInt()
+        return FourierInstrumentViewSettings(blockSize, binning, fromFrequency, tillFrequency, displayedDatapoints, isLogarithmic)
     }
 }
 

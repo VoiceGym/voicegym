@@ -93,6 +93,7 @@ class SettingsActivity : AppCompatPreferenceActivity() {
             bindPreferenceSummaryToValue(findPreference("display_logarithmic"))
             bindPreferenceSummaryToValue(findPreference("from_frequency"))
             bindPreferenceSummaryToValue(findPreference("till_frequency"))
+            bindPreferenceSummaryToValue(findPreference("display_sample_numbers"))
 
         }
 
@@ -219,6 +220,7 @@ class SettingsActivity : AppCompatPreferenceActivity() {
                     .getDefaultSharedPreferences(preference.context)
 
             val value = when (preference) {
+
                 is ListPreference     -> {
                     sharedPreferences.getString(preference.key, "")
                 }
@@ -231,7 +233,7 @@ class SettingsActivity : AppCompatPreferenceActivity() {
                     sharedPreferences.getString(preference.key, "")
                 }
 
-                else                  -> throw Error("Introduced new type of preference, needs to be caught here")
+                else                  -> throw Error("Introduced new type of preference ${preference.javaClass.toString()}, needs to be caught here")
             }
 
             sBindPreferenceSummaryToValueListener.onPreferenceChange(preference, value)
