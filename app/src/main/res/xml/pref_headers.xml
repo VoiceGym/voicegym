@@ -3,17 +3,17 @@
     <!-- These settings headers are only used on tablets. -->
 
     <header
-        android:fragment="de.voicegym.voicegym.menu.SettingsActivity$GeneralPreferenceFragment"
+        android:fragment="de.voicegym.voicegym.menu.settings.SettingsActivity$GeneralPreferenceFragment"
         android:icon="@drawable/ic_info_black_24dp"
         android:title="Instrument and Fourier Transform" />
 
     <header
-        android:fragment="de.voicegym.voicegym.menu.SettingsActivity$NotificationPreferenceFragment"
+        android:fragment="de.voicegym.voicegym.menu.settings.SettingsActivity$NotificationPreferenceFragment"
         android:icon="@drawable/ic_notifications_black_24dp"
         android:title="@string/pref_header_notifications" />
 
     <header
-        android:fragment="de.voicegym.voicegym.menu.SettingsActivity$DataSyncPreferenceFragment"
+        android:fragment="de.voicegym.voicegym.menu.settings.SettingsActivity$DataSyncPreferenceFragment"
         android:icon="@drawable/ic_sync_black_24dp"
         android:title="@string/pref_header_data_sync" />
 

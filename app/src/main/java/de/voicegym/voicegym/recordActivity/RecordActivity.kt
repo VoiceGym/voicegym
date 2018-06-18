@@ -8,9 +8,9 @@ import android.support.v4.app.Fragment
 import android.support.v7.app.AppCompatActivity
 import android.view.View
 import de.voicegym.voicegym.R
-import de.voicegym.voicegym.menu.FourierInstrumentViewSettings
-import de.voicegym.voicegym.menu.SettingBundle
-import de.voicegym.voicegym.menu.SettingBundle.sampleRate
+import de.voicegym.voicegym.menu.settings.FourierInstrumentViewSettings
+import de.voicegym.voicegym.menu.settings.SettingBundle
+import de.voicegym.voicegym.menu.settings.SettingBundle.sampleRate
 import de.voicegym.voicegym.recordActivity.RecordActivityState.PLAYBACK
 import de.voicegym.voicegym.recordActivity.RecordActivityState.RECORDING
 import de.voicegym.voicegym.recordActivity.RecordActivityState.WAITING

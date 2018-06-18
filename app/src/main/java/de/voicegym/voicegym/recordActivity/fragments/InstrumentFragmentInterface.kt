@@ -1,6 +1,6 @@
 package de.voicegym.voicegym.recordActivity.fragments
 
-import de.voicegym.voicegym.menu.FourierInstrumentViewSettings
+import de.voicegym.voicegym.menu.settings.FourierInstrumentViewSettings
 
 interface InstrumentFragmentInterface {
     fun updateInstrumentViewSettings(settings: FourierInstrumentViewSettings)
