@@ -14,43 +14,27 @@ import de.voicegym.voicegym.util.audio.getDezibelFromAmplitude
 import org.apache.commons.math3.analysis.interpolation.LinearInterpolator
 
 
-class SpectrogramFragment() : AbstractInstrumentFragment() {
-
-
-    override fun updateFrequencyArray(frequencies: DoubleArray) {
-        frequencyArray = frequencies
-    }
-
+class SpectrogramFragment : AbstractInstrumentFragment() {
 
     override var settings = FourierInstrumentViewSettings(4096, 2, 10.0, 1000.0, 100, false)
 
-    private var frequencyArray: DoubleArray? = null
-    var deltaFrequency: Double = 0.0
-    private var internalSpectrogramSettings: RawSpectrogramSettings? = null
-
+    var deltaFrequency = 0.0
+    lateinit var spectrogramView: SpectrogramView
     private val interpolator = LinearInterpolator()
-
-    var spectrogramView: SpectrogramView? = null
-
-    override fun updateInstrumentViewSettings(settings: FourierInstrumentViewSettings) {
-        this.settings = settings
-        spectrogramView?.xDataPoints = settings.displayedDatapoints
-        spectrogramView?.samplesPerDataPoint = settings.samplesPerDatapoint
-        if (frequencyArray != null) onRangeChanged()
-    }
+    private var frequencyArray: DoubleArray? = null
+    private var internalSpectrogramSettings: RawSpectrogramSettings? = null
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         // Inflate the layout for this fragment
         val view = inflater.inflate(R.layout.fragment_spectrogram, container, false)
 
         spectrogramView = view.findViewById(R.id.spectrogramView)
-        spectrogramView?.let {
+        spectrogramView.let {
             it.xDataPoints = settings.displayedDatapoints
             it.invalidate()
         }
         return view
     }
-
 
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
@@ -60,9 +44,20 @@ class SpectrogramFragment() : AbstractInstrumentFragment() {
         onRangeChanged()
     }
 
+    override fun updateFrequencyArray(frequencies: DoubleArray) {
+        frequencyArray = frequencies
+    }
+
+    override fun updateInstrumentViewSettings(settings: FourierInstrumentViewSettings) {
+        this.settings = settings
+        spectrogramView.xDataPoints = settings.displayedDatapoints
+        spectrogramView.samplesPerDataPoint = settings.samplesPerDatapoint
+        if (frequencyArray != null) onRangeChanged()
+    }
+
     override fun insertNewAmplitudes(spectrum: DoubleArray) {
-        spectrogramView?.let {
-            val colors = calculateColorArrayForSpectrum(spectrum, normalizationConstant = 55.0)
+        spectrogramView.let {
+            val colors = calculateColorArrayForSpectrum(spectrum, NORMALIZATION_CONSTANT)
             it.insertNewDataPoint(colors)
             it.invalidate()
         }
@@ -71,14 +66,11 @@ class SpectrogramFragment() : AbstractInstrumentFragment() {
 
     private fun calculateColorArrayForSpectrum(amplitude: DoubleArray, normalizationConstant: Double): IntArray {
         var colors: IntArray? = null
-        if (spectrogramView == null) {
-            throw Error("Spectrogram not correctly initialized")
-        }
 
         internalSpectrogramSettings?.let {
             val interpolatingFunction = interpolator.interpolate(it.rangeFrequencyArray, amplitude.copyOfRange(it.copyIsFromIndex, it.copyIsToIndex))
 
-            colors = IntArray(spectrogramView!!.getDrawAreaHeight().toInt())
+            colors = IntArray(spectrogramView.getDrawAreaHeight().toInt())
             colors?.let {
                 deltaFrequency = (settings.tillFrequency - settings.fromFrequency) / it.size
                 for (i in 0 until it.size) {
@@ -111,16 +103,16 @@ class SpectrogramFragment() : AbstractInstrumentFragment() {
         }
     }
 
-    override fun getCurrentSamplePosition(): Int = (spectrogramView?.currentDequePosition
-            ?: 0) * settings.samplesPerDatapoint
+    override fun getCurrentSamplePosition(): Int =
+            spectrogramView.currentDequePosition * settings.samplesPerDatapoint
 
     override fun seekToSamplePosition(samplePosition: Int) {
-        spectrogramView?.seekTo(samplePosition)
-        spectrogramView?.invalidate()
+        spectrogramView.seekTo(samplePosition)
+        spectrogramView.invalidate()
     }
 
     override fun resetFragment() {
-        spectrogramView?.let {
+        spectrogramView.let {
             it.clearBitmapAndBuffer()
             it.spectrogramViewState = LIVE_DISPLAY
             it.invalidate()
@@ -128,11 +120,11 @@ class SpectrogramFragment() : AbstractInstrumentFragment() {
     }
 
     override fun startRecording() {
-        spectrogramView?.spectrogramViewState = RECORDING_DATA
+        spectrogramView.spectrogramViewState = RECORDING_DATA
     }
 
     override fun doneRecordingSwitchToPlayback() {
-        spectrogramView?.let {
+        spectrogramView.let {
             it.rewindDequesToStart()
             it.clearBitmapAndBuffer()
             it.forwardWindDequesToEnd()
@@ -141,6 +133,10 @@ class SpectrogramFragment() : AbstractInstrumentFragment() {
         }
     }
 
-    override fun getInstrumentState(): InstrumentState = spectrogramView?.spectrogramViewState
-            ?: throw Error("Fragment not correctly initialized, no spectrogramview present")
+    override fun getInstrumentState(): InstrumentState =
+            spectrogramView.spectrogramViewState
+
+    companion object {
+        const val NORMALIZATION_CONSTANT = 55.0
+    }
 }

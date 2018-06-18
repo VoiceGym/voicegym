@@ -9,8 +9,7 @@ import android.support.v7.app.AppCompatActivity
 import android.view.View
 import de.voicegym.voicegym.R
 import de.voicegym.voicegym.menu.settings.FourierInstrumentViewSettings
-import de.voicegym.voicegym.menu.settings.SettingBundle
-import de.voicegym.voicegym.menu.settings.SettingBundle.sampleRate
+import de.voicegym.voicegym.menu.settings.SettingsBundle
 import de.voicegym.voicegym.recordActivity.RecordActivityState.PLAYBACK
 import de.voicegym.voicegym.recordActivity.RecordActivityState.RECORDING
 import de.voicegym.voicegym.recordActivity.RecordActivityState.WAITING
@@ -136,9 +135,8 @@ class RecordActivity : AppCompatActivity(),
 
     private val inputQueue = ConcurrentLinkedQueue<ShortArray>()
 
-    private var fourierHelper = FourierHelper(4096, 2, 8192, sampleRate)
-
-    private var settings: FourierInstrumentViewSettings? = null
+    private lateinit var fourierHelper : FourierHelper
+    private lateinit var settings: FourierInstrumentViewSettings
 
     private var recorder: RecordHelper? = null
     private var pcmPlayer: PCMPlayer? = null
@@ -155,16 +153,20 @@ class RecordActivity : AppCompatActivity(),
         setContentView(R.layout.activity_record)
         window.decorView.setBackgroundColor(Color.BLACK)
 
-        settings = SettingBundle.getFourierInstrumentViewSettings(this)
-        fourierHelper = settings?.let { FourierHelper(it.blockSize, it.binning, it.samplesPerDatapoint, sampleRate) } ?: throw Error("Settings were not obtained")
+        // Todo inject fourier settings
+        settings = SettingsBundle.getFourierInstrumentViewSettings(this)
+        fourierHelper = FourierHelper(
+                    settings.blockSize,
+                    settings.binning,
+                    settings.samplesPerDatapoint,
+                    SettingsBundle.sampleRate)
 
         // handle fragments
         switchToRecordControlFragment()
         instrumentFragment = supportFragmentManager.findFragmentById(R.id.spectrogramFragment) as SpectrogramFragment
         instrumentFragment?.updateFrequencyArray(fourierHelper.frequencyArray())
-        settings?.let {
-            instrumentFragment?.updateInstrumentViewSettings(it)
-        }
+        instrumentFragment?.updateInstrumentViewSettings(settings)
+
         startListening()
 
 
@@ -188,8 +190,7 @@ class RecordActivity : AppCompatActivity(),
 
     private fun startListening() {
         // start microphone listening
-        recorder = RecordHelper(settings?.samplesPerDatapoint
-                ?: throw Error("settings not obtained"))
+        recorder = RecordHelper(settings.samplesPerDatapoint)
         recorder?.let {
             it.subscribeListener(this)
             it.start()
@@ -204,12 +205,11 @@ class RecordActivity : AppCompatActivity(),
         recorder = null
     }
 
-
     private var pcmStorage: PCMStorage? = null
 
     private fun storePCMSamples() {
         recorderState = RECORDING
-        pcmStorage = PCMStorage(sampleRate)
+        pcmStorage = PCMStorage(SettingsBundle.sampleRate)
         recorder?.subscribeListener(pcmStorage!!)
         instrumentFragment?.startRecording()
     }
@@ -237,7 +237,7 @@ class RecordActivity : AppCompatActivity(),
         instrumentFragment?.seekToSamplePosition(sampleNumber)
     }
 
-    override fun canHandleBufferSize(bufferSize: Int): Boolean = (settings?.samplesPerDatapoint == bufferSize)
+    override fun canHandleBufferSize(bufferSize: Int): Boolean = (settings.samplesPerDatapoint == bufferSize)
 
     override fun onBufferReady(data: ShortArray) {
         inputQueue.add(data)
