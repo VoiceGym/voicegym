@@ -44,44 +44,259 @@ class RecordActivity : AppCompatActivity(),
         PlaybackModeControlListener,
         PCMPlayerListener {
 
-    // control variable to remember whether the player was active before touching the screen
-    private var playbackState = RELEASED
+    /**
+     * reset the activity and start over from the beginning
+     */
+    private fun restart() {
+        // Clean up
+        instrumentFragment?.resetFragment()
+        pcmStorage?.let { recorder?.unSubscribeListener(it) }
+        pcmStorage = null
+        pcmPlayer?.unSubscribeListener(this)
+        pcmPlayer?.destroy()
+        pcmPlayer = null
+        stopListeningAndFreeRessource()
+        // Start up
+        recordActivityState = WAITING
+        startListening()
+        switchToRecordControlFragment()
+    }
 
-    override fun playbackTouched() {
-        playbackState = when {
-            pcmPlayer?.playing == true -> TOUCHED_WHILE_PLAYING
-            else                       -> TOUCHED
-        }
+    /**
+     * a queue where incoming PCMSamples from the RecordHelper are stored before they can be processed
+     */
+    private val inputQueue = ConcurrentLinkedQueue<ShortArray>()
 
-        if (playbackState == TOUCHED_WHILE_PLAYING) playPause()
+    /**
+     * the FourierHelper that gives us access to the frequency space
+     */
+    private lateinit var fourierHelper: FourierHelper
+
+    /**
+     * here the FourierInstrumentViewSettings are stored that were active when the activity was started
+     */
+    private lateinit var settings: FourierInstrumentViewSettings
+
+    /**
+     * RecordHelper object that is responsible for accessing the microphone
+     */
+    private var recorder: RecordHelper? = null
+
+    /**
+     * PCMPlayer that will play a recorded set of pcmSamples
+     */
+    private var pcmPlayer: PCMPlayer? = null
+
+    /**
+     * The RecordActivityState the RecordActivity currently resides in
+     */
+    private var recordActivityState: RecordActivityState = WAITING
+
+    /**
+     * here we store our currently used Feedbackinstrument for example our SpectrogramFragment
+     */
+    private var instrumentFragment: AbstractInstrumentFragment? = null
+
+    /**
+     * RecordModeControlFragment that controls the RecordActivity while being in WAITING or RECORDING MODE
+     */
+    private val recorderControlFragment = RecordModeControlFragment()
 
 
-        startingPosition = instrumentFragment?.getCurrentSamplePosition() ?: 0
+    /**
+     * PlaybackModeControlFragment that controls the RecordActivity while being in PLAYBACK MODE
+     */
+    private val playbackControlFragment = PlaybackModeControlFragment()
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        this.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
+        window.decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_FULLSCREEN
+        setContentView(R.layout.activity_record)
+        window.decorView.setBackgroundColor(Color.BLACK)
+        // obtain settings and initialize the FourierHelper
+        settings = SettingsBundle.getFourierInstrumentViewSettings(this)
+        fourierHelper = FourierHelper(
+                settings.blockSize,
+                settings.binning,
+                settings.samplesPerDatapoint,
+                SettingsBundle.sampleRate)
+
+        // handle fragments
+        switchToRecordControlFragment()
+
+        // initialize the instrumentFragment
+        instrumentFragment = supportFragmentManager.findFragmentById(R.id.spectrogramFragment) as SpectrogramFragment
+        instrumentFragment?.updateFrequencyArray(fourierHelper.frequencyArray())
+        instrumentFragment?.updateInstrumentViewSettings(settings)
+
+        // activate the recordhelper to listen to microphone
+        startListening()
+
 
     }
 
-    private var startingPosition: Int = 0
-    private var targetSamplePosition: Int = 0
-
-    override fun playbackSeekTo(relativeMovement: Float) {
-        if (playbackState != RELEASED) {
-
-            instrumentFragment?.let {
-                val relativeSamples = (relativeMovement * it.settings.displayedDatapoints * it.settings.samplesPerDatapoint).toInt()
-                targetSamplePosition = startingPosition - relativeSamples
-                it.seekToSamplePosition(targetSamplePosition)
-            }
+    /**
+     * back-pressed behavior
+     */
+    override fun onBackPressed() {
+        when (recordActivityState) {
+            WAITING   -> if (pcmStorage == null) finish()
+            RECORDING -> switchToPlayback()
+            PLAYBACK  -> restart()
         }
     }
 
-    override fun playbackReleased() {
-        if (playbackState != RELEASED) {
-            instrumentFragment?.seekToSamplePosition(targetSamplePosition)
-            pcmPlayer?.seekTo(targetSamplePosition)
-            if (playbackState == TOUCHED_WHILE_PLAYING) playPause()
-            playbackState = RELEASED
+    /**
+     * clean up
+     */
+    override fun onDestroy() {
+        pcmStorage?.stopListening()
+        pcmPlayer?.unSubscribeListener(this)
+        pcmPlayer?.destroy()
+        this.stopListeningAndFreeRessource()
+        super.onDestroy()
+    }
+
+    /**
+     * Creates a RecordHelper object, that tries to gain access to the microphone and then starts
+     * listening to the microphone
+     */
+    private fun startListening() {
+        // start microphone listening
+        recorder = RecordHelper(settings.samplesPerDatapoint)
+        recorder?.let {
+            it.subscribeListener(this)
+            it.start()
         }
     }
+
+    /**
+     * stops the RecordHelper, releases the Microphone and then deletes the RecordHelper
+     */
+    private fun stopListeningAndFreeRessource() {
+        recorder?.let {
+            it.unSubscribeListener(this)
+            it.stopRecording()
+        }
+        recorder = null
+    }
+
+    private var pcmStorage: PCMStorage? = null
+    /**
+     * sets the RecordActivity into RECORDING_MODE and also starts collecting of audio samples
+     */
+    private fun storePCMSamples() {
+        recordActivityState = RECORDING
+        pcmStorage = PCMStorage(SettingsBundle.sampleRate)
+        recorder?.subscribeListener(pcmStorage!!)
+        instrumentFragment?.startRecording()
+    }
+
+    /**
+     * the datestring of the finished record
+     */
+    private var dateString = ""
+
+    /**
+     *  finish-up recording switch to playback
+     */
+    private fun switchToPlayback() {
+        pcmStorage?.let {
+            recordActivityState = PLAYBACK
+            it.stopListening()
+            this.stopListeningAndFreeRessource()
+            recorder?.unSubscribeListener(it)
+            dateString = SimpleDateFormat("yyyy-MM-dd'T'HH-mm-ss", Locale.ENGLISH).format(Calendar.getInstance().time)
+            switchToPlaybackControlFragment()
+            instrumentFragment?.doneRecordingSwitchToPlayback()
+
+            pcmPlayer = PCMPlayer(it.sampleRate, it.asShortBuffer(), this)
+            pcmPlayer?.subscribeListener(this)
+
+        }
+    }
+
+    /**
+     * is called by the audio player (PCMPlayer) to signal the currently played position within the displayed record
+     * RELEVANT in PLAYBACKMODE
+     */
+    override fun isAtPosition(sampleNumber: Int) {
+        instrumentFragment?.seekToSamplePosition(sampleNumber)
+    }
+
+    override fun canHandleBufferSize(bufferSize: Int): Boolean = (settings.samplesPerDatapoint == bufferSize)
+
+    /**
+     * callback for the audio recording thread, still executed on the recording thread
+     * RELEVANT in RECORDMODE
+     */
+    override fun onBufferReady(data: ShortArray) {
+        inputQueue.add(data)
+        // Get a handler that can be used to post something on the main thread
+        Handler(this.mainLooper).post {
+            // execute updateActivity() on the main thread
+            updateActivity()
+        }
+    }
+
+    /**
+     * the activity received a new array from the audio recording thread, process that
+     * RELEVANT in PLAYBACKMODE
+     */
+    private fun updateActivity() {
+        val shortArray = inputQueue.poll()
+        fourierHelper.fft(getDoubleArrayFromShortArray(1.0, shortArray))
+        instrumentFragment?.insertNewAmplitudes(fourierHelper.amplitudeArray())
+    }
+
+
+    /**
+     * Places the RecordControlFragment into the controlFragmentSpace (right screen position)
+     */
+    private fun switchToRecordControlFragment() {
+        supportFragmentManager
+                .beginTransaction()
+                .replace(R.id.controlFragmentSpace, recorderControlFragment)
+                .addToBackStack(null)
+                .commit()
+    }
+
+    /**
+     * Places the PlayBackControlFragment into the controlFragmentSpace (right screen position)
+     */
+    private fun switchToPlaybackControlFragment() {
+        supportFragmentManager
+                .beginTransaction()
+                .replace(R.id.controlFragmentSpace, playbackControlFragment)
+                .addToBackStack(null)
+                .commit()
+    }
+
+    fun getInstrumentFragment(): Fragment? = supportFragmentManager.findFragmentById(R.id.spectrogramFragment)
+
+    /*
+    The following methods implement the RecordModeControlListener Interface
+     */
+
+    override fun startRecording() {
+        if (recordActivityState == WAITING) storePCMSamples()
+    }
+
+    override fun finishRecording() {
+        if (recordActivityState == RECORDING) switchToPlayback()
+    }
+
+    override fun isRecording(): Boolean = when (recordActivityState) {
+        WAITING   -> false
+        RECORDING -> true
+        PLAYBACK  -> false
+    }
+
+
+    /*
+     The following methods implement the PlaybackModeControlListener Interface
+     */
 
     override fun playPause() {
         pcmPlayer?.let {
@@ -119,186 +334,55 @@ class RecordActivity : AppCompatActivity(),
         }
     }
 
-    private fun restart() {
-        // Clean up
-        instrumentFragment?.resetFragment()
-        pcmStorage?.let { recorder?.unSubscribeListener(it) }
-        pcmStorage = null
-        pcmPlayer?.unSubscribeListener(this)
-        pcmPlayer?.destroy()
-        pcmPlayer = null
-        stopListeningAndFreeRessource()
-        // Start up
-        recorderState = WAITING
-        startListening()
-        switchToRecordControlFragment()
-    }
+    /*
+    The following variables and functions handle TouchEvents during PlaybackMode
+     */
 
-    override fun startRecording() {
-        if (recorderState == WAITING) storePCMSamples()
-    }
+    // control variable to remember whether the player was active before touching the screen
+    private var playbackState = RELEASED
 
-    override fun finishRecording() {
-        if (recorderState == RECORDING) switchToPlayback()
-    }
+    override fun playbackTouched() {
+        playbackState = when {
+            pcmPlayer?.playing == true -> TOUCHED_WHILE_PLAYING
+            else                       -> TOUCHED
+        }
 
-    override fun isRecording(): Boolean = when (recorderState) {
-        WAITING   -> false
-        RECORDING -> true
-        PLAYBACK  -> false
-    }
+        if (playbackState == TOUCHED_WHILE_PLAYING) playPause()
 
 
-    private val inputQueue = ConcurrentLinkedQueue<ShortArray>()
-
-    private lateinit var fourierHelper : FourierHelper
-    private lateinit var settings: FourierInstrumentViewSettings
-
-    private var recorder: RecordHelper? = null
-    private var pcmPlayer: PCMPlayer? = null
-    private var recorderState: RecordActivityState = WAITING
-
-    private var instrumentFragment: AbstractInstrumentFragment? = null
-    private val recorderControlFragment = RecordModeControlFragment()
-    private val playbackControlFragment = PlaybackModeControlFragment()
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        this.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
-        window.decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_FULLSCREEN
-        setContentView(R.layout.activity_record)
-        window.decorView.setBackgroundColor(Color.BLACK)
-
-        // Todo inject fourier settings
-        settings = SettingsBundle.getFourierInstrumentViewSettings(this)
-        fourierHelper = FourierHelper(
-                    settings.blockSize,
-                    settings.binning,
-                    settings.samplesPerDatapoint,
-                    SettingsBundle.sampleRate)
-
-        // handle fragments
-        switchToRecordControlFragment()
-        instrumentFragment = supportFragmentManager.findFragmentById(R.id.spectrogramFragment) as SpectrogramFragment
-        instrumentFragment?.updateFrequencyArray(fourierHelper.frequencyArray())
-        instrumentFragment?.updateInstrumentViewSettings(settings)
-
-        startListening()
-
+        startingPosition = instrumentFragment?.getCurrentSamplePosition() ?: 0
 
     }
 
-    override fun onBackPressed() {
-        when (recorderState) {
-            WAITING   -> if (pcmStorage == null) finish()
-            RECORDING -> switchToPlayback()
-            PLAYBACK  -> restart()
+    /**
+     * position on the screen where the first TouchEvent was Called
+     */
+    private var startingPosition: Int = 0
+
+    /**
+     * position on the screen where the series of touchevents is currently targeting
+     */
+    private var targetSamplePosition: Int = 0
+
+    override fun playbackSeekTo(relativeMovement: Float) {
+        if (playbackState != RELEASED) {
+
+            instrumentFragment?.let {
+                val relativeSamples = (relativeMovement * it.settings.displayedDatapoints * it.settings.samplesPerDatapoint).toInt()
+                targetSamplePosition = startingPosition - relativeSamples
+                it.seekToSamplePosition(targetSamplePosition)
+            }
         }
     }
 
-    override fun onDestroy() {
-        pcmStorage?.stopListening()
-        pcmPlayer?.unSubscribeListener(this)
-        pcmPlayer?.destroy()
-        this.stopListeningAndFreeRessource()
-        super.onDestroy()
-    }
-
-    private fun startListening() {
-        // start microphone listening
-        recorder = RecordHelper(settings.samplesPerDatapoint)
-        recorder?.let {
-            it.subscribeListener(this)
-            it.start()
+    override fun playbackReleased() {
+        if (playbackState != RELEASED) {
+            instrumentFragment?.seekToSamplePosition(targetSamplePosition)
+            pcmPlayer?.seekTo(targetSamplePosition)
+            if (playbackState == TOUCHED_WHILE_PLAYING) playPause()
+            playbackState = RELEASED
         }
     }
 
-    private fun stopListeningAndFreeRessource() {
-        recorder?.let {
-            it.unSubscribeListener(this)
-            it.stopRecording()
-        }
-        recorder = null
-    }
 
-    private var pcmStorage: PCMStorage? = null
-
-    private fun storePCMSamples() {
-        recorderState = RECORDING
-        pcmStorage = PCMStorage(SettingsBundle.sampleRate)
-        recorder?.subscribeListener(pcmStorage!!)
-        instrumentFragment?.startRecording()
-    }
-
-
-    private var dateString = ""
-
-    private fun switchToPlayback() {
-        pcmStorage?.let {
-            recorderState = PLAYBACK
-            it.stopListening()
-            this.stopListeningAndFreeRessource()
-            recorder?.unSubscribeListener(it)
-            dateString = SimpleDateFormat("yyyy-MM-dd'T'HH-mm-ss", Locale.ENGLISH).format(Calendar.getInstance().time)
-            switchToPlaybackControlFragment()
-            instrumentFragment?.doneRecordingSwitchToPlayback()
-
-            pcmPlayer = PCMPlayer(it.sampleRate, it.asShortBuffer(), this)
-            pcmPlayer?.subscribeListener(this)
-
-        }
-    }
-
-    override fun isAtPosition(sampleNumber: Int) {
-        instrumentFragment?.seekToSamplePosition(sampleNumber)
-    }
-
-    override fun canHandleBufferSize(bufferSize: Int): Boolean = (settings.samplesPerDatapoint == bufferSize)
-
-    override fun onBufferReady(data: ShortArray) {
-        inputQueue.add(data)
-        // Get a handler that can be used to post to the main thread
-        Handler(this.mainLooper).post {
-            updateActivity()
-        }
-    }
-
-    private fun updateActivity() {
-        val shortArray = inputQueue.poll()
-        fourierHelper.fft(getDoubleArrayFromShortArray(1.0, shortArray))
-        instrumentFragment?.insertNewAmplitudes(fourierHelper.amplitudeArray())
-    }
-
-
-    private fun switchToRecordControlFragment() {
-        supportFragmentManager
-                .beginTransaction()
-                .replace(R.id.controlFragmentSpace, recorderControlFragment)
-                .addToBackStack(null)
-                .commit()
-    }
-
-
-    private fun switchToPlaybackControlFragment() {
-        supportFragmentManager
-                .beginTransaction()
-                .replace(R.id.controlFragmentSpace, playbackControlFragment)
-                .addToBackStack(null)
-                .commit()
-    }
-
-    fun getInstrumentFragment(): Fragment? = supportFragmentManager.findFragmentById(R.id.spectrogramFragment)
-}
-
-enum class RecordActivityState {
-    WAITING,
-    RECORDING,
-    PLAYBACK
-}
-
-
-enum class TouchPlaybackState {
-    TOUCHED,
-    TOUCHED_WHILE_PLAYING,
-    RELEASED
 }
