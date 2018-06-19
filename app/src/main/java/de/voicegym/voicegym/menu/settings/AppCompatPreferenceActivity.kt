@@ -1,4 +1,4 @@
-package de.voicegym.voicegym.menu
+package de.voicegym.voicegym.menu.settings
 
 import android.content.res.Configuration
 import android.os.Bundle

@@ -32,7 +32,7 @@
             android:label="@string/title_activity_record"
             android:theme="@style/FullscreenNoActionbar" />
         <activity
-            android:name=".menu.SettingsActivity"
+            android:name=".menu.settings.SettingsActivity"
             android:label="@string/title_activity_settings" />
     </application>
 

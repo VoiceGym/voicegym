@@ -133,5 +133,9 @@ class PCMPlayer(val sampleRate: Int, private val buffer: ShortBuffer, val contex
 
 
 interface PCMPlayerListener {
+    /**
+     * Callback method so the PCMPlayer can inform a subscriber that it currently plays
+     * @param sampleNumber: the sampleNumber currently played
+     */
     fun isAtPosition(sampleNumber: Int)
 }

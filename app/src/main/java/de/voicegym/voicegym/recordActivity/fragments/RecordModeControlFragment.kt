@@ -58,9 +58,18 @@ class RecordModeControlFragment : Fragment() {
 }
 
 interface RecordModeControlListener {
+    /**
+     * recording button was pressed
+     */
     fun startRecording()
 
+    /**
+     * recording button was pressed a second time
+     */
     fun finishRecording()
 
+    /**
+     * control variable to find out whether the listener is currently recording
+     */
     fun isRecording(): Boolean
 }
