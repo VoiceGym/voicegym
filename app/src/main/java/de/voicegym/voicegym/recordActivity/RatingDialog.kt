@@ -8,6 +8,7 @@ import android.view.KeyEvent
 import android.view.Window
 import android.widget.ImageView
 import de.voicegym.voicegym.R
+import de.voicegym.voicegym.recordActivity.fragments.PlaybackModeControlListener
 
 class RatingDialog : Dialog {
 
@@ -15,6 +16,8 @@ class RatingDialog : Dialog {
      * stars keeps the views that display the rating
      */
     private lateinit var stars: Array<ImageView>
+
+    var playbackModeControlListener: PlaybackModeControlListener? = null
 
     constructor(context: Context) : this(context, 0)
     constructor(context: Context, themeResId: Int) : super(context, themeResId)
@@ -51,6 +54,7 @@ class RatingDialog : Dialog {
         }
         Handler().postDelayed({
             hide()
+            playbackModeControlListener?.receiveRating(idx)
         }, 200)
     }
 

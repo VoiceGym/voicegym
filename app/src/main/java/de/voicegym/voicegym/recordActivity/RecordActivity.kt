@@ -7,6 +7,7 @@ import android.os.Bundle
 import android.os.Handler
 import android.support.v4.app.Fragment
 import android.support.v7.app.AppCompatActivity
+import android.util.Log
 import android.view.View
 import de.voicegym.voicegym.R
 import de.voicegym.voicegym.menu.settings.FourierInstrumentViewSettings
@@ -92,11 +93,22 @@ class RecordActivity : AppCompatActivity(),
         }
     }
 
-    override fun rate() {
-        var rating = 0
+    /**
+     * opens the rating dialog
+     */
+    override fun openRatingDialog() {
         val ratingDialog = RatingDialog(this);
         ratingDialog.window.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+        ratingDialog.playbackModeControlListener = this
         ratingDialog.show();
+    }
+
+    /**
+     * receives that rating value
+     */
+    override fun receiveRating(rating: Int) {
+        //TODO get rating into datamodel
+        Log.i("Rated", "Record was rated $rating")
     }
 
     override fun saveToSdCard() {

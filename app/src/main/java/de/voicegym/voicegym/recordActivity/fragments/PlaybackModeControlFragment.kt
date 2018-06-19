@@ -32,7 +32,7 @@ class PlaybackModeControlFragment : Fragment() {
         val saveButton = view.findViewById<FloatingActionButton>(R.id.saveControlButton)
 
         playPauseButton.setOnClickListener { playbackModeControlListener?.playPause() }
-        rateButton.setOnClickListener { playbackModeControlListener?.rate() }
+        rateButton.setOnClickListener { playbackModeControlListener?.openRatingDialog() }
         saveButton.setOnClickListener { playbackModeControlListener?.saveToSdCard() }
         return view
     }
@@ -40,7 +40,10 @@ class PlaybackModeControlFragment : Fragment() {
 }
 
 interface PlaybackModeControlListener {
-    fun rate()
+    
+    fun openRatingDialog()
+    fun receiveRating(rating: Int)
+
     fun playPause()
     fun saveToSdCard()
 
