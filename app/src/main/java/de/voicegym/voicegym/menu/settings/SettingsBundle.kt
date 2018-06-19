@@ -4,7 +4,7 @@ import android.content.Context
 import android.media.AudioFormat
 import android.preference.PreferenceManager
 
-object SettingBundle {
+object SettingsBundle {
     // constants
     const val sampleRate = 44100
     const val channelConfig = AudioFormat.CHANNEL_IN_MONO
@@ -14,6 +14,7 @@ object SettingBundle {
     fun getFourierInstrumentViewSettings(context: Context): FourierInstrumentViewSettings {
         val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context)
         // collect the values
+        // TODO implement NumberPickerPreference
         val blockSize = sharedPreferences.getString("fft_blocksize", "4096").toInt()
         val binning = sharedPreferences.getString("fft_binning", "2").toInt()
         val fromFrequency = sharedPreferences.getString("from_frequency", "10").toDouble()

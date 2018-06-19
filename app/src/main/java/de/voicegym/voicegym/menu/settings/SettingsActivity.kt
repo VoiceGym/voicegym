@@ -15,7 +15,6 @@ import android.preference.PreferenceFragment
 import android.preference.PreferenceManager
 import android.view.MenuItem
 import de.voicegym.voicegym.R
-import de.voicegym.voicegym.menu.AppCompatPreferenceActivity
 
 /**
  * A [PreferenceActivity] that presents a set of application settings. On

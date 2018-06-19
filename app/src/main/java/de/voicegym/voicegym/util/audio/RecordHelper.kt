@@ -8,9 +8,9 @@ import android.media.MediaRecorder.AudioSource.MIC
 import android.os.Process.THREAD_PRIORITY_AUDIO
 import android.os.Process.setThreadPriority
 import android.util.Log
-import de.voicegym.voicegym.menu.settings.SettingBundle.audioFormat
-import de.voicegym.voicegym.menu.settings.SettingBundle.channelConfig
-import de.voicegym.voicegym.menu.settings.SettingBundle.sampleRate
+import de.voicegym.voicegym.menu.settings.SettingsBundle.audioFormat
+import de.voicegym.voicegym.menu.settings.SettingsBundle.channelConfig
+import de.voicegym.voicegym.menu.settings.SettingsBundle.sampleRate
 import de.voicegym.voicegym.util.RecordBufferListener
 
 class RecordHelper(private val preferredBufferSize: Int) {
