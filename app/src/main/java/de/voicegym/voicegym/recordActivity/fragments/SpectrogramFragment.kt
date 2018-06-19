@@ -6,6 +6,7 @@ import android.view.View
 import android.view.ViewGroup
 import de.voicegym.voicegym.R
 import de.voicegym.voicegym.menu.settings.FourierInstrumentViewSettings
+import de.voicegym.voicegym.menu.settings.SettingsBundle
 import de.voicegym.voicegym.recordActivity.fragments.InstrumentState.LIVE_DISPLAY
 import de.voicegym.voicegym.recordActivity.fragments.InstrumentState.RECORDING_DATA
 import de.voicegym.voicegym.recordActivity.views.SpectrogramView
@@ -84,7 +85,7 @@ class SpectrogramFragment : AbstractInstrumentFragment() {
      */
     override fun insertNewAmplitudes(spectrum: DoubleArray) {
         spectrogramView.let {
-            val colors = calculateColorArrayForSpectrum(spectrum, NORMALIZATION_CONSTANT)
+            val colors = calculateColorArrayForSpectrum(spectrum, SettingsBundle.normailzationConstant)
             it.insertNewDataPoint(colors)
             it.invalidate()
         }
@@ -92,7 +93,7 @@ class SpectrogramFragment : AbstractInstrumentFragment() {
     }
 
     /**
-     * this method calculates the colors at the pixel position relating to the
+     * Calculates the colors at the pixel position relating to the passed amplitude array.
      * @param amplitude amplitudeArray, intensities in the frequency space
      * @param normalizationConstant could be used to calibrate the microphone so the intensities can be recalculated into accurate dezibels
      */
@@ -168,7 +169,4 @@ class SpectrogramFragment : AbstractInstrumentFragment() {
     override fun getInstrumentState(): InstrumentState =
             spectrogramView.spectrogramViewState
 
-    companion object {
-        const val NORMALIZATION_CONSTANT = 55.0
-    }
 }

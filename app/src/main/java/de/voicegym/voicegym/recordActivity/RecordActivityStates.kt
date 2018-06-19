@@ -1,11 +1,9 @@
 package de.voicegym.voicegym.recordActivity
 
-
 /**
  * The state in which the RecordActivity currently resides in
  */
 enum class RecordActivityState {
-
     WAITING,
     RECORDING,
     PLAYBACK
@@ -17,7 +15,6 @@ enum class RecordActivityState {
  * and whether the activity was playing beforehand
  */
 enum class TouchPlaybackState {
-
     TOUCHED,
     TOUCHED_WHILE_PLAYING,
     RELEASED

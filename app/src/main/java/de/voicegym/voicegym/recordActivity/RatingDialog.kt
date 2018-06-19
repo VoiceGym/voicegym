@@ -15,7 +15,7 @@ class RatingDialog : Dialog {
     /**
      * stars keeps the views that display the rating
      */
-    private lateinit var stars: Array<ImageView>
+    private lateinit var stars: List<ImageView>
 
     var playbackModeControlListener: PlaybackModeControlListener? = null
 
@@ -31,7 +31,7 @@ class RatingDialog : Dialog {
         val star3 = findViewById<ImageView>(R.id.rate3)
         val star2 = findViewById<ImageView>(R.id.rate2)
         val star1 = findViewById<ImageView>(R.id.rate1)
-        stars = arrayOf(star1, star2, star3, star4)
+        stars = listOf(star1, star2, star3, star4)
         // set all the OnClickListeners of the Views
         stars.forEachIndexed { idx, view ->
             view.setOnClickListener {
@@ -42,7 +42,6 @@ class RatingDialog : Dialog {
 
     /**
      * This method selects a specific rating, and displays it on the screen.
-     * TODO: include callback from calling activity
      */
     private fun selectRating(idx: Int) {
         for (i in 0 until stars.size) {
@@ -79,6 +78,6 @@ class RatingDialog : Dialog {
         if (keyCode == KeyEvent.KEYCODE_BACK) {
             dismiss()
         }
-        return ret;
+        return ret
     }
 }

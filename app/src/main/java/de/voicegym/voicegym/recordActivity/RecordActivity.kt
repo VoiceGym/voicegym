@@ -68,7 +68,7 @@ class RecordActivity : AppCompatActivity(),
     private val inputQueue = ConcurrentLinkedQueue<ShortArray>()
 
     /**
-     * the FourierHelper that gives us access to the frequency space
+     * Access to the frequency space
      */
     private lateinit var fourierHelper: FourierHelper
 
@@ -136,9 +136,6 @@ class RecordActivity : AppCompatActivity(),
 
     }
 
-    /**
-     * back-pressed behavior
-     */
     override fun onBackPressed() {
         when (recordActivityState) {
             WAITING   -> if (pcmStorage == null) finish()
@@ -147,9 +144,6 @@ class RecordActivity : AppCompatActivity(),
         }
     }
 
-    /**
-     * clean up
-     */
     override fun onDestroy() {
         pcmStorage?.stopListening()
         pcmPlayer?.unSubscribeListener(this)
@@ -183,6 +177,7 @@ class RecordActivity : AppCompatActivity(),
     }
 
     private var pcmStorage: PCMStorage? = null
+
     /**
      * sets the RecordActivity into RECORDING_MODE and also starts collecting of audio samples
      */
@@ -307,19 +302,13 @@ class RecordActivity : AppCompatActivity(),
         }
     }
 
-    /**
-     * opens the rating dialog
-     */
     override fun openRatingDialog() {
-        val ratingDialog = RatingDialog(this);
+        val ratingDialog = RatingDialog(this)
         ratingDialog.window.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
         ratingDialog.playbackModeControlListener = this
-        ratingDialog.show();
+        ratingDialog.show()
     }
 
-    /**
-     * receives that rating value
-     */
     override fun receiveRating(rating: Int) {
         //TODO get rating into datamodel
         Log.i("Rated", "Record was rated $rating")
@@ -355,12 +344,12 @@ class RecordActivity : AppCompatActivity(),
     }
 
     /**
-     * position on the screen where the first TouchEvent was Called
+     * position on screen where the first TouchEvent was called
      */
     private var startingPosition: Int = 0
 
     /**
-     * position on the screen where the series of touchevents is currently targeting
+     * position on screen where the series of touchevents is currently targeting
      */
     private var targetSamplePosition: Int = 0
 
@@ -383,6 +372,5 @@ class RecordActivity : AppCompatActivity(),
             playbackState = RELEASED
         }
     }
-
 
 }
