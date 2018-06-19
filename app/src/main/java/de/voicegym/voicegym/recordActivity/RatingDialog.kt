@@ -3,6 +3,8 @@ package de.voicegym.voicegym.recordActivity
 import android.app.Dialog
 import android.content.Context
 import android.os.Bundle
+import android.os.Handler
+import android.view.KeyEvent
 import android.view.Window
 import android.widget.ImageView
 import de.voicegym.voicegym.R
@@ -22,7 +24,7 @@ class RatingDialog : Dialog {
         val star3 = findViewById<ImageView>(R.id.rate3)
         val star2 = findViewById<ImageView>(R.id.rate2)
         val star1 = findViewById<ImageView>(R.id.rate1)
-        stars = arrayOf(star4, star3, star2, star1)
+        stars = arrayOf(star1, star2, star3, star4)
         stars.forEachIndexed { idx, view ->
             view.setOnClickListener {
                 selectStar(idx)
@@ -39,6 +41,9 @@ class RatingDialog : Dialog {
                 setStar(i, true)
             }
         }
+        Handler().postDelayed({
+            hide()
+        }, 200)
     }
 
     private fun setStar(idx: Int, on: Boolean) {
@@ -48,5 +53,14 @@ class RatingDialog : Dialog {
         } else {
             star.setImageResource(R.drawable.star_big_off)
         }
+    }
+
+    override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
+        val ret = super.onKeyDown(keyCode, event)
+
+        if (keyCode == KeyEvent.KEYCODE_BACK) {
+            dismiss()
+        }
+        return ret;
     }
 }
