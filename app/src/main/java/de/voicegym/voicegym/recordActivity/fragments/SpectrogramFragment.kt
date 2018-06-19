@@ -16,12 +16,36 @@ import org.apache.commons.math3.analysis.interpolation.LinearInterpolator
 
 class SpectrogramFragment : AbstractInstrumentFragment() {
 
+    /**
+     * this stores the current settings, initialized with bogus settings
+     * requires a call of updateInstrumentViewSettings(settings) after creation
+     */
     override var settings = FourierInstrumentViewSettings(4096, 2, 10.0, 1000.0, 100, false)
 
+    /**
+     * 1-pixel along the y-Axis relates to
+     * @param deltaFrequency in Hz
+     */
     var deltaFrequency = 0.0
+
+    /**
+     * holds our spectrogram
+     */
     lateinit var spectrogramView: SpectrogramView
+
+    /**
+     * the interpolator is used to calculate the intensities at the specific pixel positions
+     */
     private val interpolator = LinearInterpolator()
+
+    /**
+     * holds the array that stores the frequencies of the relating to the positions in the amplitudeArray
+     */
     private var frequencyArray: DoubleArray? = null
+
+    /**
+     * this internally stores the range that is displayed from the amplitudeArray
+     */
     private var internalSpectrogramSettings: RawSpectrogramSettings? = null
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
@@ -55,6 +79,9 @@ class SpectrogramFragment : AbstractInstrumentFragment() {
         if (frequencyArray != null) onRangeChanged()
     }
 
+    /**
+     * this is the callback that receives a new amplitudeArray
+     */
     override fun insertNewAmplitudes(spectrum: DoubleArray) {
         spectrogramView.let {
             val colors = calculateColorArrayForSpectrum(spectrum, NORMALIZATION_CONSTANT)
@@ -64,6 +91,11 @@ class SpectrogramFragment : AbstractInstrumentFragment() {
         this.view?.invalidate()
     }
 
+    /**
+     * this method calculates the colors at the pixel position relating to the
+     * @param amplitude amplitudeArray, intensities in the frequency space
+     * @param normalizationConstant could be used to calibrate the microphone so the intensities can be recalculated into accurate dezibels
+     */
     private fun calculateColorArrayForSpectrum(amplitude: DoubleArray, normalizationConstant: Double): IntArray {
         var colors: IntArray? = null
 
