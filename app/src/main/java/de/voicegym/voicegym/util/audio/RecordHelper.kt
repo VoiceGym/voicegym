@@ -1,6 +1,5 @@
 package de.voicegym.voicegym.util.audio
 
-import android.media.AudioFormat.CHANNEL_IN_MONO
 import android.media.AudioFormat.ENCODING_PCM_16BIT
 import android.media.AudioRecord
 import android.media.AudioRecord.STATE_INITIALIZED
@@ -9,15 +8,14 @@ import android.media.MediaRecorder.AudioSource.MIC
 import android.os.Process.THREAD_PRIORITY_AUDIO
 import android.os.Process.setThreadPriority
 import android.util.Log
+import de.voicegym.voicegym.menu.settings.SettingBundle.audioFormat
+import de.voicegym.voicegym.menu.settings.SettingBundle.channelConfig
+import de.voicegym.voicegym.menu.settings.SettingBundle.sampleRate
 import de.voicegym.voicegym.util.RecordBufferListener
 
 class RecordHelper(private val preferredBufferSize: Int) {
 
-    companion object {
-        private const val sampleRate = 44100
-        private const val channelConfig = CHANNEL_IN_MONO
-        private const val audioFormat = ENCODING_PCM_16BIT
-    }
+
 
     private val bytesPerBufferSlot = when (audioFormat) {
         ENCODING_PCM_16BIT -> 2

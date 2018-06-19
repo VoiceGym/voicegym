@@ -5,6 +5,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import de.voicegym.voicegym.R
+import de.voicegym.voicegym.menu.settings.FourierInstrumentViewSettings
 import de.voicegym.voicegym.recordActivity.fragments.InstrumentState.LIVE_DISPLAY
 import de.voicegym.voicegym.recordActivity.fragments.InstrumentState.RECORDING_DATA
 import de.voicegym.voicegym.recordActivity.views.SpectrogramView
@@ -15,42 +16,48 @@ import org.apache.commons.math3.analysis.interpolation.LinearInterpolator
 
 class SpectrogramFragment() : AbstractInstrumentFragment() {
 
-    override var userSettings = UserSettings(10.0, 1000.0, 100, 4096)
 
-    var frequencyArray: DoubleArray? = null
+    override fun updateFrequencyArray(frequencies: DoubleArray) {
+        frequencyArray = frequencies
+    }
+
+
+    override var settings = FourierInstrumentViewSettings(4096, 2, 10.0, 1000.0, 100, false)
+
+    private var frequencyArray: DoubleArray? = null
     var deltaFrequency: Double = 0.0
-    var internalSpectrogramSettings: RawSpectrogramSettings? = null
+    private var internalSpectrogramSettings: RawSpectrogramSettings? = null
 
     private val interpolator = LinearInterpolator()
 
     var spectrogramView: SpectrogramView? = null
 
-    override fun updateUserSettings(userSettings: UserSettings) {
-        this.userSettings = userSettings
-        spectrogramView?.xDataPoints = userSettings.numberDataPoints
-        spectrogramView?.samplesPerDataPoint = userSettings.samplesPerDatapoint
+    override fun updateInstrumentViewSettings(settings: FourierInstrumentViewSettings) {
+        this.settings = settings
+        spectrogramView?.xDataPoints = settings.displayedDatapoints
+        spectrogramView?.samplesPerDataPoint = settings.samplesPerDatapoint
         if (frequencyArray != null) onRangeChanged()
-    }
-
-    override fun onActivityCreated(savedInstanceState: Bundle?) {
-        super.onActivityCreated(savedInstanceState)
-
-        frequencyArray = arguments?.getDoubleArray("frequencyArray")
-        if (frequencyArray == null) throw Error("Didn't pass required arguments to fragments, frequencyArray missing")
-
-        onRangeChanged()
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         // Inflate the layout for this fragment
         val view = inflater.inflate(R.layout.fragment_spectrogram, container, false)
 
-        spectrogramView = view.findViewById<SpectrogramView>(R.id.spectrogramView)
+        spectrogramView = view.findViewById(R.id.spectrogramView)
         spectrogramView?.let {
-            it.xDataPoints = userSettings?.numberDataPoints ?: 10
+            it.xDataPoints = settings.displayedDatapoints
             it.invalidate()
         }
         return view
+    }
+
+
+    override fun onActivityCreated(savedInstanceState: Bundle?) {
+        super.onActivityCreated(savedInstanceState)
+        if (frequencyArray == null) throw Error("Didn't pass required arguments to fragments, frequencyArray missing")
+
+        // all settings should have been after execution of activity onCreate
+        onRangeChanged()
     }
 
     override fun insertNewAmplitudes(spectrum: DoubleArray) {
@@ -73,9 +80,9 @@ class SpectrogramFragment() : AbstractInstrumentFragment() {
 
             colors = IntArray(spectrogramView!!.getDrawAreaHeight().toInt())
             colors?.let {
-                deltaFrequency = (userSettings!!.tillFrequency - userSettings!!.fromFrequency) / it.size
+                deltaFrequency = (settings.tillFrequency - settings.fromFrequency) / it.size
                 for (i in 0 until it.size) {
-                    val amplitudeVal = interpolatingFunction.value(userSettings!!.fromFrequency + i * deltaFrequency)
+                    val amplitudeVal = interpolatingFunction.value(settings.fromFrequency + i * deltaFrequency)
                     it[i] = HotGradientColorPicker.pickColor(getDezibelFromAmplitude(amplitudeVal) / normalizationConstant)
                 }
             }
@@ -88,7 +95,7 @@ class SpectrogramFragment() : AbstractInstrumentFragment() {
     }
 
     private fun onRangeChanged() {
-        userSettings?.let {
+        settings.let {
             if (it.fromFrequency > it.tillFrequency) throw RuntimeException("fromFrequency must be smaller than tillFrequency")
             if (frequencyArray!![0] > it.fromFrequency) throw RuntimeException("you choose a frequency below available range")
             if (frequencyArray!![frequencyArray!!.size - 1] < it.tillFrequency) throw RuntimeException("you choose a frequency above available range")
@@ -105,7 +112,7 @@ class SpectrogramFragment() : AbstractInstrumentFragment() {
     }
 
     override fun getCurrentSamplePosition(): Int = (spectrogramView?.currentDequePosition
-            ?: 0) * userSettings.samplesPerDatapoint
+            ?: 0) * settings.samplesPerDatapoint
 
     override fun seekToSamplePosition(samplePosition: Int) {
         spectrogramView?.seekTo(samplePosition)

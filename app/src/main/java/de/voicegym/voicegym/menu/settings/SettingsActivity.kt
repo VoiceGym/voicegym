@@ -1,22 +1,21 @@
-package de.voicegym.voicegym.menu
+package de.voicegym.voicegym.menu.settings
 
 import android.annotation.TargetApi
 import android.content.Context
 import android.content.Intent
 import android.content.res.Configuration
-import android.media.RingtoneManager
-import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.preference.CheckBoxPreference
+import android.preference.EditTextPreference
 import android.preference.ListPreference
 import android.preference.Preference
 import android.preference.PreferenceActivity
 import android.preference.PreferenceFragment
 import android.preference.PreferenceManager
-import android.preference.RingtonePreference
-import android.text.TextUtils
 import android.view.MenuItem
 import de.voicegym.voicegym.R
+import de.voicegym.voicegym.menu.AppCompatPreferenceActivity
 
 /**
  * A [PreferenceActivity] that presents a set of application settings. On
@@ -84,17 +83,19 @@ class SettingsActivity : AppCompatPreferenceActivity() {
      */
     @TargetApi(Build.VERSION_CODES.HONEYCOMB)
     class GeneralPreferenceFragment : PreferenceFragment() {
+
         override fun onCreate(savedInstanceState: Bundle?) {
             super.onCreate(savedInstanceState)
-            addPreferencesFromResource(R.xml.pref_general)
+            addPreferencesFromResource(R.xml.pref_fourier_instrumentview)
             setHasOptionsMenu(true)
 
-            // Bind the summaries of EditText/List/Dialog/Ringtone preferences
-            // to their values. When their values change, their summaries are
-            // updated to reflect the new value, per the Android Design
-            // guidelines.
-            bindPreferenceSummaryToValue(findPreference("example_text"))
-            bindPreferenceSummaryToValue(findPreference("example_list"))
+            bindPreferenceSummaryToValue(findPreference("fft_binning"))
+            bindPreferenceSummaryToValue(findPreference("fft_blocksize"))
+            bindPreferenceSummaryToValue(findPreference("display_logarithmic"))
+            bindPreferenceSummaryToValue(findPreference("from_frequency"))
+            bindPreferenceSummaryToValue(findPreference("till_frequency"))
+            bindPreferenceSummaryToValue(findPreference("display_sample_numbers"))
+
         }
 
         override fun onOptionsItemSelected(item: MenuItem): Boolean {
@@ -113,6 +114,7 @@ class SettingsActivity : AppCompatPreferenceActivity() {
      */
     @TargetApi(Build.VERSION_CODES.HONEYCOMB)
     class NotificationPreferenceFragment : PreferenceFragment() {
+
         override fun onCreate(savedInstanceState: Bundle?) {
             super.onCreate(savedInstanceState)
             addPreferencesFromResource(R.xml.pref_notification)
@@ -141,6 +143,7 @@ class SettingsActivity : AppCompatPreferenceActivity() {
      */
     @TargetApi(Build.VERSION_CODES.HONEYCOMB)
     class DataSyncPreferenceFragment : PreferenceFragment() {
+
         override fun onCreate(savedInstanceState: Bundle?) {
             super.onCreate(savedInstanceState)
             addPreferencesFromResource(R.xml.pref_data_sync)
@@ -172,44 +175,20 @@ class SettingsActivity : AppCompatPreferenceActivity() {
         private val sBindPreferenceSummaryToValueListener = Preference.OnPreferenceChangeListener { preference, value ->
             val stringValue = value.toString()
 
-            if (preference is ListPreference) {
-                // For list preferences, look up the correct display value in
-                // the preference's 'entries' list.
-                val index = preference.findIndexOfValue(stringValue)
+            when (preference) {
+                is ListPreference -> {
+                    // For list preferences, look up the correct display value in
+                    // the preference's 'entries' list.
+                    val index = preference.findIndexOfValue(stringValue)
 
-                // Set the summary to reflect the new value.
-                preference.setSummary(
-                        if (index >= 0)
-                            preference.entries[index]
-                        else
-                            null)
-
-            } else if (preference is RingtonePreference) {
-                // For ringtone preferences, look up the correct display value
-                // using RingtoneManager.
-                if (TextUtils.isEmpty(stringValue)) {
-                    // Empty values correspond to 'silent' (no ringtone).
-                    preference.setSummary(R.string.pref_ringtone_silent)
-
-                } else {
-                    val ringtone = RingtoneManager.getRingtone(
-                            preference.getContext(), Uri.parse(stringValue))
-
-                    if (ringtone == null) {
-                        // Clear the summary if there was a lookup error.
-                        preference.setSummary(null)
-                    } else {
-                        // Set the summary to reflect the new ringtone display
-                        // name.
-                        val name = ringtone.getTitle(preference.getContext())
-                        preference.setSummary(name)
-                    }
+                    // Set the summary to reflect the new value.
+                    preference.setSummary(when {
+                        index >= 0 -> preference.entries[index]
+                        else       -> "4096"
+                    })
                 }
 
-            } else {
-                // For all other preferences, set the summary to the value's
-                // simple string representation.
-                preference.summary = stringValue
+                else              -> preference.summary = stringValue
             }
             true
         }
@@ -237,10 +216,29 @@ class SettingsActivity : AppCompatPreferenceActivity() {
 
             // Trigger the listener immediately with the preference's
             // current value.
-            sBindPreferenceSummaryToValueListener.onPreferenceChange(preference,
-                    PreferenceManager
-                            .getDefaultSharedPreferences(preference.context)
-                            .getString(preference.key, ""))
+
+            val sharedPreferences = PreferenceManager
+                    .getDefaultSharedPreferences(preference.context)
+
+            val value = when (preference) {
+
+                is ListPreference     -> {
+                    sharedPreferences.getString(preference.key, "")
+                }
+
+                is CheckBoxPreference -> {
+                    sharedPreferences.getBoolean(preference.key, false)
+                }
+
+                is EditTextPreference -> {
+                    sharedPreferences.getString(preference.key, "")
+                }
+
+                else                  -> throw Error("Introduced new type of preference ${preference.javaClass.toString()}, needs to be caught here")
+            }
+
+            sBindPreferenceSummaryToValueListener.onPreferenceChange(preference, value)
+
         }
     }
 }

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="list_of_binning_values">
+        <item>1</item>
+        <item>2</item>
+        <item>4</item>
+        <item>8</item>
+    </string-array>
+
+    <string-array name="list_of_blockSizes">
+        <item>2048</item>
+        <item>4096</item>
+        <item>8192</item>
+    </string-array>
+
+</resources>
