@@ -72,8 +72,6 @@ class SettingsActivity : AppCompatPreferenceActivity() {
     override fun isValidFragment(fragmentName: String): Boolean {
         return PreferenceFragment::class.java.name == fragmentName
                 || GeneralPreferenceFragment::class.java.name == fragmentName
-                || DataSyncPreferenceFragment::class.java.name == fragmentName
-                || NotificationPreferenceFragment::class.java.name == fragmentName
     }
 
     /**
@@ -85,9 +83,12 @@ class SettingsActivity : AppCompatPreferenceActivity() {
 
         override fun onCreate(savedInstanceState: Bundle?) {
             super.onCreate(savedInstanceState)
+
+            // find all preferences in the xml layout file - see for all preferences
             addPreferencesFromResource(R.xml.pref_fourier_instrumentview)
             setHasOptionsMenu(true)
 
+            // bind these preference keys  and set onChangeListeners when their values are changed
             bindPreferenceSummaryToValue(findPreference("fft_binning"))
             bindPreferenceSummaryToValue(findPreference("fft_blocksize"))
             bindPreferenceSummaryToValue(findPreference("display_logarithmic"))
@@ -107,63 +108,6 @@ class SettingsActivity : AppCompatPreferenceActivity() {
         }
     }
 
-    /**
-     * This fragment shows notification preferences only. It is used when the
-     * activity is showing a two-pane settings UI.
-     */
-    @TargetApi(Build.VERSION_CODES.HONEYCOMB)
-    class NotificationPreferenceFragment : PreferenceFragment() {
-
-        override fun onCreate(savedInstanceState: Bundle?) {
-            super.onCreate(savedInstanceState)
-            addPreferencesFromResource(R.xml.pref_notification)
-            setHasOptionsMenu(true)
-
-            // Bind the summaries of EditText/List/Dialog/Ringtone preferences
-            // to their values. When their values change, their summaries are
-            // updated to reflect the new value, per the Android Design
-            // guidelines.
-            bindPreferenceSummaryToValue(findPreference("notifications_new_message_ringtone"))
-        }
-
-        override fun onOptionsItemSelected(item: MenuItem): Boolean {
-            val id = item.itemId
-            if (id == android.R.id.home) {
-                startActivity(Intent(activity, SettingsActivity::class.java))
-                return true
-            }
-            return super.onOptionsItemSelected(item)
-        }
-    }
-
-    /**
-     * This fragment shows data and sync preferences only. It is used when the
-     * activity is showing a two-pane settings UI.
-     */
-    @TargetApi(Build.VERSION_CODES.HONEYCOMB)
-    class DataSyncPreferenceFragment : PreferenceFragment() {
-
-        override fun onCreate(savedInstanceState: Bundle?) {
-            super.onCreate(savedInstanceState)
-            addPreferencesFromResource(R.xml.pref_data_sync)
-            setHasOptionsMenu(true)
-
-            // Bind the summaries of EditText/List/Dialog/Ringtone preferences
-            // to their values. When their values change, their summaries are
-            // updated to reflect the new value, per the Android Design
-            // guidelines.
-            bindPreferenceSummaryToValue(findPreference("sync_frequency"))
-        }
-
-        override fun onOptionsItemSelected(item: MenuItem): Boolean {
-            val id = item.itemId
-            if (id == android.R.id.home) {
-                startActivity(Intent(activity, SettingsActivity::class.java))
-                return true
-            }
-            return super.onOptionsItemSelected(item)
-        }
-    }
 
     companion object {
 
@@ -219,8 +163,8 @@ class SettingsActivity : AppCompatPreferenceActivity() {
             val sharedPreferences = PreferenceManager
                     .getDefaultSharedPreferences(preference.context)
 
+            // select the appropriate datatype
             val value = when (preference) {
-
                 is ListPreference     -> {
                     sharedPreferences.getString(preference.key, "")
                 }
@@ -236,6 +180,7 @@ class SettingsActivity : AppCompatPreferenceActivity() {
                 else                  -> throw Error("Introduced new type of preference ${preference.javaClass.toString()}, needs to be caught here")
             }
 
+            // call change listener of the preference
             sBindPreferenceSummaryToValueListener.onPreferenceChange(preference, value)
 
         }

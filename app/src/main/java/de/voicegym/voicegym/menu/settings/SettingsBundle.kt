@@ -4,13 +4,20 @@ import android.content.Context
 import android.media.AudioFormat
 import android.preference.PreferenceManager
 
+/**
+ * This object is intended as a single access point for all constants and user-defined variables (settings)
+ */
 object SettingsBundle {
+
     // constants
     const val sampleRate = 44100
     const val channelConfig = AudioFormat.CHANNEL_IN_MONO
     const val audioFormat = AudioFormat.ENCODING_PCM_16BIT
 
-    // user settings
+    /**
+     * This function returns an object that contains all settings related to the FourierInstrumentViewSettings
+     * @return FourierInstrumentViewSettings that are currently active
+     */
     fun getFourierInstrumentViewSettings(context: Context): FourierInstrumentViewSettings {
         val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context)
         // collect the values
@@ -25,6 +32,9 @@ object SettingsBundle {
     }
 }
 
+/**
+ * Data Class to bundle all settings related to InstrumentIn and the Fourier Transformation
+ */
 data class FourierInstrumentViewSettings(val blockSize: Int,
                                          val binning: Int,
                                          val fromFrequency: Double,
@@ -32,5 +42,8 @@ data class FourierInstrumentViewSettings(val blockSize: Int,
                                          val displayedDatapoints: Int,
                                          val isLogarithmic: Boolean) {
 
+    /**
+     * not an independent setting, i.e. must be calculated by blockSize and binning
+     */
     val samplesPerDatapoint = blockSize * binning
 }
