@@ -147,6 +147,7 @@ class SpectrogramFragment : AbstractInstrumentFragment() {
     override fun resetFragment() {
         spectrogramView.let {
             it.clearBitmapAndBuffer()
+            it.clearForRestart()
             it.spectrogramViewState = LIVE_DISPLAY
             it.invalidate()
         }
