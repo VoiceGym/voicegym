@@ -48,25 +48,43 @@ class NavigationDrawerActivity : AppCompatActivity(),
 
     private fun requestPermission() {
 
-        val permissionResult = ContextCompat.checkSelfPermission(this,
+        val permissionAudioResult = ContextCompat.checkSelfPermission(this,
                 Manifest.permission.RECORD_AUDIO)
-        if (permissionResult != PackageManager.PERMISSION_GRANTED) {
+        val permissionStorageReadResult = ContextCompat.checkSelfPermission(this,
+                Manifest.permission.READ_EXTERNAL_STORAGE)
+        val permissioStorageWriteResult = ContextCompat.checkSelfPermission(this,
+                Manifest.permission.WRITE_EXTERNAL_STORAGE)
+
+        /**
+         * READ and WRITE belong to the same permission group (STORAGE).
+         * For now(API 27), giving permission to one, doesn't force user interaction for the other.
+         */
+        val permissionsToRequest = listOf(permissionAudioResult,permissionStorageReadResult,permissioStorageWriteResult)
+            .zip( listOf(
+                    Manifest.permission.RECORD_AUDIO,
+                    Manifest.permission.READ_EXTERNAL_STORAGE,
+                    Manifest.permission.WRITE_EXTERNAL_STORAGE))
+            .filter { it.first != PackageManager.PERMISSION_GRANTED  }
+            .map { it.second }
+
+
+        if (permissionsToRequest.isNotEmpty()) {
             // only show dialog, if permission was denied earlier
             if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.RECORD_AUDIO)) {
                 AlertDialog.Builder(this)
                         .setTitle(R.string.permission_alert_dialog_title)
                         .setMessage(R.string.permission_alert_dialog_text)
-                        .setPositiveButton(android.R.string.ok, { dialog, id ->
+                        .setPositiveButton(android.R.string.ok) { _, _ ->
                             ActivityCompat.requestPermissions(
                                     this,
-                                    arrayOf(Manifest.permission.RECORD_AUDIO),
-                                    REQUEST_PERMISSION_RECORD_AUDIO)
-                        }).create().show()
+                                    permissionsToRequest.toTypedArray(),
+                                    REQUEST_PERMISSIONS)
+                        }.create().show()
             } else {
                 ActivityCompat.requestPermissions(
                         this,
-                        arrayOf(Manifest.permission.RECORD_AUDIO),
-                        REQUEST_PERMISSION_RECORD_AUDIO)
+                        permissionsToRequest.toTypedArray(),
+                        REQUEST_PERMISSIONS)
             }
         } else {
             // permission already granted
@@ -109,7 +127,7 @@ class NavigationDrawerActivity : AppCompatActivity(),
         // as you specify a parent activity in AndroidManifest.xml.
         when (item.itemId) {
             R.id.action_settings -> return true
-            else                 -> return super.onOptionsItemSelected(item)
+            else -> return super.onOptionsItemSelected(item)
         }
 
     }
@@ -121,23 +139,23 @@ class NavigationDrawerActivity : AppCompatActivity(),
                 loadInstrumentsFragment()
             }
 
-            R.id.nav_exercises   -> {
+            R.id.nav_exercises -> {
                 loadExercisesFragment()
             }
 
-            R.id.nav_recordings  -> {
+            R.id.nav_recordings -> {
                 loadRecordingsFragment()
             }
 
-            R.id.nav_reports     -> {
+            R.id.nav_reports -> {
                 loadReportsFragment()
             }
 
-            R.id.nav_share       -> {
+            R.id.nav_share -> {
                 // load share action
             }
 
-            R.id.nav_settings    -> {
+            R.id.nav_settings -> {
                 val intent = Intent(this, SettingsActivity::class.java)
                 startActivity(intent)
             }
@@ -182,7 +200,7 @@ class NavigationDrawerActivity : AppCompatActivity(),
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
         when (requestCode) {
-            REQUEST_PERMISSION_RECORD_AUDIO -> {
+            REQUEST_PERMISSIONS -> {
                 if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED)
                     Toast.makeText(this, "Permission Granted", Toast.LENGTH_SHORT).show()
                 else
@@ -192,7 +210,7 @@ class NavigationDrawerActivity : AppCompatActivity(),
     }
 
     companion object {
-        const val REQUEST_PERMISSION_RECORD_AUDIO = 100
+        const val REQUEST_PERMISSIONS = 100
     }
 
 }
