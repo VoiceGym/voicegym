@@ -158,12 +158,16 @@ class SpectrogramFragment : AbstractInstrumentFragment() {
 
     override fun doneRecordingSwitchToPlayback() {
         spectrogramView.let {
+            it.spectrogramViewState = InstrumentState.PLAYBACK
             it.rewindDequesToStart()
             it.clearBitmapAndBuffer()
             it.forwardWindDequesToEnd()
-            it.spectrogramViewState = InstrumentState.PLAYBACK
             it.invalidate()
         }
+    }
+
+    override fun cutToMaximumSampleNumber(samples: Int) {
+        spectrogramView.limitToMaximumSampleNumber(samples)
     }
 
     override fun getInstrumentState(): InstrumentState =

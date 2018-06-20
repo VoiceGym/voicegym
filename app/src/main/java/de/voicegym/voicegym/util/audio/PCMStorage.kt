@@ -49,6 +49,9 @@ class PCMStorage(val sampleRate: Int) : RecordBufferListener, InputStream() {
     private var buffer: ByteBuffer? = null
 
     var size: Int = 0
+        private set(value) {
+            field = value
+        }
 
     fun ready(): Boolean = sealed
 

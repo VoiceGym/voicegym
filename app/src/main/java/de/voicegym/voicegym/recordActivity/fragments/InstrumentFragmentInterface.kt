@@ -56,6 +56,13 @@ interface InstrumentFragmentInterface {
 
     fun getInstrumentState(): InstrumentState
 
+    /**
+     * Informs the Instrument of the maximum sample number the Activity is able to play.
+     *
+     * @param samples: the maximum sampleNumber
+     */
+    fun cutToMaximumSampleNumber(samples: Int)
+
 }
 
 
