@@ -21,7 +21,8 @@ class SpectrogramFragment : AbstractInstrumentFragment() {
      * this stores the current settings, initialized with bogus settings
      * requires a call of updateInstrumentViewSettings(settings) after creation
      */
-    override var settings = FourierInstrumentViewSettings(4096, 2, 10.0, 1000.0, 100, false)
+    override var settings =
+            FourierInstrumentViewSettings(4096, 2, 10.0, 1000.0, 100, false)
 
     /**
      * 1-pixel along the y-Axis relates to
