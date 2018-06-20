@@ -35,7 +35,7 @@ interface InstrumentFragmentInterface {
     /**
      * scroll the instrument
      *
-     * @param samplePosition: scroll to this sample number
+     * @param samplePosition scroll to this sample number
      */
     fun seekToSamplePosition(samplePosition: Int)
 
@@ -59,7 +59,7 @@ interface InstrumentFragmentInterface {
     /**
      * Informs the Instrument of the maximum sample number the Activity is able to play.
      *
-     * @param samples: the maximum sampleNumber
+     * @param samples the maximum sampleNumber
      */
     fun cutToMaximumSampleNumber(samples: Int)
 
