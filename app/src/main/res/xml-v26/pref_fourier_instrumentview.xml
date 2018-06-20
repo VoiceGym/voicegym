@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <PreferenceCategory android:title="Instrument View Settings">
+
+        <EditTextPreference
+            android:defaultValue="10"
+            android:inputType="number"
+            android:key="from_frequency"
+            android:selectAllOnFocus="true"
+            android:singleLine="true"
+            android:title="from Frequency" />
+
+        <EditTextPreference
+            android:defaultValue="1000"
+            android:inputType="number"
+            android:key="till_frequency"
+            android:selectAllOnFocus="true"
+            android:singleLine="true"
+            android:title="until Frequency" />
+
+        <EditTextPreference
+            android:defaultValue="100"
+            android:inputType="number"
+            android:key="display_sample_numbers"
+            android:selectAllOnFocus="true"
+            android:singleLine="true"
+            android:title="Number of Displayed Blocks" />
+
+        <CheckBoxPreference
+            android:defaultValue="false"
+            android:key="display_logarithmic"
+            android:title="Logarithmic Display" />
+    </PreferenceCategory>
+
+    <PreferenceCategory android:title="Fourier Transformation Settings">
+        <ListPreference
+            android:defaultValue="4096"
+            android:entries="@array/list_of_blockSizes"
+            android:entryValues="@array/list_of_blockSizes"
+            android:key="fft_blocksize"
+            android:title="FFT Blocksize" />
+
+        <ListPreference
+            android:defaultValue="2"
+            android:entries="@array/list_of_binning_values"
+            android:entryValues="@array/list_of_binning_values"
+            android:key="fft_binning"
+            android:title="FFT Binning" />
+    </PreferenceCategory>
+</PreferenceScreen>

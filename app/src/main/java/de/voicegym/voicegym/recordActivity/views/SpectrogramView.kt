@@ -13,7 +13,6 @@ import android.view.MotionEvent.ACTION_MOVE
 import android.view.MotionEvent.ACTION_UP
 import android.view.View
 import de.voicegym.voicegym.recordActivity.RecordActivity
-import de.voicegym.voicegym.recordActivity.fragments.InstrumentState
 import de.voicegym.voicegym.recordActivity.fragments.InstrumentState.LIVE_DISPLAY
 import de.voicegym.voicegym.recordActivity.fragments.InstrumentState.PLAYBACK
 import de.voicegym.voicegym.recordActivity.fragments.InstrumentState.RECORDING_DATA
@@ -146,7 +145,7 @@ class SpectrogramView : View {
             val fragment = (context as RecordActivity).getInstrumentFragment()
             if (fragment is SpectrogramFragment) {
                 val deltaFrequency = (fragment as SpectrogramFragment).deltaFrequency
-                val frequency = (fragment as SpectrogramFragment).userSettings!!.fromFrequency + (bottom_margin + getDrawAreaHeight() - yPosLine) * deltaFrequency
+                val frequency = (fragment as SpectrogramFragment).settings.fromFrequency + (bottom_margin + getDrawAreaHeight() - yPosLine) * deltaFrequency
                 canvas?.drawText("${frequency.toInt()} Hz", left_margin + 5, yPosLine - 5, mPaint)
             } else {
                 throw Error("InstrumentFragment was not a SpectrogramFragment, please expand SpectrogramView")
@@ -203,7 +202,7 @@ class SpectrogramView : View {
                 }
             }
 
-            PLAYBACK                                     -> {
+            PLAYBACK                     -> {
                 if (context !is PlaybackModeControlListener) throw Error("SpectrogramView can only be used within Activities that implement PlaybackModeControlListener")
                 val controller = (context as PlaybackModeControlListener)
                 when (event?.action) {

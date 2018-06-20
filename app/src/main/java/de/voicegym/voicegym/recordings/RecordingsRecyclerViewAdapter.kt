@@ -1,4 +1,4 @@
-package de.voicegym.voicegym.menu
+package de.voicegym.voicegym.recordings
 
 
 import android.support.design.widget.Snackbar
@@ -8,13 +8,12 @@ import android.view.View
 import android.view.View.OnClickListener
 import android.view.ViewGroup
 import de.voicegym.voicegym.R
-import de.voicegym.voicegym.menu.RecordingsFragment.OnListFragmentInteractionListener
+import de.voicegym.voicegym.recordings.RecordingsFragment.OnListFragmentInteractionListener
 import de.voicegym.voicegym.model.Recording
 import kotlinx.android.extensions.LayoutContainer
 import kotlinx.android.synthetic.main.fragment_recordings.createdView
 import kotlinx.android.synthetic.main.fragment_recordings.durationView
 import kotlinx.android.synthetic.main.fragment_recordings.floatingActionButton2
-import kotlinx.android.synthetic.main.fragment_recordings.nameView
 
 /**
  * [RecyclerView.Adapter] that can display a [DummyItem] and makes a call to the
@@ -22,7 +21,7 @@ import kotlinx.android.synthetic.main.fragment_recordings.nameView
  * TODO: Replace the implementation with code for your data type.
  */
 class RecordingsRecyclerViewAdapter(
-        private val values: List<Recording>,
+        private val values: MutableList<Recording>,
         private val listener: OnListFragmentInteractionListener?)
     : RecyclerView.Adapter<RecordingsRecyclerViewAdapter.ViewHolder>() {
 
@@ -54,6 +53,14 @@ class RecordingsRecyclerViewAdapter(
     }
 
     override fun getItemCount(): Int = values.size
+
+    fun removeItem(position: Int) {
+        values.removeAt(position)
+        // notify the item removed by position
+        // to perform recycler view delete animations
+        // NOTE: don't call notifyDataSetChanged()
+        notifyItemRemoved(position)
+    }
 
     class ViewHolder(override val containerView: View) : RecyclerView.ViewHolder(containerView), LayoutContainer {
 

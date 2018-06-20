@@ -32,7 +32,7 @@ class PlaybackModeControlFragment : Fragment() {
         val saveButton = view.findViewById<FloatingActionButton>(R.id.saveControlButton)
 
         playPauseButton.setOnClickListener { playbackModeControlListener?.playPause() }
-        rateButton.setOnClickListener { playbackModeControlListener?.rate() }
+        rateButton.setOnClickListener { playbackModeControlListener?.openRatingDialog() }
         saveButton.setOnClickListener { playbackModeControlListener?.saveToSdCard() }
         return view
     }
@@ -40,11 +40,42 @@ class PlaybackModeControlFragment : Fragment() {
 }
 
 interface PlaybackModeControlListener {
-    fun rate()
+
+    /**
+     * rate button was pressed
+     */
+    fun openRatingDialog()
+
+    /**
+     * rating dialog has a value for us
+     */
+    fun receiveRating(rating: Int)
+
+    /**
+     * play or pause button was pressed
+     */
     fun playPause()
+
+    /**
+     * save button was pressed
+     */
     fun saveToSdCard()
 
+    /**
+     * called once the screen is touched during PlaybackMode and a series of TouchEvents is started
+     */
     fun playbackTouched()
+
+    /**
+     * called once the series of TouchEvents is completed during PlaybackMode
+     */
     fun playbackReleased()
+
+    /**
+     * called during the series of TouchEvents
+     * @param relativeMovement is the relative movement (to the screen width), in between -1 to 1
+     *      * -1: scroll one screen back
+     *      * +1: scroll one screen forward
+     */
     fun playbackSeekTo(relativeMovement: Float)
 }
