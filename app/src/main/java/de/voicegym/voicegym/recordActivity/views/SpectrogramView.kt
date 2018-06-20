@@ -250,7 +250,15 @@ class SpectrogramView : View {
         rightDeque.clear()
     }
 
-    fun totalDatapoints() = currentDeque.size + leftDeque.size + rightDeque.size
+    private fun totalDatapoints() = currentDeque.size + leftDeque.size + rightDeque.size
+
+    fun limitToMaximumSampleNumber(sampleNumber: Int) {
+        if (currentDequePosition * samplesPerDataPoint > sampleNumber) seekTo(sampleNumber)
+        while (totalDatapoints() * samplesPerDataPoint > sampleNumber) {
+            rightDeque.removeLast()
+        }
+    }
+
     var currentDequePosition: Int = 0
 
     fun rewindDequesToStart() {

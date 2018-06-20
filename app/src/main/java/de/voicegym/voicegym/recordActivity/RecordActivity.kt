@@ -184,8 +184,8 @@ class RecordActivity : AppCompatActivity(),
     private fun storePCMSamples() {
         recordActivityState = RECORDING
         pcmStorage = PCMStorage(SettingsBundle.sampleRate)
-        recorder?.subscribeListener(pcmStorage!!)
-        instrumentFragment?.startRecording()
+        instrumentFragment?.startRecording() // from here on the instrumentFragment will keep the pcmSamples
+        pcmStorage?.let { recorder?.subscribeListener(it) }  // from here on the pcmStorage will collect pcm samples
     }
 
     /**
@@ -197,18 +197,18 @@ class RecordActivity : AppCompatActivity(),
      *  finish-up recording switch to playback
      */
     private fun switchToPlayback() {
-        pcmStorage?.let {
+        pcmStorage?.let { storage ->
             recordActivityState = PLAYBACK
-            it.stopListening()
-            this.stopListeningAndFreeRessource()
-            recorder?.unSubscribeListener(it)
+            storage.stopListening() // from here pcmStorage won't accept new samples
+            this.stopListeningAndFreeRessource() // from here RecordActivity won't accept new pcmSamples
+            recorder?.unSubscribeListener(storage)
             dateString = SimpleDateFormat("yyyy-MM-dd'T'HH-mm-ss", Locale.ENGLISH).format(Calendar.getInstance().time)
             switchToPlaybackControlFragment()
             instrumentFragment?.doneRecordingSwitchToPlayback()
+            instrumentFragment?.cutToMaximumSampleNumber(storage.size)
 
-            pcmPlayer = PCMPlayer(it.sampleRate, it.asShortBuffer(), this)
+            pcmPlayer = PCMPlayer(storage.sampleRate, storage.asShortBuffer(), this)
             pcmPlayer?.subscribeListener(this)
-
         }
     }
 
