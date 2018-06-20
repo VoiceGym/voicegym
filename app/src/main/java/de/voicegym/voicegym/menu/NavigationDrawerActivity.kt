@@ -46,7 +46,6 @@ class NavigationDrawerActivity : AppCompatActivity(),
 
     private fun requestPermission() {
 
-        val permissions = mutableListOf<String>()
         val permissionAudioResult = ContextCompat.checkSelfPermission(this,
                 Manifest.permission.RECORD_AUDIO)
         val permissionStorageReadResult = ContextCompat.checkSelfPermission(this,
@@ -73,12 +72,12 @@ class NavigationDrawerActivity : AppCompatActivity(),
                 AlertDialog.Builder(this)
                         .setTitle(R.string.permission_alert_dialog_title)
                         .setMessage(R.string.permission_alert_dialog_text)
-                        .setPositiveButton(android.R.string.ok, { dialog, id ->
+                        .setPositiveButton(android.R.string.ok) { _, _ ->
                             ActivityCompat.requestPermissions(
                                     this,
                                     permissionsToRequest.toTypedArray(),
                                     REQUEST_PERMISSIONS)
-                        }).create().show()
+                        }.create().show()
             } else {
                 ActivityCompat.requestPermissions(
                         this,
@@ -88,10 +87,6 @@ class NavigationDrawerActivity : AppCompatActivity(),
         } else {
             // permission already granted
         }
-
-
-
-
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
