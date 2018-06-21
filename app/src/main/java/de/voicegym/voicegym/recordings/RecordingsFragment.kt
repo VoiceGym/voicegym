@@ -3,7 +3,10 @@ package de.voicegym.voicegym.recordings
 import android.arch.lifecycle.Observer
 import android.content.Context
 import android.arch.lifecycle.ViewModelProviders
+import android.graphics.Color
 import android.os.Bundle
+import android.support.design.widget.BaseTransientBottomBar
+import android.support.design.widget.Snackbar
 import android.support.v4.app.Fragment
 import android.support.v7.widget.DefaultItemAnimator
 import android.support.v7.widget.DividerItemDecoration
@@ -16,6 +19,7 @@ import android.view.ViewGroup
 import de.voicegym.voicegym.R
 import de.voicegym.voicegym.model.Recording
 import de.voicegym.voicegym.model.RecordingListViewModel
+import java.io.File
 
 /**
  * A fragment representing a list of Items.
@@ -25,39 +29,37 @@ import de.voicegym.voicegym.model.RecordingListViewModel
 class RecordingsFragment : Fragment(),
         RecyclerItemTouchHelperListener {
 
-
+    val TAG = "RecordingsFragment"
     private var listener: OnListFragmentInteractionListener? = null
 
     private lateinit var recordingsListViewModel: RecordingListViewModel
-    lateinit var  adapter: RecordingsAdapter
+    lateinit var adapter: RecordingsAdapter
 
     override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int, position: Int) {
         if (viewHolder is RecordingsAdapter.ViewHolder) {
-            recordingsListViewModel.deleteRecording(adapter[position])
-            // get the removed item name to display it in snack bar
-//            val name = recordings[viewHolder.getAdapterPosition()].fileName
-//
-//            // backup of removed item for undo purpose
-//            val deletedItem = recordings.get(viewHolder.getAdapterPosition())
-//            val deletedIndex = viewHolder.getAdapterPosition()
+            val deletedRecording = adapter[position]
+            recordingsListViewModel.deleteRecording(deletedRecording)
 
-            // remove the item from recycler view
-//            adapter.removeItem(viewHolder.getAdapterPosition())
-
-//            // showing snack bar with Undo option
-//            val snackbar = Snackbar
-//                    .make(recordingsList, name + " removed from cart!", Snackbar.LENGTH_LONG).show()
-//            snackbar.setAction("UNDO", view ->
-//
-//                    // undo is selected, restore the deleted item
-//                    adapter.restoreItem(deletedItem, deletedIndex);
-//
-//            )
-//            snackbar.setActionTextColor(Color.YELLOW);
-//            snackbar.show();
+            // showing snack bar with Undo option
+            var undone = false
+            Snackbar.make(view!!, deletedRecording.fileName + " removed!", Snackbar.LENGTH_LONG)
+                    .setAction("UNDO") { view ->
+                        // undo is selected, restore the deleted item
+                        recordingsListViewModel.addRecording(deletedRecording)
+                        undone = true
+                    }
+                    .addCallback(object : BaseTransientBottomBar.BaseCallback<Snackbar>() {
+                            override fun onDismissed(transientBottomBar: Snackbar?, event: Int) {
+                                if (!undone) {
+                                    File(deletedRecording.fileName).delete()
+                                }
+                            }
+                        }
+                    )
+                    .setActionTextColor(Color.YELLOW)
+                    .show()
         }
     }
-
 
     override fun onAttach(context: Context) {
         super.onAttach(context)

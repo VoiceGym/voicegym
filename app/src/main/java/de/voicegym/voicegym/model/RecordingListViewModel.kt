@@ -24,4 +24,10 @@ class RecordingListViewModel(application: Application) : AndroidViewModel(applic
             database.recordingDao().delete(recording)
         }
     }
+
+    fun addRecording(recording: Recording) {
+        launch(CommonPool) {
+            database.recordingDao().insert(recording)
+        }
+    }
 }
