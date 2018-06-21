@@ -12,6 +12,8 @@ import android.view.View
 import de.voicegym.voicegym.R
 import de.voicegym.voicegym.menu.settings.FourierInstrumentViewSettings
 import de.voicegym.voicegym.menu.settings.SettingsBundle
+import de.voicegym.voicegym.model.AppDatabase
+import de.voicegym.voicegym.model.Recording
 import de.voicegym.voicegym.recordActivity.RecordActivityState.PLAYBACK
 import de.voicegym.voicegym.recordActivity.RecordActivityState.RECORDING
 import de.voicegym.voicegym.recordActivity.RecordActivityState.WAITING
@@ -32,11 +34,12 @@ import de.voicegym.voicegym.util.audio.RecordHelper
 import de.voicegym.voicegym.util.audio.getDoubleArrayFromShortArray
 import de.voicegym.voicegym.util.audio.savePCMInputStreamOnSDCard
 import de.voicegym.voicegym.util.math.FourierHelper
+import kotlinx.coroutines.experimental.CommonPool
+import kotlinx.coroutines.experimental.launch
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
 import java.util.concurrent.ConcurrentLinkedQueue
-import kotlin.concurrent.thread
 
 class RecordActivity : AppCompatActivity(),
         RecordBufferListener,
@@ -315,11 +318,19 @@ class RecordActivity : AppCompatActivity(),
     }
 
     override fun saveToSdCard() {
-        thread {
+        launch(CommonPool) {
             pcmStorage?.let {
                 it.rewind()
                 savePCMInputStreamOnSDCard(dateString, it, it.sampleRate, 128000)
             }
+
+            val recordingDao = AppDatabase.getInstance().recordingDao()
+            val size = pcmStorage?.size ?: 0
+            val sampleRate = pcmStorage?.sampleRate ?: 41000
+            recordingDao.insert(Recording().also {
+                it.fileName = dateString
+                it.duration = size / sampleRate
+            })
         }
     }
 
