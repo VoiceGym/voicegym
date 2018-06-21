@@ -20,10 +20,10 @@ import kotlinx.android.synthetic.main.fragment_recordings.floatingActionButton2
  * specified [OnListFragmentInteractionListener].
  * TODO: Replace the implementation with code for your data type.
  */
-class RecordingsRecyclerViewAdapter(
-        private val values: MutableList<Recording>,
+class RecordingsAdapter(
+        private var values: List<Recording>,
         private val listener: OnListFragmentInteractionListener?)
-    : RecyclerView.Adapter<RecordingsRecyclerViewAdapter.ViewHolder>() {
+    : RecyclerView.Adapter<RecordingsAdapter.ViewHolder>() {
 
     private val mOnClickListener: OnClickListener
 
@@ -54,13 +54,12 @@ class RecordingsRecyclerViewAdapter(
 
     override fun getItemCount(): Int = values.size
 
-    fun removeItem(position: Int) {
-        values.removeAt(position)
-        // notify the item removed by position
-        // to perform recycler view delete animations
-        // NOTE: don't call notifyDataSetChanged()
-        notifyItemRemoved(position)
+    fun update(recordings: List<Recording>) {
+        this.values = recordings
+        notifyDataSetChanged()
     }
+
+    operator fun get(position: Int): Recording = values[position]
 
     class ViewHolder(override val containerView: View) : RecyclerView.ViewHolder(containerView), LayoutContainer {
 

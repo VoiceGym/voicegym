@@ -1,7 +1,9 @@
 package de.voicegym.voicegym.model
 
+import android.arch.lifecycle.LiveData
 import android.arch.persistence.room.ColumnInfo
 import android.arch.persistence.room.Dao
+import android.arch.persistence.room.Delete
 import android.arch.persistence.room.Entity
 import android.arch.persistence.room.Insert
 import android.arch.persistence.room.OnConflictStrategy.REPLACE
@@ -33,7 +35,7 @@ data class Recording(
 @Dao
 interface RecordingDao {
     @Query("SELECT * from recordings")
-    fun getAll(): List<Recording>
+    fun getAll(): LiveData<List<Recording>>
 
     @Insert(onConflict = REPLACE)
     fun insert(recording: Recording)
@@ -41,4 +43,6 @@ interface RecordingDao {
     @Query("Select * from recordings where filename=:filename")
     fun getByFileName(filename: String): Recording?
 
+    @Delete
+    fun delete(recording: Recording)
 }

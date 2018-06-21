@@ -167,10 +167,10 @@ class NavigationDrawerActivity : AppCompatActivity(),
 
     private fun loadFragment(fragment: Fragment, TAG: String) {
         contentView!!.post {
-            val fragmentTransaction = supportFragmentManager.beginTransaction()
-            fragmentTransaction.setCustomAnimations(android.R.anim.fade_in, android.R.anim.fade_out)
-            fragmentTransaction.replace(R.id.content_area, fragment, TAG)
-            fragmentTransaction.commitAllowingStateLoss()
+            supportFragmentManager.beginTransaction()
+                .setCustomAnimations(android.R.anim.fade_in, android.R.anim.fade_out)
+                .replace(R.id.content_area, fragment, TAG)
+                .commitAllowingStateLoss()
         }
     }
 
