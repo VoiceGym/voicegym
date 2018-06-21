@@ -2,14 +2,11 @@ package de.voicegym.voicegym.recordings
 
 import android.arch.lifecycle.Observer
 import android.content.Context
-import android.graphics.Color
 import android.arch.lifecycle.ViewModelProviders
 import android.os.Bundle
-import android.support.design.widget.Snackbar
 import android.support.v4.app.Fragment
 import android.support.v7.widget.DefaultItemAnimator
 import android.support.v7.widget.DividerItemDecoration
-import android.support.v7.widget.GridLayoutManager
 import android.support.v7.widget.LinearLayoutManager
 import android.support.v7.widget.RecyclerView
 import android.support.v7.widget.helper.ItemTouchHelper
@@ -17,15 +14,8 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import de.voicegym.voicegym.R
-import de.voicegym.voicegym.model.AppDatabase
 import de.voicegym.voicegym.model.Recording
-import de.voicegym.voicegym.model.RecordingDao
-import de.voicegym.voicegym.model.RecordingViewModel
-import kotlinx.android.synthetic.main.fragment_recordings_list.recordingsList
-import kotlinx.coroutines.experimental.CommonPool
-import kotlinx.coroutines.experimental.android.UI
-import kotlinx.coroutines.experimental.async
-import kotlinx.coroutines.experimental.launch
+import de.voicegym.voicegym.model.RecordingListViewModel
 
 /**
  * A fragment representing a list of Items.
@@ -37,14 +27,13 @@ class RecordingsFragment : Fragment(),
 
 
     private var listener: OnListFragmentInteractionListener? = null
-    private lateinit var recordingDao: RecordingDao
 
-    private lateinit var viewModel: RecordingViewModel
-    lateinit var  adapter: RecordingsRecyclerViewAdapter
+    private lateinit var recordingsListViewModel: RecordingListViewModel
+    lateinit var  adapter: RecordingsAdapter
 
     override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int, position: Int) {
-        if (viewHolder is RecordingsRecyclerViewAdapter.ViewHolder) {
-            recordingDao.delete(adapter[position])
+        if (viewHolder is RecordingsAdapter.ViewHolder) {
+            recordingsListViewModel.deleteRecording(adapter[position])
             // get the removed item name to display it in snack bar
 //            val name = recordings[viewHolder.getAdapterPosition()].fileName
 //
@@ -79,11 +68,6 @@ class RecordingsFragment : Fragment(),
         }
     }
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        recordingDao = AppDatabase.getInstance().recordingDao()
-    }
-
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
                               savedInstanceState: Bundle?): View? {
         val view = inflater.inflate(R.layout.fragment_recordings_list, container, false) as RecyclerView
@@ -91,12 +75,12 @@ class RecordingsFragment : Fragment(),
         view.layoutManager = LinearLayoutManager(context)
         view.addItemDecoration(DividerItemDecoration(context, DividerItemDecoration.VERTICAL))
         view.itemAnimator = DefaultItemAnimator()
-        adapter = RecordingsRecyclerViewAdapter(emptyList(), listener)
+        adapter = RecordingsAdapter(emptyList(), listener)
         view.adapter = adapter
         val itemTouchHelperCallback = RecyclerItemTouchHelper(0, ItemTouchHelper.LEFT, this)
         ItemTouchHelper(itemTouchHelperCallback).attachToRecyclerView(view)
-        viewModel = ViewModelProviders.of(this).get(RecordingViewModel::class.java)
-        viewModel.recordingsList.observe(this, Observer { recordings ->
+        recordingsListViewModel = ViewModelProviders.of(this).get(RecordingListViewModel::class.java)
+        recordingsListViewModel.recordingsList.observe(this, Observer { recordings ->
             adapter.update(recordings!!)
         })
 

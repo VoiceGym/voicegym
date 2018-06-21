@@ -20,10 +20,10 @@ import kotlinx.android.synthetic.main.fragment_recordings.floatingActionButton2
  * specified [OnListFragmentInteractionListener].
  * TODO: Replace the implementation with code for your data type.
  */
-class RecordingsRecyclerViewAdapter(
+class RecordingsAdapter(
         private var values: List<Recording>,
         private val listener: OnListFragmentInteractionListener?)
-    : RecyclerView.Adapter<RecordingsRecyclerViewAdapter.ViewHolder>() {
+    : RecyclerView.Adapter<RecordingsAdapter.ViewHolder>() {
 
     private val mOnClickListener: OnClickListener
 
