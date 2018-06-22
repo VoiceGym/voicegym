@@ -1,5 +1,6 @@
 package de.voicegym.voicegym
 
+import de.voicegym.voicegym.recordActivity.views.util.ExponentialScalingFunction
 import de.voicegym.voicegym.recordActivity.views.util.LinearScalingFunction
 import de.voicegym.voicegym.recordActivity.views.util.PixelFrequencyPair
 import junit.framework.Assert.assertEquals
@@ -27,6 +28,21 @@ class ScalingFunctionTest {
         assertEquals(175, testObject.valueFromFrequency(77.5))
         assertEquals(200, testObject.valueFromFrequency(100.0))
 
+    }
+
+
+    @Test
+    fun testExponentialScalingFunction() {
+        val from = PixelFrequencyPair(100, 10.0)
+        val till = PixelFrequencyPair(900, 2000.0)
+
+        val testObject = ExponentialScalingFunction(from, till)
+
+        assertEquals(10.0, testObject.valueFromPixel(100), 0.00000001)
+        assertEquals(2000.0, testObject.valueFromPixel(900), 0.00000001)
+
+        assertEquals(100, testObject.valueFromFrequency(10.0))
+        assertEquals(900, testObject.valueFromFrequency(2000.0))
     }
 
 
