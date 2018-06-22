@@ -14,53 +14,23 @@ import android.view.MotionEvent.ACTION_MOVE
 import android.view.MotionEvent.ACTION_UP
 import android.view.View
 import de.voicegym.voicegym.menu.settings.FourierInstrumentViewSettings
+import de.voicegym.voicegym.menu.settings.SettingsBundle
 import de.voicegym.voicegym.recordActivity.fragments.InstrumentState.LIVE_DISPLAY
 import de.voicegym.voicegym.recordActivity.fragments.InstrumentState.PLAYBACK
 import de.voicegym.voicegym.recordActivity.fragments.InstrumentState.RECORDING_DATA
 import de.voicegym.voicegym.recordActivity.fragments.InstrumentViewInterface
 import de.voicegym.voicegym.recordActivity.fragments.PlaybackModeControlListener
 import de.voicegym.voicegym.recordActivity.views.util.ExponentialScalingFunction
+import de.voicegym.voicegym.recordActivity.views.util.HotGradientColorPicker
 import de.voicegym.voicegym.recordActivity.views.util.LinearScalingFunction
 import de.voicegym.voicegym.recordActivity.views.util.PixelFrequencyPair
 import de.voicegym.voicegym.recordActivity.views.util.ScalingFunction
+import de.voicegym.voicegym.util.audio.getDezibelFromAmplitude
 import org.jetbrains.anko.backgroundColor
 import kotlin.math.absoluteValue
 import kotlin.math.roundToInt
 
 class SpectrogramView : View, InstrumentViewInterface {
-
-    override fun updateInstrumentViewSettings(settings: FourierInstrumentViewSettings) {
-        this.settings = settings
-        updateScaling()
-    }
-
-
-    override fun onWindowFocusChanged(hasWindowFocus: Boolean) {
-        super.onWindowFocusChanged(hasWindowFocus)
-
-        updateScaling()
-    }
-
-
-    fun updateScaling() {
-        val from = PixelFrequencyPair((getDrawAreaHeight() + top_margin).toInt(), settings.fromFrequency)
-        val until = PixelFrequencyPair((top_margin).toInt(), settings.tillFrequency)
-        scale = if (settings.isLogarithmic) {
-            ExponentialScalingFunction(from, until)
-        } else {
-            LinearScalingFunction(from, until)
-        }
-    }
-
-    private lateinit var settings: FourierInstrumentViewSettings
-
-    private lateinit var scale: ScalingFunction
-
-    /**
-     * the number of pixels per datapoint aka block
-     */
-    fun pixelPerFFTBlock(): Int = (getDrawAreaWidth() / settings.samplesPerDatapoint).toInt()
-
 
     /**
      *  The instrument is drawn below the top_margin
@@ -82,10 +52,6 @@ class SpectrogramView : View, InstrumentViewInterface {
      */
     var right_margin: Float = 20f
 
-    fun getDrawAreaWidth(): Float = (width - left_margin - right_margin)
-
-    fun getDrawAreaHeight(): Float = (height - top_margin - bottom_margin)
-
     /**
      * Whether to draw a border around the instrument area
      */
@@ -100,6 +66,15 @@ class SpectrogramView : View, InstrumentViewInterface {
      * The thickness of the border
      */
     var border_thickness = 3f
+
+    private fun getDrawAreaWidth(): Float = (width - left_margin - right_margin)
+
+    private fun getDrawAreaHeight(): Float = (height - top_margin - bottom_margin)
+
+
+    private lateinit var settings: FourierInstrumentViewSettings
+
+    private lateinit var scale: ScalingFunction
 
     var spectrogramViewState = LIVE_DISPLAY
 
@@ -129,6 +104,46 @@ class SpectrogramView : View, InstrumentViewInterface {
     constructor(context: Context, attrs: AttributeSet?) : this(context, attrs, 0)
     constructor(context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0) : super(context, attrs, defStyleAttr)
 
+    var frequencyArray: DoubleArray? = null
+
+    fun indexOfFrequency(frequency: Double): Int {
+        frequencyArray?.let { frequencies ->
+            for (i in 0 until frequencies.size - 1) {
+                if ((frequencies[i] <= frequency) && frequencies[i + 1] > frequency) return i
+            }
+            return -1
+        }
+        throw Error("FrequencyArray was not set before calling index function")
+    }
+
+    fun addLeft(amplitudes: DoubleArray) {
+        val pixelPerDataPoint = (getDrawAreaWidth() / settings.displayedDatapoints).toInt()
+        rotateBitmap(-pixelPerDataPoint)
+    }
+
+    fun addRight(amplitudes: DoubleArray) {
+        val pixelPerDataPoint = (getDrawAreaWidth() / settings.displayedDatapoints).toInt()
+        rotateBitmap(pixelPerDataPoint)
+
+
+        val colors = IntArray(getDrawAreaHeight().toInt())
+        colors?.let {
+            for (i in 0 until it.size) {
+                val frequency = scale.valueFromPixel((getDrawAreaHeight() + top_margin).toInt() - i)
+                it[i] = HotGradientColorPicker.pickColor(getDezibelFromAmplitude(amplitudes[indexOfFrequency(frequency)]) / SettingsBundle.normalisationConstant)
+            }
+        }
+
+        val deltaX = getDrawAreaWidth() / settings.displayedDatapoints
+        val lx = deltaX * (settings.displayedDatapoints - 1)
+        val lowerY = getDrawAreaHeight()
+
+        colors.forEachIndexed { i, colorValue ->
+            mPaint.color = colorValue
+            mCanvas?.drawLine(lx, lowerY - i, lx + deltaX, lowerY - i, mPaint)
+        }
+        this.invalidate()
+    }
 
     private fun rotateBitmap(numberOfPixels: Int) {
         buffer?.let {
@@ -188,6 +203,7 @@ class SpectrogramView : View, InstrumentViewInterface {
     }
 
     var touchedAtXpos: Float = 0f
+
     override fun onTouchEvent(event: MotionEvent?): Boolean {
         when (spectrogramViewState) {
             LIVE_DISPLAY, RECORDING_DATA -> when (event?.action) {
@@ -239,6 +255,29 @@ class SpectrogramView : View, InstrumentViewInterface {
         mBitmap = Bitmap.createBitmap((width - left_margin - right_margin).toInt(), (height - top_margin - bottom_margin).toInt(), Bitmap.Config.ARGB_8888)
         mCanvas = Canvas(mBitmap)
         buffer = IntArray((getDrawAreaHeight() * getDrawAreaWidth()).toInt())
+    }
+
+    override fun updateInstrumentViewSettings(settings: FourierInstrumentViewSettings) {
+        this.settings = settings
+        updateScaling()
+    }
+
+
+    override fun onWindowFocusChanged(hasWindowFocus: Boolean) {
+        super.onWindowFocusChanged(hasWindowFocus)
+
+        updateScaling()
+    }
+
+
+    fun updateScaling() {
+        val from = PixelFrequencyPair((getDrawAreaHeight() + top_margin).toInt(), settings.fromFrequency)
+        val until = PixelFrequencyPair((top_margin).toInt(), settings.tillFrequency)
+        scale = if (settings.isLogarithmic) {
+            ExponentialScalingFunction(from, until)
+        } else {
+            LinearScalingFunction(from, until)
+        }
     }
 
 

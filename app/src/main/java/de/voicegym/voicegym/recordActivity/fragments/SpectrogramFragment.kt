@@ -37,10 +37,6 @@ class SpectrogramFragment : AbstractInstrumentFragment() {
         return view
     }
 
-    override fun onResume() {
-        super.onResume()
-        spectrogramView.updateInstrumentViewSettings(settings)
-    }
 
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
@@ -49,6 +45,7 @@ class SpectrogramFragment : AbstractInstrumentFragment() {
 
     override fun updateFrequencyArray(frequencies: DoubleArray) {
         frequencyArray = frequencies
+        spectrogramView.frequencyArray = frequencies
     }
 
     override fun updateInstrumentViewSettings(settings: FourierInstrumentViewSettings) {
@@ -60,6 +57,7 @@ class SpectrogramFragment : AbstractInstrumentFragment() {
      * this is the callback that receives a new amplitudeArray
      */
     override fun insertNewAmplitudes(spectrum: DoubleArray) {
+        spectrogramView.addRight(spectrum)
     }
 
 

@@ -13,7 +13,7 @@ object SettingsBundle {
     const val sampleRate = 44100
     const val channelConfig = AudioFormat.CHANNEL_IN_MONO
     const val audioFormat = AudioFormat.ENCODING_PCM_16BIT
-    const val normailzationConstant = 55.0
+    const val normalisationConstant = 55.0
 
 
     /**
