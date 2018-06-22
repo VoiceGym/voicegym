@@ -7,6 +7,7 @@ import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.Path
 import android.util.AttributeSet
+import android.util.Log
 import android.view.MotionEvent
 import android.view.MotionEvent.ACTION_DOWN
 import android.view.MotionEvent.ACTION_MOVE
@@ -18,19 +19,42 @@ import de.voicegym.voicegym.recordActivity.fragments.InstrumentState.PLAYBACK
 import de.voicegym.voicegym.recordActivity.fragments.InstrumentState.RECORDING_DATA
 import de.voicegym.voicegym.recordActivity.fragments.InstrumentViewInterface
 import de.voicegym.voicegym.recordActivity.fragments.PlaybackModeControlListener
+import de.voicegym.voicegym.recordActivity.views.util.ExponentialScalingFunction
+import de.voicegym.voicegym.recordActivity.views.util.LinearScalingFunction
+import de.voicegym.voicegym.recordActivity.views.util.PixelFrequencyPair
+import de.voicegym.voicegym.recordActivity.views.util.ScalingFunction
 import org.jetbrains.anko.backgroundColor
 import kotlin.math.absoluteValue
+import kotlin.math.roundToInt
 
 class SpectrogramView : View, InstrumentViewInterface {
 
     override fun updateInstrumentViewSettings(settings: FourierInstrumentViewSettings) {
         this.settings = settings
-        //TODO check if settings actually changed
-        //TODO if settings changed
+        updateScaling()
+    }
+
+
+    override fun onWindowFocusChanged(hasWindowFocus: Boolean) {
+        super.onWindowFocusChanged(hasWindowFocus)
+
+        updateScaling()
+    }
+
+
+    fun updateScaling() {
+        val from = PixelFrequencyPair((getDrawAreaHeight() + top_margin).toInt(), settings.fromFrequency)
+        val until = PixelFrequencyPair((top_margin).toInt(), settings.tillFrequency)
+        scale = if (settings.isLogarithmic) {
+            ExponentialScalingFunction(from, until)
+        } else {
+            LinearScalingFunction(from, until)
+        }
     }
 
     private lateinit var settings: FourierInstrumentViewSettings
 
+    private lateinit var scale: ScalingFunction
 
     /**
      * the number of pixels per datapoint aka block
@@ -132,11 +156,8 @@ class SpectrogramView : View, InstrumentViewInterface {
         mPaint.strokeWidth = 2f
         mPaint.textSize = 24f
         canvas?.drawLine(left_margin, yPosLine, width + left_margin, yPosLine, mPaint)
-        TODO()
-        //val deltaFrequency = (fragment as SpectrogramFragment).deltaFrequency
-        //val frequency = (fragment as SpectrogramFragment).settings.fromFrequency + (bottom_margin + getDrawAreaHeight() - yPosLine) * deltaFrequency
-        //canvas?.drawText("${frequency.toInt()} Hz", left_margin + 5, yPosLine - 5, mPaint)
-
+        val frequency = scale.valueFromPixel(yPosLine.roundToInt())
+        canvas?.drawText("${frequency.toInt()} Hz", left_margin + 5, yPosLine - 5, mPaint)
     }
 
     private fun drawBorder(canvas: Canvas) {
@@ -173,18 +194,10 @@ class SpectrogramView : View, InstrumentViewInterface {
                 ACTION_DOWN -> {
                     drawLine = !drawLine
                     yPosLine = event.y
-                    return true
                 }
 
-                ACTION_MOVE -> {
-                    yPosLine = event.y
-                    return true
-                }
-
-                ACTION_UP   -> {
-                    yPosLine = event.y
-                    return true
-                }
+                ACTION_MOVE -> yPosLine = event.y
+                ACTION_UP   -> yPosLine = event.y
             }
 
             PLAYBACK                     -> {
@@ -194,12 +207,10 @@ class SpectrogramView : View, InstrumentViewInterface {
                     ACTION_DOWN -> {
                         controller.playbackTouched()
                         touchedAtXpos = event.x
-                        return true
                     }
 
                     ACTION_MOVE -> {
                         controller.playbackSeekTo((event.x - touchedAtXpos) / getDrawAreaWidth())
-
                     }
 
                     ACTION_UP   -> {
@@ -209,7 +220,12 @@ class SpectrogramView : View, InstrumentViewInterface {
                 }
             }
         }
-        return super.onTouchEvent(event)
+        this.invalidate()
+        Log.e("EventLog", "Ypos was ${event?.y}")
+        return when (event?.action) {
+            ACTION_UP, ACTION_DOWN, ACTION_MOVE -> true
+            else                                -> super.onTouchEvent(event)
+        }
     }
 
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {

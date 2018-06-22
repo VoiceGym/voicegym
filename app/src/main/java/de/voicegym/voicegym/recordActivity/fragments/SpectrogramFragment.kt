@@ -9,7 +9,6 @@ import de.voicegym.voicegym.menu.settings.FourierInstrumentViewSettings
 import de.voicegym.voicegym.recordActivity.fragments.InstrumentState.LIVE_DISPLAY
 import de.voicegym.voicegym.recordActivity.fragments.InstrumentState.RECORDING_DATA
 import de.voicegym.voicegym.recordActivity.views.SpectrogramView
-import org.apache.commons.math3.analysis.interpolation.LinearInterpolator
 
 
 class SpectrogramFragment : AbstractInstrumentFragment() {
@@ -35,19 +34,17 @@ class SpectrogramFragment : AbstractInstrumentFragment() {
         val view = inflater.inflate(R.layout.fragment_spectrogram, container, false)
 
         spectrogramView = view.findViewById(R.id.spectrogramView)
-        spectrogramView.let {
-            it.updateInstrumentViewSettings(settings)
-            it.invalidate()
-        }
         return view
+    }
+
+    override fun onResume() {
+        super.onResume()
+        spectrogramView.updateInstrumentViewSettings(settings)
     }
 
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
         if (frequencyArray == null) throw Error("Didn't pass required arguments to fragments, frequencyArray missing")
-
-        // all settings should have been after execution of activity onCreate
-        onRangeChanged()
     }
 
     override fun updateFrequencyArray(frequencies: DoubleArray) {
@@ -57,34 +54,18 @@ class SpectrogramFragment : AbstractInstrumentFragment() {
     override fun updateInstrumentViewSettings(settings: FourierInstrumentViewSettings) {
         this.settings = settings
         spectrogramView.updateInstrumentViewSettings(settings)
-        if (frequencyArray != null) onRangeChanged()
     }
 
     /**
      * this is the callback that receives a new amplitudeArray
      */
     override fun insertNewAmplitudes(spectrum: DoubleArray) {
-        spectrogramView.let {
-            TODO()
-            it.invalidate()
-        }
-        this.view?.invalidate()
     }
 
 
-    private fun onRangeChanged() {
-        settings.let {
-            TODO()
-        }
-    }
-
-    override fun getCurrentSamplePosition(): Int {
-        TODO()
-    }
+    override fun getCurrentSamplePosition(): Int = 0
 
     override fun seekToSamplePosition(samplePosition: Int) {
-        TODO()
-        spectrogramView.invalidate()
     }
 
     override fun resetFragment() {
@@ -102,13 +83,11 @@ class SpectrogramFragment : AbstractInstrumentFragment() {
     override fun doneRecordingSwitchToPlayback() {
         spectrogramView.let {
             it.spectrogramViewState = InstrumentState.PLAYBACK
-            TODO()
-            it.invalidate()
         }
     }
 
     override fun cutToMaximumSampleNumber(samples: Int) {
-        TODO()
+
     }
 
     override fun getInstrumentState(): InstrumentState =
