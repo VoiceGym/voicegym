@@ -12,8 +12,10 @@ abstract class ScalingFunction(val from: PixelFrequencyPair, val until: PixelFre
 
 class LinearScalingFunction(from: PixelFrequencyPair, until: PixelFrequencyPair) : ScalingFunction(from, until) {
 
-    private val m: Double = (from.pixelPosition - until.pixelPosition) /
-            (from.correspondingFrequency - until.correspondingFrequency)
+
+    private val m: Double = (from.correspondingFrequency - until.correspondingFrequency) /
+            (from.pixelPosition - until.pixelPosition)
+
     private val b: Double = until.correspondingFrequency - this.m * until.pixelPosition
 
 
