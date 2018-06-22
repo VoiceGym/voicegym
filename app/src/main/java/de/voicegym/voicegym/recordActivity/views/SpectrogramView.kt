@@ -76,8 +76,6 @@ class SpectrogramView : View, InstrumentViewInterface {
 
     private lateinit var scale: ScalingFunction
 
-    var spectrogramViewState = LIVE_DISPLAY
-
 
     private var mCanvas: Canvas? = null
     private var mBitmap: Bitmap? = null
@@ -106,7 +104,7 @@ class SpectrogramView : View, InstrumentViewInterface {
 
     var frequencyArray: DoubleArray? = null
 
-    fun indexOfFrequency(frequency: Double): Int {
+    private fun indexOfFrequency(frequency: Double): Int {
         frequencyArray?.let { frequencies ->
             for (i in 0 until frequencies.size - 1) {
                 if ((frequencies[i] <= frequency) && frequencies[i + 1] > frequency) return i
@@ -116,34 +114,45 @@ class SpectrogramView : View, InstrumentViewInterface {
         throw Error("FrequencyArray was not set before calling index function")
     }
 
+
+    private fun getPixelColorArray(amplitudes: DoubleArray): IntArray {
+        val colors = IntArray(getDrawAreaHeight().toInt())
+        for (i in 0 until colors.size) colors[i] = pickColor((getDrawAreaHeight() + top_margin).toInt() - i, amplitudes)
+        return colors
+    }
+
+    private fun pickColor(pixelPosition: Int, amplitudes: DoubleArray): Int {
+        val frequency = scale.valueFromPixel(pixelPosition)
+        return HotGradientColorPicker.pickColor(getDezibelFromAmplitude(amplitudes[indexOfFrequency(frequency)]) / SettingsBundle.normalisationConstant)
+    }
+
+    private fun drawSpectrogramBar(colors: IntArray, x: Float, width: Float) {
+        val lowerY = getDrawAreaHeight()
+        colors.forEachIndexed { i, colorValue ->
+            mPaint.color = colorValue
+            mCanvas?.drawLine(x, lowerY - i, x + width, lowerY - i, mPaint)
+        }
+    }
+
+    private fun pixelPerDatapoint() = (getDrawAreaWidth() / settings.displayedDatapoints).toInt()
+
     fun addLeft(amplitudes: DoubleArray) {
-        val pixelPerDataPoint = (getDrawAreaWidth() / settings.displayedDatapoints).toInt()
-        rotateBitmap(-pixelPerDataPoint)
+        rotateBitmap(-pixelPerDatapoint())
+        val colors = getPixelColorArray(amplitudes)
+        val width = getDrawAreaWidth() / settings.displayedDatapoints
+        drawSpectrogramBar(colors, 0f, width)
+        this.invalidate()
     }
 
     fun addRight(amplitudes: DoubleArray) {
-        val pixelPerDataPoint = (getDrawAreaWidth() / settings.displayedDatapoints).toInt()
-        rotateBitmap(pixelPerDataPoint)
-
-
-        val colors = IntArray(getDrawAreaHeight().toInt())
-        colors?.let {
-            for (i in 0 until it.size) {
-                val frequency = scale.valueFromPixel((getDrawAreaHeight() + top_margin).toInt() - i)
-                it[i] = HotGradientColorPicker.pickColor(getDezibelFromAmplitude(amplitudes[indexOfFrequency(frequency)]) / SettingsBundle.normalisationConstant)
-            }
-        }
-
-        val deltaX = getDrawAreaWidth() / settings.displayedDatapoints
-        val lx = deltaX * (settings.displayedDatapoints - 1)
-        val lowerY = getDrawAreaHeight()
-
-        colors.forEachIndexed { i, colorValue ->
-            mPaint.color = colorValue
-            mCanvas?.drawLine(lx, lowerY - i, lx + deltaX, lowerY - i, mPaint)
-        }
+        rotateBitmap(pixelPerDatapoint())
+        val colors = getPixelColorArray(amplitudes)
+        val width = getDrawAreaWidth() / settings.displayedDatapoints
+        val x = width * (settings.displayedDatapoints - 1)
+        drawSpectrogramBar(colors, x, width)
         this.invalidate()
     }
+
 
     private fun rotateBitmap(numberOfPixels: Int) {
         buffer?.let {
@@ -155,15 +164,6 @@ class SpectrogramView : View, InstrumentViewInterface {
         }
     }
 
-
-    /**
-     * Inserts one datapoint represented by its colorvalues when the view is in LIVE_DISPLAY MODE
-     */
-    fun insertNewDataPoint(colorValues: IntArray) {
-        if (spectrogramViewState != PLAYBACK) {
-            TODO()
-        } else throw Error("View already in Playback mode")
-    }
 
     private fun drawFrequencyLine(canvas: Canvas?) {
         val width = getDrawAreaWidth()
@@ -203,6 +203,8 @@ class SpectrogramView : View, InstrumentViewInterface {
     }
 
     var touchedAtXpos: Float = 0f
+
+    var spectrogramViewState = LIVE_DISPLAY
 
     override fun onTouchEvent(event: MotionEvent?): Boolean {
         when (spectrogramViewState) {

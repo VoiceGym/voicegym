@@ -57,7 +57,7 @@ class SpectrogramFragment : AbstractInstrumentFragment() {
      * this is the callback that receives a new amplitudeArray
      */
     override fun insertNewAmplitudes(spectrum: DoubleArray) {
-        spectrogramView.addRight(spectrum)
+        spectrogramView.addLeft(spectrum)
     }
 
 
