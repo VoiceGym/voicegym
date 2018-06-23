@@ -57,7 +57,7 @@ class FourierHelper(
         for (i in 0 until fftData.size / 2) {
             calculationBuffer[i] = Math.sqrt(Math.pow(fftData[2 * i], 2.0) + Math.pow(fftData[2 * i + 1], 2.0))
         }
-        return calculationBuffer
+        return calculationBuffer.copyOf()
     }
 
     /**
@@ -69,7 +69,7 @@ class FourierHelper(
         for (i in 0 until fftData.size / 2) {
             calculationBuffer[i] = Math.atan(fftData[2 * i] / fftData[2 * i + 1])
         }
-        return calculationBuffer
+        return calculationBuffer.copyOf()
     }
 
     /**

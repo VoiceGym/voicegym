@@ -141,7 +141,6 @@ class SpectrogramView : View, InstrumentViewInterface {
         val colors = getPixelColorArray(amplitudes)
         val width = getDrawAreaWidth() / settings.displayedDatapoints
         drawSpectrogramBar(colors, 0f, width)
-        this.invalidate()
     }
 
     fun addRight(amplitudes: DoubleArray) {
@@ -150,7 +149,6 @@ class SpectrogramView : View, InstrumentViewInterface {
         val width = getDrawAreaWidth() / settings.displayedDatapoints
         val x = width * (settings.displayedDatapoints - 1)
         drawSpectrogramBar(colors, x, width)
-        this.invalidate()
     }
 
 
@@ -208,14 +206,18 @@ class SpectrogramView : View, InstrumentViewInterface {
 
     override fun onTouchEvent(event: MotionEvent?): Boolean {
         when (spectrogramViewState) {
-            LIVE_DISPLAY, RECORDING_DATA -> when (event?.action) {
-                ACTION_DOWN -> {
-                    drawLine = !drawLine
-                    yPosLine = event.y
-                }
+            LIVE_DISPLAY, RECORDING_DATA -> {
+                when (event?.action) {
+                    ACTION_DOWN -> {
+                        drawLine = !drawLine
+                        yPosLine = event.y
 
-                ACTION_MOVE -> yPosLine = event.y
-                ACTION_UP   -> yPosLine = event.y
+                    }
+
+                    ACTION_MOVE -> yPosLine = event.y
+                    ACTION_UP   -> yPosLine = event.y
+                }
+                this.invalidate()
             }
 
             PLAYBACK                     -> {
@@ -238,7 +240,7 @@ class SpectrogramView : View, InstrumentViewInterface {
                 }
             }
         }
-        this.invalidate()
+
         Log.e("EventLog", "Ypos was ${event?.y}")
         return when (event?.action) {
             ACTION_UP, ACTION_DOWN, ACTION_MOVE -> true

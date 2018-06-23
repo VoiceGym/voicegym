@@ -7,6 +7,7 @@ import android.view.ViewGroup
 import de.voicegym.voicegym.R
 import de.voicegym.voicegym.menu.settings.FourierInstrumentViewSettings
 import de.voicegym.voicegym.recordActivity.fragments.InstrumentState.LIVE_DISPLAY
+import de.voicegym.voicegym.recordActivity.fragments.InstrumentState.PLAYBACK
 import de.voicegym.voicegym.recordActivity.fragments.InstrumentState.RECORDING_DATA
 import de.voicegym.voicegym.recordActivity.views.SpectrogramView
 
@@ -28,6 +29,7 @@ class SpectrogramFragment : AbstractInstrumentFragment() {
      * holds the array that stores the frequencies of the relating to the positions in the amplitudeArray
      */
     private var frequencyArray: DoubleArray? = null
+    private var zeroAmplitudes: DoubleArray? = null
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         // Inflate the layout for this fragment
@@ -46,6 +48,7 @@ class SpectrogramFragment : AbstractInstrumentFragment() {
     override fun updateFrequencyArray(frequencies: DoubleArray) {
         frequencyArray = frequencies
         spectrogramView.frequencyArray = frequencies
+        zeroAmplitudes = DoubleArray(frequencies.size)
     }
 
     override fun updateInstrumentViewSettings(settings: FourierInstrumentViewSettings) {
@@ -53,17 +56,58 @@ class SpectrogramFragment : AbstractInstrumentFragment() {
         spectrogramView.updateInstrumentViewSettings(settings)
     }
 
+    private val savedSpectra = ArrayList<DoubleArray>()
+
+    private var currentPosition = 0
+
+    private fun leftBorderPosition() = currentPosition - settings.displayedDatapoints
+
     /**
      * this is the callback that receives a new amplitudeArray
      */
     override fun insertNewAmplitudes(spectrum: DoubleArray) {
-        spectrogramView.addLeft(spectrum)
+        spectrogramView.addRight(spectrum)
+        spectrogramView.invalidate()
+        if (spectrogramView.spectrogramViewState == RECORDING_DATA) {
+            savedSpectra.add(spectrum)
+            currentPosition++
+        }
     }
 
+    private fun scrollLeft() {
+        zeroAmplitudes?.let {
+            if (spectrogramView.spectrogramViewState == PLAYBACK) {
+                currentPosition--
+                spectrogramView.addLeft(
+                        if (leftBorderPosition() < 0) {
+                            it
+                        } else {
+                            savedSpectra[leftBorderPosition()]
+                        })
+            }
+        }
+    }
 
-    override fun getCurrentSamplePosition(): Int = 0
+    private fun scrollRight() {
+        if (spectrogramView.spectrogramViewState == PLAYBACK) {
+            if (currentPosition < savedSpectra.size - 1) {
+                spectrogramView.addRight(savedSpectra[++currentPosition])
+            }
+        }
+    }
+
+    override fun getCurrentSamplePosition(): Int = currentPosition * settings.samplesPerDatapoint
 
     override fun seekToSamplePosition(samplePosition: Int) {
+        val position = samplePosition / settings.samplesPerDatapoint
+
+        if (position < savedSpectra.size) {
+            while (position != currentPosition) {
+                if (position < currentPosition) scrollLeft()
+                else if (position > currentPosition) scrollRight()
+            }
+        }
+        spectrogramView.invalidate()
     }
 
     override fun resetFragment() {
@@ -79,13 +123,18 @@ class SpectrogramFragment : AbstractInstrumentFragment() {
     }
 
     override fun doneRecordingSwitchToPlayback() {
-        spectrogramView.let {
-            it.spectrogramViewState = InstrumentState.PLAYBACK
-        }
+        spectrogramView.spectrogramViewState = InstrumentState.PLAYBACK
+        spectrogramView.clearBitmapAndBuffer()
+        val left = if (leftBorderPosition() >= 0) currentPosition - settings.displayedDatapoints else 0
+        for (i in left until savedSpectra.size - 1) spectrogramView.addRight(savedSpectra[i])
+        spectrogramView.invalidate()
     }
 
     override fun cutToMaximumSampleNumber(samples: Int) {
-
+        if (samples < settings.samplesPerDatapoint * savedSpectra.size) {
+            val remove = savedSpectra.subList(samples / settings.samplesPerDatapoint, savedSpectra.size - 1)
+            savedSpectra.removeAll(remove)
+        }
     }
 
     override fun getInstrumentState(): InstrumentState =

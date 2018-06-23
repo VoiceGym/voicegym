@@ -6,6 +6,7 @@ import android.media.AudioFormat
 import android.media.AudioManager
 import android.media.AudioTrack
 import android.os.Build
+import android.util.Log
 import org.jetbrains.anko.runOnUiThread
 import java.nio.ShortBuffer
 import kotlin.concurrent.thread
@@ -30,7 +31,6 @@ class PCMPlayer(val sampleRate: Int, private val buffer: ShortBuffer, val contex
                 minBufSizeOrError
         }
         playBuffer = ShortArray(minBufferSize)
-
         player = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             AudioTrack.Builder()
                     .setBufferSizeInBytes(minBufferSize)
