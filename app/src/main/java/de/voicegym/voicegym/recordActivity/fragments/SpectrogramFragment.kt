@@ -86,6 +86,7 @@ class SpectrogramFragment : AbstractInstrumentFragment() {
                         })
             }
         }
+        spectrogramView.invalidate()
     }
 
     private fun scrollRight() {
@@ -94,6 +95,7 @@ class SpectrogramFragment : AbstractInstrumentFragment() {
                 spectrogramView.addRight(savedSpectra[++currentPosition])
             }
         }
+        spectrogramView.invalidate()
     }
 
     override fun getCurrentSamplePosition(): Int = currentPosition * settings.samplesPerDatapoint
@@ -107,7 +109,6 @@ class SpectrogramFragment : AbstractInstrumentFragment() {
                 else if (position > currentPosition) scrollRight()
             }
         }
-        spectrogramView.invalidate()
     }
 
     override fun resetFragment() {
@@ -116,6 +117,7 @@ class SpectrogramFragment : AbstractInstrumentFragment() {
             it.spectrogramViewState = LIVE_DISPLAY
             it.invalidate()
         }
+        savedSpectra.clear()
     }
 
     override fun startRecording() {

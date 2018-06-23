@@ -241,7 +241,7 @@ class SpectrogramView : View, InstrumentViewInterface {
             }
         }
 
-        Log.e("EventLog", "Ypos was ${event?.y}")
+
         return when (event?.action) {
             ACTION_UP, ACTION_DOWN, ACTION_MOVE -> true
             else                                -> super.onTouchEvent(event)
