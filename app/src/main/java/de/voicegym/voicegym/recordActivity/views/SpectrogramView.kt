@@ -121,8 +121,7 @@ class SpectrogramView : View, InstrumentViewInterface {
     }
 
     private fun pickColor(pixelPosition: Int, amplitudes: DoubleArray): Int {
-        val frequency = scale.valueFromPixel(pixelPosition)
-        return HotGradientColorPicker.pickColor(getDezibelFromAmplitude(amplitudes[indexOfFrequency(frequency)]) / SettingsBundle.normalisationConstant)
+        return HotGradientColorPicker.pickColor(getDezibelFromAmplitude(amplitudes[indexArray[pixelPosition - top_margin.toInt() - 1]]) / SettingsBundle.normalisationConstant)
     }
 
     private fun drawSpectrogramBar(colors: IntArray, x: Float, width: Float) {
@@ -272,14 +271,19 @@ class SpectrogramView : View, InstrumentViewInterface {
         updateScaling()
     }
 
+    var indexArray = IntArray(0)
 
     fun updateScaling() {
-        val from = PixelFrequencyPair((getDrawAreaHeight() + top_margin).toInt(), settings.fromFrequency)
-        val until = PixelFrequencyPair((top_margin).toInt(), settings.tillFrequency)
-        scale = if (settings.isLogarithmic) {
-            ExponentialScalingFunction(from, until)
-        } else {
-            LinearScalingFunction(from, until)
+        if (height > 0) {
+            val from = PixelFrequencyPair((getDrawAreaHeight() + top_margin).toInt(), settings.fromFrequency)
+            val until = PixelFrequencyPair((top_margin).toInt(), settings.tillFrequency)
+            scale = if (settings.isLogarithmic) {
+                ExponentialScalingFunction(from, until)
+            } else {
+                LinearScalingFunction(from, until)
+            }
+            indexArray = IntArray(getDrawAreaHeight().toInt())
+            for (i in 0 until indexArray.size) indexArray[i] = indexOfFrequency(scale.valueFromPixel(top_margin.toInt() + i))
         }
     }
 
