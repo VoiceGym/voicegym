@@ -12,7 +12,7 @@ import de.voicegym.voicegym.R
 
 class PlaybackModeControlFragment : Fragment() {
 
-    var playbackModeControlListener: PlaybackModeControlListener? = null
+    private var playbackModeControlListener: PlaybackModeControlListener? = null
 
     override fun onAttach(context: Context?) {
         super.onAttach(context)

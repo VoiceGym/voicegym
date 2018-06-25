@@ -23,23 +23,23 @@ class LinearScalingFunction(from: PixelFrequencyPair, until: PixelFrequencyPair)
 }
 
 /**
- * The used function here is y=C*a**x where x are pixels and y are frequencies
+ * The used function here is y=c*a**x where x are pixels and y are frequencies
  */
 class ExponentialScalingFunction(from: PixelFrequencyPair, until: PixelFrequencyPair) : ScalingFunction(from, until) {
 
 
     private val a: Double
-    private val C: Double
+    private val c: Double
 
     init {
         val (p1, f1) = from
         val (p2, f2) = until
         a = Math.exp(Math.log(f2 / f1) / (p2 - p1))
-        C = f1 * Math.pow(a, -p1.toDouble())
+        c = f1 * Math.pow(a, -p1.toDouble())
     }
 
-    override fun valueFromPixel(pixelPosition: Int): Double = C * Math.pow(a, pixelPosition.toDouble())
+    override fun valueFromPixel(pixelPosition: Int): Double = c * Math.pow(a, pixelPosition.toDouble())
 
-    override fun valueFromFrequency(frequency: Double): Int = (Math.log(frequency / C) / Math.log(a)).roundToInt()
+    override fun valueFromFrequency(frequency: Double): Int = (Math.log(frequency / c) / Math.log(a)).roundToInt()
 
 }

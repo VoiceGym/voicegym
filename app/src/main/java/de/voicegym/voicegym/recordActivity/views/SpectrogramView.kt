@@ -108,7 +108,7 @@ class SpectrogramView : View, InstrumentViewInterface {
             for (i in 0 until frequencies.size - 1) {
                 if ((frequencies[i] <= frequency) && frequencies[i + 1] > frequency) return i
             }
-            if (frequencies[0] < frequency) return 0 else return frequencies.size - 1 // frequency was not in range
+            return if (frequencies[0] < frequency) 0 else frequencies.size - 1 // frequency was not in range
         }
         throw Error("FrequencyArray was not set before calling index function")
     }
