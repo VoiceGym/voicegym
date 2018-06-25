@@ -113,6 +113,12 @@ class SpectrogramView : View, InstrumentViewInterface {
         throw Error("FrequencyArray was not set before calling index function")
     }
 
+    override fun onLayout(changed: Boolean, left: Int, top: Int, right: Int, bottom: Int) {
+        super.onLayout(changed, left, top, right, bottom)
+
+        updateScaling()
+    }
+
 
     private fun getPixelColorArray(amplitudes: DoubleArray): IntArray {
         val colors = IntArray(getDrawAreaHeight().toInt())
@@ -135,18 +141,22 @@ class SpectrogramView : View, InstrumentViewInterface {
     private fun pixelPerDatapoint() = (getDrawAreaWidth() / settings.displayedDatapoints).toInt()
 
     fun addLeft(amplitudes: DoubleArray) {
-        rotateBitmap(-pixelPerDatapoint())
-        val colors = getPixelColorArray(amplitudes)
-        val width = getDrawAreaWidth() / settings.displayedDatapoints
-        drawSpectrogramBar(colors, 0f, width)
+        if (indexArray.isNotEmpty()) {
+            rotateBitmap(-pixelPerDatapoint())
+            val colors = getPixelColorArray(amplitudes)
+            val width = getDrawAreaWidth() / settings.displayedDatapoints
+            drawSpectrogramBar(colors, 0f, width)
+        }
     }
 
     fun addRight(amplitudes: DoubleArray) {
-        rotateBitmap(pixelPerDatapoint())
-        val colors = getPixelColorArray(amplitudes)
-        val width = getDrawAreaWidth() / settings.displayedDatapoints
-        val x = width * (settings.displayedDatapoints - 1)
-        drawSpectrogramBar(colors, x, width)
+        if (indexArray.isNotEmpty()) {
+            rotateBitmap(pixelPerDatapoint())
+            val colors = getPixelColorArray(amplitudes)
+            val width = getDrawAreaWidth() / settings.displayedDatapoints
+            val x = width * (settings.displayedDatapoints - 1)
+            drawSpectrogramBar(colors, x, width)
+        }
     }
 
 

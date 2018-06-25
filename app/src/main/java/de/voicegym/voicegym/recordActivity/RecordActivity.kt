@@ -1,5 +1,6 @@
 package de.voicegym.voicegym.recordActivity
 
+import android.content.Context
 import android.content.pm.ActivityInfo
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
@@ -8,7 +9,9 @@ import android.os.Handler
 import android.support.v4.app.Fragment
 import android.support.v7.app.AppCompatActivity
 import android.util.Log
+import android.view.Surface
 import android.view.View
+import android.view.WindowManager
 import de.voicegym.voicegym.R
 import de.voicegym.voicegym.menu.settings.FourierInstrumentViewSettings
 import de.voicegym.voicegym.menu.settings.SettingsBundle
@@ -38,6 +41,7 @@ import java.util.Locale
 import java.util.concurrent.ConcurrentLinkedQueue
 import kotlin.concurrent.thread
 
+
 class RecordActivity : AppCompatActivity(),
         RecordBufferListener,
         RecordModeControlListener,
@@ -49,6 +53,7 @@ class RecordActivity : AppCompatActivity(),
      */
     private fun restart() {
         // Clean up
+        unLockScreenPosition()
         instrumentFragment?.resetFragment()
         pcmStorage?.let { recorder?.unSubscribeListener(it) }
         pcmStorage = null
@@ -110,7 +115,7 @@ class RecordActivity : AppCompatActivity(),
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        this.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
+        requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
         window.decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_FULLSCREEN
         setContentView(R.layout.activity_record)
         window.decorView.setBackgroundColor(Color.BLACK)
@@ -183,6 +188,7 @@ class RecordActivity : AppCompatActivity(),
      */
     private fun storePCMSamples() {
         recordActivityState = RECORDING
+        lockScreenPosition()
         pcmStorage = PCMStorage(SettingsBundle.sampleRate)
         instrumentFragment?.startRecording() // from here on the instrumentFragment will keep the pcmSamples
         pcmStorage?.let { recorder?.subscribeListener(it) }  // from here on the pcmStorage will collect pcm samples
@@ -373,4 +379,21 @@ class RecordActivity : AppCompatActivity(),
         }
     }
 
+    fun lockScreenPosition() {
+
+        val rotation = (getSystemService(Context.WINDOW_SERVICE) as WindowManager).defaultDisplay.rotation
+        requestedOrientation =
+                when (rotation) {
+                    Surface.ROTATION_0   -> ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+                    Surface.ROTATION_90  -> ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
+                    Surface.ROTATION_180 -> ActivityInfo.SCREEN_ORIENTATION_REVERSE_PORTRAIT
+                    Surface.ROTATION_270 -> ActivityInfo.SCREEN_ORIENTATION_REVERSE_LANDSCAPE
+                    else                 -> ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
+                }
+
+    }
+
+    fun unLockScreenPosition() {
+        requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
+    }
 }
