@@ -103,11 +103,15 @@ class SpectrogramFragment : AbstractInstrumentFragment() {
     override fun seekToSamplePosition(samplePosition: Int) {
         val position = samplePosition / settings.samplesPerDatapoint
 
-        if (position < savedSpectra.size && position >= 0) {
-            while (position != currentPosition) {
-                if (position < currentPosition) scrollLeft()
-                else if (position > currentPosition) scrollRight()
-            }
+        val scrollTo = when {
+            position < savedSpectra.size && position >= 0 -> position
+            position < 0                                  -> 0
+            else                                          -> savedSpectra.size - 1
+        }
+
+        while (scrollTo != currentPosition) {
+            if (scrollTo < currentPosition) scrollLeft()
+            else if (scrollTo > currentPosition) scrollRight()
         }
     }
 

@@ -7,7 +7,6 @@ import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.Path
 import android.util.AttributeSet
-import android.util.Log
 import android.view.MotionEvent
 import android.view.MotionEvent.ACTION_DOWN
 import android.view.MotionEvent.ACTION_MOVE
@@ -109,7 +108,7 @@ class SpectrogramView : View, InstrumentViewInterface {
             for (i in 0 until frequencies.size - 1) {
                 if ((frequencies[i] <= frequency) && frequencies[i + 1] > frequency) return i
             }
-            return -1
+            if (frequencies[0] < frequency) return 0 else return frequencies.size - 1 // frequency was not in range
         }
         throw Error("FrequencyArray was not set before calling index function")
     }
