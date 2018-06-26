@@ -2,6 +2,7 @@ package de.voicegym.voicegym.recordActivity
 
 import android.content.Context
 import android.content.pm.ActivityInfo
+import android.content.res.Configuration
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
 import android.os.Bundle
@@ -141,6 +142,7 @@ class RecordActivity : AppCompatActivity(),
 
     }
 
+
     override fun onBackPressed() {
         when (recordActivityState) {
             WAITING   -> if (pcmStorage == null) finish()
@@ -150,10 +152,10 @@ class RecordActivity : AppCompatActivity(),
     }
 
     override fun onDestroy() {
+        this.stopListeningAndFreeRessource()
         pcmStorage?.stopListening()
         pcmPlayer?.unSubscribeListener(this)
         pcmPlayer?.destroy()
-        this.stopListeningAndFreeRessource()
         super.onDestroy()
     }
 
