@@ -7,6 +7,7 @@ import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
 import android.os.Bundle
 import android.os.Handler
+import android.os.PersistableBundle
 import android.support.v4.app.Fragment
 import android.support.v7.app.AppCompatActivity
 import android.util.Log
@@ -149,6 +150,11 @@ class RecordActivity : AppCompatActivity(),
             RECORDING -> switchToPlayback()
             PLAYBACK  -> restart()
         }
+    }
+
+    override fun onStop() {
+        stopListeningAndFreeRessource()
+        super.onStop()
     }
 
     override fun onDestroy() {
