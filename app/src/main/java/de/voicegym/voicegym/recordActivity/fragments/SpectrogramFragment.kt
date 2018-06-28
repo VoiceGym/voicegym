@@ -47,9 +47,9 @@ class SpectrogramFragment : AbstractInstrumentFragment() {
     }
 
     override fun updateFrequencyArray(frequencies: DoubleArray) {
-        frequencyArray = frequencies
-        spectrogramView.frequencyArray = frequencies
-        zeroAmplitudes = DoubleArray(frequencies.size)
+        frequencyArray = frequencies.copyOf()
+        spectrogramView.frequencyArray = frequencyArray
+        zeroAmplitudes = DoubleArray(frequencyArray!!.size)
     }
 
     override fun updateInstrumentViewSettings(settings: FourierInstrumentViewSettings) {

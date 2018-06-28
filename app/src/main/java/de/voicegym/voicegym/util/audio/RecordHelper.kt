@@ -99,6 +99,7 @@ class RecordHelper(private val preferredBufferSize: Int) {
 
     fun stopRecording() {
         shouldRecord = false
+        recordingThread.join()
     }
 
 }

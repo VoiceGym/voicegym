@@ -2,18 +2,18 @@
 <android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:orientation="horizontal"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-
     tools:context=".recordActivity.RecordActivity">
 
 
     <fragment
         android:id="@+id/spectrogramFragment"
-        android:name="de.voicegym.voicegym.recordActivity.fragments.SpectrogramFragment"
+        class="de.voicegym.voicegym.recordActivity.fragments.SpectrogramFragment"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_marginRight="66dp"
+        android:layout_marginEnd="66dp"
         app:layout_constraintLeft_toLeftOf="parent" />
 
 
