@@ -12,6 +12,7 @@ import android.view.MotionEvent.ACTION_DOWN
 import android.view.MotionEvent.ACTION_MOVE
 import android.view.MotionEvent.ACTION_UP
 import android.view.View
+import de.voicegym.voicegym.R
 import de.voicegym.voicegym.menu.settings.FourierInstrumentViewSettings
 import de.voicegym.voicegym.menu.settings.SettingsBundle
 import de.voicegym.voicegym.recordActivity.fragments.InstrumentState.LIVE_DISPLAY
@@ -20,6 +21,7 @@ import de.voicegym.voicegym.recordActivity.fragments.InstrumentState.RECORDING_D
 import de.voicegym.voicegym.recordActivity.fragments.InstrumentViewInterface
 import de.voicegym.voicegym.recordActivity.fragments.PlaybackModeControlListener
 import de.voicegym.voicegym.recordActivity.views.util.ExponentialScalingFunction
+import de.voicegym.voicegym.recordActivity.views.util.GradientPicker
 import de.voicegym.voicegym.recordActivity.views.util.HotGradientColorPicker
 import de.voicegym.voicegym.recordActivity.views.util.LinearScalingFunction
 import de.voicegym.voicegym.recordActivity.views.util.PixelFrequencyPair
@@ -66,6 +68,8 @@ class SpectrogramView : View, InstrumentViewInterface {
      */
     var border_thickness = 3f
 
+    var intensity_map: GradientPicker = HotGradientColorPicker
+
     private fun getDrawAreaWidth(): Float = (width - left_margin - right_margin)
 
     private fun getDrawAreaHeight(): Float = (height - top_margin - bottom_margin)
@@ -99,7 +103,24 @@ class SpectrogramView : View, InstrumentViewInterface {
 
     constructor(context: Context) : this(context, null)
     constructor(context: Context, attrs: AttributeSet?) : this(context, attrs, 0)
-    constructor(context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0) : super(context, attrs, defStyleAttr)
+    constructor(context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0) : super(context, attrs, defStyleAttr) {
+        attrs?.let {
+            val styleableAttributes = context.theme.obtainStyledAttributes(it, R.styleable.SpectrogramView, defStyleAttr, 0)
+            top_margin = styleableAttributes.getFloat(R.styleable.SpectrogramView_top_margin, 20f)
+            bottom_margin = styleableAttributes.getFloat(R.styleable.SpectrogramView_bottom_margin, 20f)
+            left_margin = styleableAttributes.getFloat(R.styleable.SpectrogramView_left_margin, 50f)
+            right_margin = styleableAttributes.getFloat(R.styleable.SpectrogramView_right_margin, 20f)
+            draw_border = styleableAttributes.getBoolean(R.styleable.SpectrogramView_draw_border, true)
+            border_thickness=styleableAttributes.getFloat(R.styleable.SpectrogramView_border_thickness,3f)
+            intensity_map = when (styleableAttributes.getInteger(R.styleable.SpectrogramView_color_map, 0)) {
+                0    -> HotGradientColorPicker
+                else -> HotGradientColorPicker
+            }
+
+
+        }
+    }
+
 
     var frequencyArray: DoubleArray? = null
 
@@ -127,7 +148,7 @@ class SpectrogramView : View, InstrumentViewInterface {
     }
 
     private fun pickColor(pixelPosition: Int, amplitudes: DoubleArray): Int {
-        return HotGradientColorPicker.pickColor(getDezibelFromAmplitude(amplitudes[indexArray[pixelPosition - top_margin.toInt() - 1]]) / SettingsBundle.normalisationConstant)
+        return intensity_map.pickColor(getDezibelFromAmplitude(amplitudes[indexArray[pixelPosition - top_margin.toInt() - 1]]) / SettingsBundle.normalisationConstant)
     }
 
     private fun drawSpectrogramBar(colors: IntArray, x: Float, width: Float) {
