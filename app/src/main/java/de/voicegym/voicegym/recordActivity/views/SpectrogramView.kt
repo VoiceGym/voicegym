@@ -12,35 +12,24 @@ import android.view.MotionEvent.ACTION_DOWN
 import android.view.MotionEvent.ACTION_MOVE
 import android.view.MotionEvent.ACTION_UP
 import android.view.View
-import de.voicegym.voicegym.recordActivity.RecordActivity
+import de.voicegym.voicegym.menu.settings.FourierInstrumentViewSettings
+import de.voicegym.voicegym.menu.settings.SettingsBundle
 import de.voicegym.voicegym.recordActivity.fragments.InstrumentState.LIVE_DISPLAY
 import de.voicegym.voicegym.recordActivity.fragments.InstrumentState.PLAYBACK
 import de.voicegym.voicegym.recordActivity.fragments.InstrumentState.RECORDING_DATA
+import de.voicegym.voicegym.recordActivity.fragments.InstrumentViewInterface
 import de.voicegym.voicegym.recordActivity.fragments.PlaybackModeControlListener
-import de.voicegym.voicegym.recordActivity.fragments.SpectrogramFragment
+import de.voicegym.voicegym.recordActivity.views.util.ExponentialScalingFunction
+import de.voicegym.voicegym.recordActivity.views.util.HotGradientColorPicker
+import de.voicegym.voicegym.recordActivity.views.util.LinearScalingFunction
+import de.voicegym.voicegym.recordActivity.views.util.PixelFrequencyPair
+import de.voicegym.voicegym.recordActivity.views.util.ScalingFunction
+import de.voicegym.voicegym.util.audio.getDezibelFromAmplitude
 import org.jetbrains.anko.backgroundColor
-import java.util.concurrent.LinkedBlockingDeque
 import kotlin.math.absoluteValue
 import kotlin.math.roundToInt
 
-class SpectrogramView : View {
-
-    /**
-     * The number of datapoints (blocks) to be displayed,
-     * needs to be smaller or equal the number of pixels available
-     */
-    var xDataPoints: Int = 10
-
-    /**
-     * The number of PCM Samples per datapoint (block)
-     */
-    var samplesPerDataPoint: Int = 4096
-
-    /**
-     * the number of pixels per datapoint aka block
-     */
-    fun pixelPerFFTBlock(): Int = (getDrawAreaWidth() / xDataPoints).toInt()
-
+class SpectrogramView : View, InstrumentViewInterface {
 
     /**
      *  The instrument is drawn below the top_margin
@@ -62,10 +51,6 @@ class SpectrogramView : View {
      */
     var right_margin: Float = 20f
 
-    fun getDrawAreaWidth(): Float = (width - left_margin - right_margin)
-
-    fun getDrawAreaHeight(): Float = (height - top_margin - bottom_margin)
-
     /**
      * Whether to draw a border around the instrument area
      */
@@ -81,11 +66,14 @@ class SpectrogramView : View {
      */
     var border_thickness = 3f
 
-    var spectrogramViewState = LIVE_DISPLAY
+    private fun getDrawAreaWidth(): Float = (width - left_margin - right_margin)
 
-    val leftDeque = LinkedBlockingDeque<IntArray>()
-    val rightDeque = LinkedBlockingDeque<IntArray>()
-    val currentDeque = LinkedBlockingDeque<IntArray>()
+    private fun getDrawAreaHeight(): Float = (height - top_margin - bottom_margin)
+
+
+    private lateinit var settings: FourierInstrumentViewSettings
+
+    private lateinit var scale: ScalingFunction
 
 
     private var mCanvas: Canvas? = null
@@ -113,6 +101,64 @@ class SpectrogramView : View {
     constructor(context: Context, attrs: AttributeSet?) : this(context, attrs, 0)
     constructor(context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0) : super(context, attrs, defStyleAttr)
 
+    var frequencyArray: DoubleArray? = null
+
+    private fun indexOfFrequency(frequency: Double): Int {
+        frequencyArray?.let { frequencies ->
+            for (i in 0 until frequencies.size - 1) {
+                if ((frequencies[i] <= frequency) && frequencies[i + 1] > frequency) return i
+            }
+            return if (frequencies[0] < frequency) 0 else frequencies.size - 1 // frequency was not in range
+        }
+        throw Error("FrequencyArray was not set before calling index function")
+    }
+
+    override fun onLayout(changed: Boolean, left: Int, top: Int, right: Int, bottom: Int) {
+        super.onLayout(changed, left, top, right, bottom)
+
+        updateScaling()
+    }
+
+
+    private fun getPixelColorArray(amplitudes: DoubleArray): IntArray {
+        val colors = IntArray(getDrawAreaHeight().toInt())
+        for (i in 0 until colors.size) colors[i] = pickColor((getDrawAreaHeight() + top_margin).toInt() - i, amplitudes)
+        return colors
+    }
+
+    private fun pickColor(pixelPosition: Int, amplitudes: DoubleArray): Int {
+        return HotGradientColorPicker.pickColor(getDezibelFromAmplitude(amplitudes[indexArray[pixelPosition - top_margin.toInt() - 1]]) / SettingsBundle.normalisationConstant)
+    }
+
+    private fun drawSpectrogramBar(colors: IntArray, x: Float, width: Float) {
+        val lowerY = getDrawAreaHeight()
+        colors.forEachIndexed { i, colorValue ->
+            mPaint.color = colorValue
+            mCanvas?.drawLine(x, lowerY - i, x + width, lowerY - i, mPaint)
+        }
+    }
+
+    private fun pixelPerDatapoint() = (getDrawAreaWidth() / settings.displayedDatapoints).toInt()
+
+    fun addLeft(amplitudes: DoubleArray) {
+        if (indexArray.isNotEmpty()) {
+            rotateBitmap(-pixelPerDatapoint())
+            val colors = getPixelColorArray(amplitudes)
+            val width = getDrawAreaWidth() / settings.displayedDatapoints
+            drawSpectrogramBar(colors, 0f, width)
+        }
+    }
+
+    fun addRight(amplitudes: DoubleArray) {
+        if (indexArray.isNotEmpty()) {
+            rotateBitmap(pixelPerDatapoint())
+            val colors = getPixelColorArray(amplitudes)
+            val width = getDrawAreaWidth() / settings.displayedDatapoints
+            val x = width * (settings.displayedDatapoints - 1)
+            drawSpectrogramBar(colors, x, width)
+        }
+    }
+
 
     private fun rotateBitmap(numberOfPixels: Int) {
         buffer?.let {
@@ -125,33 +171,14 @@ class SpectrogramView : View {
     }
 
 
-    /**
-     * Inserts one datapoint represented by its colorvalues when the view is in LIVE_DISPLAY MODE
-     */
-    fun insertNewDataPoint(colorValues: IntArray) {
-        if (spectrogramViewState != PLAYBACK) {
-            rightDeque.addLast(colorValues)
-            left()
-        } else throw Error("View already in Playback mode")
-    }
-
     private fun drawFrequencyLine(canvas: Canvas?) {
         val width = getDrawAreaWidth()
         mPaint.color = Color.GRAY
         mPaint.strokeWidth = 2f
         mPaint.textSize = 24f
         canvas?.drawLine(left_margin, yPosLine, width + left_margin, yPosLine, mPaint)
-        if (context is RecordActivity) {
-            val fragment = (context as RecordActivity).getInstrumentFragment()
-            if (fragment is SpectrogramFragment) {
-                val deltaFrequency = (fragment as SpectrogramFragment).deltaFrequency
-                val frequency = (fragment as SpectrogramFragment).settings.fromFrequency + (bottom_margin + getDrawAreaHeight() - yPosLine) * deltaFrequency
-                canvas?.drawText("${frequency.toInt()} Hz", left_margin + 5, yPosLine - 5, mPaint)
-            } else {
-                throw Error("InstrumentFragment was not a SpectrogramFragment, please expand SpectrogramView")
-            }
-
-        }
+        val frequency = scale.valueFromPixel(yPosLine.roundToInt())
+        canvas?.drawText("${frequency.toInt()} Hz", left_margin + 5, yPosLine - 5, mPaint)
     }
 
     private fun drawBorder(canvas: Canvas) {
@@ -182,24 +209,23 @@ class SpectrogramView : View {
     }
 
     var touchedAtXpos: Float = 0f
+
+    var spectrogramViewState = LIVE_DISPLAY
+
     override fun onTouchEvent(event: MotionEvent?): Boolean {
         when (spectrogramViewState) {
-            LIVE_DISPLAY, RECORDING_DATA -> when (event?.action) {
-                ACTION_DOWN -> {
-                    drawLine = !drawLine
-                    yPosLine = event.y
-                    return true
-                }
+            LIVE_DISPLAY, RECORDING_DATA -> {
+                when (event?.action) {
+                    ACTION_DOWN -> {
+                        drawLine = !drawLine
+                        yPosLine = event.y
 
-                ACTION_MOVE -> {
-                    yPosLine = event.y
-                    return true
-                }
+                    }
 
-                ACTION_UP   -> {
-                    yPosLine = event.y
-                    return true
+                    ACTION_MOVE -> yPosLine = event.y
+                    ACTION_UP   -> yPosLine = event.y
                 }
+                this.invalidate()
             }
 
             PLAYBACK                     -> {
@@ -209,12 +235,10 @@ class SpectrogramView : View {
                     ACTION_DOWN -> {
                         controller.playbackTouched()
                         touchedAtXpos = event.x
-                        return true
                     }
 
                     ACTION_MOVE -> {
                         controller.playbackSeekTo((event.x - touchedAtXpos) / getDrawAreaWidth())
-
                     }
 
                     ACTION_UP   -> {
@@ -224,17 +248,19 @@ class SpectrogramView : View {
                 }
             }
         }
-        return super.onTouchEvent(event)
+
+
+        return when (event?.action) {
+            ACTION_UP, ACTION_DOWN, ACTION_MOVE -> true
+            else                                -> super.onTouchEvent(event)
+        }
     }
 
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
         super.onSizeChanged(w, h, oldw, oldh)
 
         clearBitmapAndBuffer()
-        //TODO recalulate the content in the deques
-        leftDeque.clear()
-        rightDeque.clear()
-        currentDeque.clear()
+        //TODO repaint bitmap
     }
 
     fun clearBitmapAndBuffer() {
@@ -243,93 +269,32 @@ class SpectrogramView : View {
         buffer = IntArray((getDrawAreaHeight() * getDrawAreaWidth()).toInt())
     }
 
-    fun clearForRestart() {
-        currentDequePosition = 0
-        leftDeque.clear()
-        currentDeque.clear()
-        rightDeque.clear()
+    override fun updateInstrumentViewSettings(settings: FourierInstrumentViewSettings) {
+        this.settings = settings
+        updateScaling()
     }
 
-    private fun totalDatapoints() = currentDeque.size + leftDeque.size + rightDeque.size
 
-    fun limitToMaximumSampleNumber(sampleNumber: Int) {
-        if (currentDequePosition * samplesPerDataPoint > sampleNumber) seekTo(sampleNumber)
-        while (totalDatapoints() * samplesPerDataPoint > sampleNumber) {
-            rightDeque.removeLast()
+    override fun onWindowFocusChanged(hasWindowFocus: Boolean) {
+        super.onWindowFocusChanged(hasWindowFocus)
+
+        updateScaling()
+    }
+
+    var indexArray = IntArray(0)
+
+    fun updateScaling() {
+        if (height > 0) {
+            val from = PixelFrequencyPair((getDrawAreaHeight() + top_margin).toInt(), settings.fromFrequency)
+            val until = PixelFrequencyPair((top_margin).toInt(), settings.tillFrequency)
+            scale = if (settings.isLogarithmic) {
+                ExponentialScalingFunction(from, until)
+            } else {
+                LinearScalingFunction(from, until)
+            }
+            indexArray = IntArray(getDrawAreaHeight().toInt())
+            for (i in 0 until indexArray.size) indexArray[i] = indexOfFrequency(scale.valueFromPixel(top_margin.toInt() + i))
         }
-    }
-
-    var currentDequePosition: Int = 0
-
-    fun rewindDequesToStart() {
-        currentDequePosition = 0
-        while (currentDeque.isNotEmpty()) rightDeque.push(currentDeque.poll())
-        while (leftDeque.isNotEmpty()) rightDeque.push(leftDeque.poll())
-    }
-
-    fun forwardWindDequesToEnd() {
-        windToPosition(totalDatapoints())
-    }
-
-
-    fun seekTo(sampleNumber: Int) {
-        val position = sampleNumber / samplesPerDataPoint
-        windToPosition(position)
-    }
-
-    private fun windToPosition(position: Int): Int {
-        when {
-            position < 0                    -> rewindDequesToStart()
-            position < currentDequePosition -> while (currentDequePosition > position) right()
-            position > totalDatapoints()    -> forwardWindDequesToEnd()
-            position > currentDequePosition -> while (currentDequePosition < position) left()
-        }
-        return currentDequePosition
-    }
-
-    private fun left() {
-        rotateBitmap((getDrawAreaWidth() / xDataPoints).roundToInt())
-        if (rightDeque.size > 0) {
-            val newDataPoint = rightDeque.poll()
-            val deltaX: Float = getDrawAreaWidth() / xDataPoints as Int
-            val lx = deltaX * (xDataPoints as Int - 1)
-            val lowerY = getDrawAreaHeight()
-
-            newDataPoint.forEachIndexed { i, colorValue ->
-                mPaint.color = colorValue
-                mCanvas?.drawLine(lx, lowerY - i, lx + deltaX, lowerY - i, mPaint)
-            }
-
-            if (spectrogramViewState != LIVE_DISPLAY) {
-                currentDeque.push(newDataPoint)
-                if (currentDeque.size > xDataPoints) leftDeque.push(currentDeque.removeLast())
-                currentDequePosition += 1
-            }
-
-        } else throw Error("Stack has reached the end to the right")
-        this.invalidate()
-    }
-
-    private fun right() {
-        if (spectrogramViewState == LIVE_DISPLAY) throw Error("Should not be used during LIVE_DISPLAY")
-        if (currentDeque.size + leftDeque.size > 0) {
-            val newDataPoint = if (leftDeque.size > 0) leftDeque.poll() else null
-            rightDeque.push(currentDeque.poll())
-            rotateBitmap(-(getDrawAreaWidth() / xDataPoints).roundToInt())
-            newDataPoint?.let {
-                currentDeque.addLast(it)
-                val deltaX: Float = getDrawAreaWidth() / xDataPoints as Int
-                val lowerY = getDrawAreaHeight()
-
-                newDataPoint.forEachIndexed { i, colorValue ->
-                    mPaint.color = colorValue
-                    mCanvas?.drawLine(0f, lowerY - i, deltaX, lowerY - i, mPaint)
-                }
-            }
-
-        } else throw Error("Stack has reached its end to the left")
-        currentDequePosition -= 1
-        this.invalidate()
     }
 
 
