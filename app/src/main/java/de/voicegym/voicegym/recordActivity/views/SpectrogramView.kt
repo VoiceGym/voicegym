@@ -75,7 +75,6 @@ class SpectrogramView : View, InstrumentViewInterface {
      */
     var border_thickness = 2f
 
-    var draw_scale: Boolean = true
 
     /**
      * Holds the ColorPicker that is used to select the appropriate color for the spectral intensity
@@ -142,7 +141,6 @@ class SpectrogramView : View, InstrumentViewInterface {
             left_margin = styleableAttributes.getFloat(R.styleable.SpectrogramView_left_margin, 50f)
             right_margin = styleableAttributes.getFloat(R.styleable.SpectrogramView_right_margin, 20f)
             draw_border = styleableAttributes.getBoolean(R.styleable.SpectrogramView_draw_border, true)
-            draw_scale = styleableAttributes.getBoolean(R.styleable.SpectrogramView_draw_scale, true)
             border_thickness = styleableAttributes.getFloat(R.styleable.SpectrogramView_border_thickness, 2f)
             intensity_map = when (styleableAttributes.getInteger(R.styleable.SpectrogramView_color_map, 0)) {
                 0    -> HotGradientColorPicker
@@ -329,7 +327,7 @@ class SpectrogramView : View, InstrumentViewInterface {
             // Draw Instrument Tools
             if (draw_border) drawBorder(canvas)
             if (drawLine) drawFrequencyLine(canvas)
-            if (draw_scale) drawScale(canvas)
+            if (settings.drawScale) drawScale(canvas)
         }
     }
 
