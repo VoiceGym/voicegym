@@ -6,6 +6,8 @@ import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.Path
+import android.graphics.Rect
+import android.graphics.Typeface
 import android.util.AttributeSet
 import android.view.MotionEvent
 import android.view.MotionEvent.ACTION_DOWN
@@ -26,8 +28,13 @@ import de.voicegym.voicegym.recordActivity.views.util.HotGradientColorPicker
 import de.voicegym.voicegym.recordActivity.views.util.LinearScalingFunction
 import de.voicegym.voicegym.recordActivity.views.util.PixelFrequencyPair
 import de.voicegym.voicegym.recordActivity.views.util.ScalingFunction
+import de.voicegym.voicegym.recordActivity.views.util.SpectrogramViewDecorationSettings
+import de.voicegym.voicegym.recordActivity.views.util.SpectrogramViewPaintArea
 import de.voicegym.voicegym.util.audio.getDezibelFromAmplitude
 import org.jetbrains.anko.backgroundColor
+import java.math.BigDecimal
+import java.math.MathContext
+import java.math.RoundingMode
 import kotlin.math.absoluteValue
 import kotlin.math.roundToInt
 
@@ -66,8 +73,13 @@ class SpectrogramView : View, InstrumentViewInterface {
     /**
      * The thickness of the border
      */
-    var border_thickness = 3f
+    var border_thickness = 2f
 
+    var draw_scale: Boolean = true
+
+    /**
+     * Holds the ColorPicker that is used to select the appropriate color for the spectral intensity
+     */
     var intensity_map: GradientPicker = HotGradientColorPicker
 
     private fun getDrawAreaWidth(): Float = (width - left_margin - right_margin)
@@ -90,6 +102,8 @@ class SpectrogramView : View, InstrumentViewInterface {
     private var drawLine: Boolean = false
     private var yPosLine: Float = 0f
 
+    private var decorationSettings: SpectrogramViewDecorationSettings
+
     init {
         // Set up the paint with which to draw.
         mPaint.color = Color.BLACK
@@ -99,6 +113,23 @@ class SpectrogramView : View, InstrumentViewInterface {
         mPaint.strokeJoin = Paint.Join.ROUND
         mPaint.strokeCap = Paint.Cap.ROUND
         mPaint.strokeWidth = 1f
+        decorationSettings = SpectrogramViewDecorationSettings(mPaint, SpectrogramViewPaintArea(0f, 0f, 0f, 0f))
+
+    }
+
+    private fun updateDecorationSettings() {
+        val paint = Paint()
+        paint.color = border_color
+        paint.isAntiAlias = true
+        paint.isDither = true
+        paint.strokeJoin = Paint.Join.ROUND
+        paint.strokeCap = Paint.Cap.ROUND
+        paint.strokeWidth = border_thickness * resources.displayMetrics.density
+        paint.style = Paint.Style.STROKE
+        paint.textSize = 16f * resources.displayMetrics.density
+        paint.typeface = Typeface.SANS_SERIF
+        decorationSettings = SpectrogramViewDecorationSettings(paint, SpectrogramViewPaintArea(left_margin, width - right_margin, height - bottom_margin, top_margin))
+
     }
 
     constructor(context: Context) : this(context, null)
@@ -111,7 +142,8 @@ class SpectrogramView : View, InstrumentViewInterface {
             left_margin = styleableAttributes.getFloat(R.styleable.SpectrogramView_left_margin, 50f)
             right_margin = styleableAttributes.getFloat(R.styleable.SpectrogramView_right_margin, 20f)
             draw_border = styleableAttributes.getBoolean(R.styleable.SpectrogramView_draw_border, true)
-            border_thickness=styleableAttributes.getFloat(R.styleable.SpectrogramView_border_thickness,3f)
+            draw_scale = styleableAttributes.getBoolean(R.styleable.SpectrogramView_draw_scale, true)
+            border_thickness = styleableAttributes.getFloat(R.styleable.SpectrogramView_border_thickness, 2f)
             intensity_map = when (styleableAttributes.getInteger(R.styleable.SpectrogramView_color_map, 0)) {
                 0    -> HotGradientColorPicker
                 else -> HotGradientColorPicker
@@ -138,6 +170,7 @@ class SpectrogramView : View, InstrumentViewInterface {
         super.onLayout(changed, left, top, right, bottom)
 
         updateScaling()
+        updateDecorationSettings()
     }
 
 
@@ -193,40 +226,111 @@ class SpectrogramView : View, InstrumentViewInterface {
 
 
     private fun drawFrequencyLine(canvas: Canvas?) {
-        val width = getDrawAreaWidth()
-        mPaint.color = Color.GRAY
-        mPaint.strokeWidth = 2f
-        mPaint.textSize = 24f
-        canvas?.drawLine(left_margin, yPosLine, width + left_margin, yPosLine, mPaint)
-        val frequency = scale.valueFromPixel(yPosLine.roundToInt())
-        canvas?.drawText("${frequency.toInt()} Hz", left_margin + 5, yPosLine - 5, mPaint)
+        canvas?.let {
+            it.drawLine(left_margin, yPosLine, getDrawAreaWidth() + left_margin, yPosLine, decorationSettings.paint)
+            val frequency = scale.valueFromPixel(yPosLine.roundToInt())
+            drawText("${frequency.toInt()} Hz", left_margin, yPosLine, it)
+        }
     }
 
     private fun drawBorder(canvas: Canvas) {
-        val paint = Paint()
-        paint.color = border_color
-        paint.strokeWidth = border_thickness
-        paint.style = Paint.Style.STROKE
         val bottom = (height - bottom_margin + border_thickness)
-        val top = (top_margin - border_thickness)
-        val left = (left_margin - border_thickness)
         val right = (width - right_margin + border_thickness)
-        canvas.drawRect(left, top, right, bottom, paint)
+        canvas.drawRect(decorationSettings.drawArea.left - border_thickness,
+                decorationSettings.drawArea.top - border_thickness,
+                decorationSettings.drawArea.right + border_thickness,
+                bottom,
+                decorationSettings.paint)
+    }
+
+    private fun getHiLoTick(): Pair<Double, Double> {
+        var loTick: Double
+        var hiTick: Double
+        when (scale) {
+            is LinearScalingFunction      -> {
+                // rounds up or down to the most significant digit double within range
+                loTick = BigDecimal(scale.from.correspondingFrequency).round(MathContext(1, RoundingMode.UP)).toDouble()
+                hiTick = BigDecimal(scale.until.correspondingFrequency).round(MathContext(1, RoundingMode.DOWN)).toDouble()
+
+            }
+
+            is ExponentialScalingFunction -> {
+                // rounds up or down to the order of magnitude within range
+                loTick = Math.pow(10.0, BigDecimal(Math.log10(scale.from.correspondingFrequency)).round(MathContext(1, RoundingMode.UP)).toDouble())
+                hiTick = Math.pow(10.0, BigDecimal(Math.log10(scale.until.correspondingFrequency)).round(MathContext(1, RoundingMode.DOWN)).toDouble())
+            }
+
+            else                          -> {
+                throw Error("Unknown Scaling, extend the getHiLoTick Function")
+            }
+        }
+        return Pair(loTick, hiTick)
+    }
+
+    private fun drawScale(canvas: Canvas) {
+        canvas.drawLine(
+                decorationSettings.drawArea.right + border_thickness,
+                decorationSettings.drawArea.bottom,
+                decorationSettings.drawArea.right + border_thickness,
+                decorationSettings.drawArea.top,
+                decorationSettings.paint)
+        val (loTick, hiTick) = getHiLoTick()
+        drawTick(false, "${loTick.toInt()} Hz", true, scale.valueFromFrequency(loTick).toFloat(), canvas)
+        drawTick(false, "${hiTick.toInt()} Hz", false, scale.valueFromFrequency(hiTick).toFloat(), canvas)
+
+    }
+
+
+    private fun drawTick(drawText: Boolean, text: String, aboveLine: Boolean, position: Float, canvas: Canvas) {
+        val tickLength = if (drawText) {
+            (decorationSettings.drawArea.right - decorationSettings.drawArea.left) * 0.05f
+        } else {
+            (decorationSettings.drawArea.right - decorationSettings.drawArea.left) * 0.02f
+        }
+        canvas.drawLine(
+                decorationSettings.drawArea.right - tickLength,
+                position,
+                decorationSettings.drawArea.right + border_thickness,
+                position,
+                decorationSettings.paint)
+        drawText(text, decorationSettings.drawArea.right, position, aboveLine, false, canvas)
+    }
+
+    private fun drawText(text: String, x: Float, y: Float, canvas: Canvas) = drawText(text, x, y, true, true, canvas)
+
+    private fun drawText(text: String, x: Float, y: Float, above: Boolean, right: Boolean, canvas: Canvas) {
+        val distanceFromPosition = 5 * resources.displayMetrics.density
+        val yPos = if (above) {
+            y - distanceFromPosition
+        } else {
+            val rect = Rect()
+            decorationSettings.paint.getTextBounds(text, 0, text.length - 1, rect)
+            y + distanceFromPosition + rect.bottom - rect.top
+        }
+
+        val xPos = if (right) {
+            x + distanceFromPosition
+        } else {
+            val rect = Rect()
+            decorationSettings.paint.getTextBounds(text, 0, text.length - 1, rect)
+            x - distanceFromPosition - rect.right + rect.left - right_margin - 2 * decorationSettings.paint.strokeWidth
+        }
+
+        canvas?.drawText(text, xPos, yPos, decorationSettings.paint)
     }
 
     override fun onDraw(canvas: Canvas?) {
         backgroundColor = Color.BLACK
         super.onDraw(canvas)
 
-        if (canvas != null) {
-            // Draw internal bitmap and path
+        canvas?.let { canvas ->
             canvas.drawBitmap(mBitmap, left_margin, top_margin, mPaint)
             canvas.drawPath(mPath, mPaint)
             // Draw Instrument Tools
             if (draw_border) drawBorder(canvas)
+            if (drawLine) drawFrequencyLine(canvas)
+            if (draw_scale) drawScale(canvas)
         }
-
-        if (drawLine) drawFrequencyLine(canvas)
     }
 
     var touchedAtXpos: Float = 0f
@@ -293,6 +397,7 @@ class SpectrogramView : View, InstrumentViewInterface {
     override fun updateInstrumentViewSettings(settings: FourierInstrumentViewSettings) {
         this.settings = settings
         updateScaling()
+        updateDecorationSettings()
     }
 
 
@@ -317,6 +422,4 @@ class SpectrogramView : View, InstrumentViewInterface {
             for (i in 0 until indexArray.size) indexArray[i] = indexOfFrequency(scale.valueFromPixel(top_margin.toInt() + i))
         }
     }
-
-
 }
