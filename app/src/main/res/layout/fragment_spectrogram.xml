@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" xmlns:custom="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -8,5 +8,13 @@
     <de.voicegym.voicegym.recordActivity.views.SpectrogramView
         android:id="@+id/spectrogramView"
         android:layout_width="match_parent"
-        android:layout_height="match_parent" />
+        android:layout_height="match_parent"
+        custom:left_margin="0"
+        custom:right_margin="0"
+        custom:top_margin="0"
+        custom:bottom_margin="0"
+        custom:draw_border="false"
+        custom:color_map="hot_map"
+        custom:border_thickness="3"
+        />
 </LinearLayout>
