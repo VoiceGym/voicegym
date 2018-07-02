@@ -22,19 +22,9 @@ import de.voicegym.voicegym.recordActivity.fragments.InstrumentState.PLAYBACK
 import de.voicegym.voicegym.recordActivity.fragments.InstrumentState.RECORDING_DATA
 import de.voicegym.voicegym.recordActivity.fragments.InstrumentViewInterface
 import de.voicegym.voicegym.recordActivity.fragments.PlaybackModeControlListener
-import de.voicegym.voicegym.recordActivity.views.util.ExponentialScalingFunction
-import de.voicegym.voicegym.recordActivity.views.util.GradientPicker
-import de.voicegym.voicegym.recordActivity.views.util.HotGradientColorPicker
-import de.voicegym.voicegym.recordActivity.views.util.LinearScalingFunction
-import de.voicegym.voicegym.recordActivity.views.util.PixelFrequencyPair
-import de.voicegym.voicegym.recordActivity.views.util.ScalingFunction
-import de.voicegym.voicegym.recordActivity.views.util.SpectrogramViewDecorationSettings
-import de.voicegym.voicegym.recordActivity.views.util.SpectrogramViewPaintArea
+import de.voicegym.voicegym.recordActivity.views.util.*
 import de.voicegym.voicegym.util.audio.getDezibelFromAmplitude
 import org.jetbrains.anko.backgroundColor
-import java.math.BigDecimal
-import java.math.MathContext
-import java.math.RoundingMode
 import kotlin.math.absoluteValue
 import kotlin.math.roundToInt
 
@@ -241,29 +231,24 @@ class SpectrogramView : View, InstrumentViewInterface {
                 decorationSettings.paint)
     }
 
-    private fun getHiLoTick(): Pair<Double, Double> {
-        var loTick: Double
-        var hiTick: Double
+
+    private fun getTicks(): ArrayList<Tick> {
         when (scale) {
             is LinearScalingFunction      -> {
-                // rounds up or down to the most significant digit double within range
-                loTick = BigDecimal(scale.from.correspondingFrequency).round(MathContext(1, RoundingMode.UP)).toDouble()
-                hiTick = BigDecimal(scale.until.correspondingFrequency).round(MathContext(1, RoundingMode.DOWN)).toDouble()
-
+                return getLinearTicklist(scale.from.correspondingFrequency, scale.until.correspondingFrequency)
             }
 
             is ExponentialScalingFunction -> {
-                // rounds up or down to the order of magnitude within range
-                loTick = Math.pow(10.0, BigDecimal(Math.log10(scale.from.correspondingFrequency)).round(MathContext(1, RoundingMode.UP)).toDouble())
-                hiTick = Math.pow(10.0, BigDecimal(Math.log10(scale.until.correspondingFrequency)).round(MathContext(1, RoundingMode.DOWN)).toDouble())
+                return getExponentialTicklist(scale.from.correspondingFrequency, scale.until.correspondingFrequency)
             }
 
             else                          -> {
                 throw Error("Unknown Scaling, extend the getHiLoTick Function")
             }
         }
-        return Pair(loTick, hiTick)
+
     }
+
 
     private fun drawScale(canvas: Canvas) {
         canvas.drawLine(
@@ -272,9 +257,12 @@ class SpectrogramView : View, InstrumentViewInterface {
                 decorationSettings.drawArea.right + border_thickness,
                 decorationSettings.drawArea.top,
                 decorationSettings.paint)
-        val (loTick, hiTick) = getHiLoTick()
-        drawTick(false, "${loTick.toInt()} Hz", true, scale.valueFromFrequency(loTick).toFloat(), canvas)
-        drawTick(false, "${hiTick.toInt()} Hz", false, scale.valueFromFrequency(hiTick).toFloat(), canvas)
+        val ticklist = getTicks().sortedWith(compareBy { it.value })
+        drawTick(ticklist.last().hasLabel, "${ticklist.last().value.toInt()} Hz", false, scale.valueFromFrequency(ticklist.last().value).toFloat(), canvas)
+        ticklist.dropLast(1)
+        ticklist.forEach { tick ->
+            drawTick(tick.hasLabel, "${tick.value.toInt()} Hz", true, scale.valueFromFrequency(tick.value).toFloat(), canvas)
+        }
 
     }
 
@@ -291,7 +279,7 @@ class SpectrogramView : View, InstrumentViewInterface {
                 decorationSettings.drawArea.right + border_thickness,
                 position,
                 decorationSettings.paint)
-        drawText(text, decorationSettings.drawArea.right, position, aboveLine, false, canvas)
+        if (drawText) drawText(text, decorationSettings.drawArea.right, position, aboveLine, false, canvas)
     }
 
     private fun drawText(text: String, x: Float, y: Float, canvas: Canvas) = drawText(text, x, y, true, true, canvas)
@@ -372,7 +360,6 @@ class SpectrogramView : View, InstrumentViewInterface {
             }
         }
 
-
         return when (event?.action) {
             ACTION_UP, ACTION_DOWN, ACTION_MOVE -> true
             else                                -> super.onTouchEvent(event)
@@ -398,7 +385,6 @@ class SpectrogramView : View, InstrumentViewInterface {
         updateDecorationSettings()
     }
 
-
     override fun onWindowFocusChanged(hasWindowFocus: Boolean) {
         super.onWindowFocusChanged(hasWindowFocus)
 
@@ -407,7 +393,7 @@ class SpectrogramView : View, InstrumentViewInterface {
 
     var indexArray = IntArray(0)
 
-    fun updateScaling() {
+    private fun updateScaling() {
         if (height > 0) {
             val from = PixelFrequencyPair((getDrawAreaHeight() + top_margin).toInt(), settings.fromFrequency)
             val until = PixelFrequencyPair((top_margin).toInt(), settings.tillFrequency)
@@ -421,3 +407,4 @@ class SpectrogramView : View, InstrumentViewInterface {
         }
     }
 }
+
