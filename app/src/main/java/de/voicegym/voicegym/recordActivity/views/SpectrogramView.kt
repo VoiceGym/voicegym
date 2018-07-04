@@ -114,7 +114,7 @@ class SpectrogramView : View, InstrumentViewInterface {
         paint.strokeJoin = Paint.Join.ROUND
         paint.strokeCap = Paint.Cap.ROUND
         paint.strokeWidth = border_thickness * resources.displayMetrics.density
-        paint.style = Paint.Style.STROKE
+        paint.style = Paint.Style.FILL
         paint.textSize = 16f * resources.displayMetrics.density
         paint.typeface = Typeface.SANS_SERIF
         decorationSettings = SpectrogramViewDecorationSettings(paint, SpectrogramViewPaintArea(left_margin, width - right_margin, height - bottom_margin, top_margin))
