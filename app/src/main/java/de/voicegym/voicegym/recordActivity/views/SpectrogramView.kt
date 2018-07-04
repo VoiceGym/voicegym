@@ -31,49 +31,49 @@ import kotlin.math.roundToInt
 class SpectrogramView : View, InstrumentViewInterface {
 
     /**
-     *  The instrument is drawn below the top_margin
+     *  The instrument is drawn below the topMargin
      */
-    var top_margin: Float = 20f
+    var topMargin: Float = 20f
 
     /**
      *  The instrument is drawn above the above_margin
      */
-    var bottom_margin: Float = 20f
+    var bottomMargin: Float = 20f
 
     /**
-     *  The instrument is drawn right to the left_margin
+     *  The instrument is drawn right to the leftMargin
      */
-    var left_margin: Float = 50f
+    var leftMargin: Float = 50f
 
     /**
-     * The instrument is drawn left to the right_margin
+     * The instrument is drawn left to the rightMargin
      */
-    var right_margin: Float = 20f
+    var rightMargin: Float = 20f
 
     /**
      * Whether to draw a border around the instrument area
      */
-    var draw_border: Boolean = true
+    var drawBorder: Boolean = true
 
     /**
      * Which color to pick for the border
      */
-    var border_color = Color.GRAY
+    var borderColor = Color.GRAY
 
     /**
      * The thickness of the border
      */
-    var border_thickness = 2f
+    var borderThickness = 2f
 
 
     /**
      * Holds the ColorPicker that is used to select the appropriate color for the spectral intensity
      */
-    var intensity_map: GradientPicker = HotGradientColorPicker
+    var intensityMap: GradientPicker = HotGradientColorPicker
 
-    private fun getDrawAreaWidth(): Float = (width - left_margin - right_margin)
+    private fun getDrawAreaWidth(): Float = (width - leftMargin - rightMargin)
 
-    private fun getDrawAreaHeight(): Float = (height - top_margin - bottom_margin)
+    private fun getDrawAreaHeight(): Float = (height - topMargin - bottomMargin)
 
 
     private lateinit var settings: FourierInstrumentViewSettings
@@ -108,16 +108,16 @@ class SpectrogramView : View, InstrumentViewInterface {
 
     private fun updateDecorationSettings() {
         val paint = Paint()
-        paint.color = border_color
+        paint.color = borderColor
         paint.isAntiAlias = true
         paint.isDither = true
         paint.strokeJoin = Paint.Join.ROUND
         paint.strokeCap = Paint.Cap.ROUND
-        paint.strokeWidth = border_thickness * resources.displayMetrics.density
+        paint.strokeWidth = borderThickness * resources.displayMetrics.density
         paint.style = Paint.Style.FILL
         paint.textSize = 16f * resources.displayMetrics.density
         paint.typeface = Typeface.SANS_SERIF
-        decorationSettings = SpectrogramViewDecorationSettings(paint, SpectrogramViewPaintArea(left_margin, width - right_margin, height - bottom_margin, top_margin))
+        decorationSettings = SpectrogramViewDecorationSettings(paint, SpectrogramViewPaintArea(leftMargin, width - rightMargin, height - bottomMargin, topMargin))
 
     }
 
@@ -126,13 +126,13 @@ class SpectrogramView : View, InstrumentViewInterface {
     constructor(context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0) : super(context, attrs, defStyleAttr) {
         attrs?.let {
             val styleableAttributes = context.theme.obtainStyledAttributes(it, R.styleable.SpectrogramView, defStyleAttr, 0)
-            top_margin = styleableAttributes.getFloat(R.styleable.SpectrogramView_top_margin, 20f)
-            bottom_margin = styleableAttributes.getFloat(R.styleable.SpectrogramView_bottom_margin, 20f)
-            left_margin = styleableAttributes.getFloat(R.styleable.SpectrogramView_left_margin, 50f)
-            right_margin = styleableAttributes.getFloat(R.styleable.SpectrogramView_right_margin, 20f)
-            draw_border = styleableAttributes.getBoolean(R.styleable.SpectrogramView_draw_border, true)
-            border_thickness = styleableAttributes.getFloat(R.styleable.SpectrogramView_border_thickness, 2f)
-            intensity_map = when (styleableAttributes.getInteger(R.styleable.SpectrogramView_color_map, 0)) {
+            topMargin = styleableAttributes.getFloat(R.styleable.SpectrogramView_top_margin, 20f)
+            bottomMargin = styleableAttributes.getFloat(R.styleable.SpectrogramView_bottom_margin, 20f)
+            leftMargin = styleableAttributes.getFloat(R.styleable.SpectrogramView_left_margin, 50f)
+            rightMargin = styleableAttributes.getFloat(R.styleable.SpectrogramView_right_margin, 20f)
+            drawBorder = styleableAttributes.getBoolean(R.styleable.SpectrogramView_draw_border, true)
+            borderThickness = styleableAttributes.getFloat(R.styleable.SpectrogramView_border_thickness, 2f)
+            intensityMap = when (styleableAttributes.getInteger(R.styleable.SpectrogramView_color_map, 0)) {
                 0    -> HotGradientColorPicker
                 else -> HotGradientColorPicker
             }
@@ -164,12 +164,12 @@ class SpectrogramView : View, InstrumentViewInterface {
 
     private fun getPixelColorArray(amplitudes: DoubleArray): IntArray {
         val colors = IntArray(getDrawAreaHeight().toInt())
-        for (i in 0 until colors.size) colors[i] = pickColor((getDrawAreaHeight() + top_margin).toInt() - i, amplitudes)
+        for (i in 0 until colors.size) colors[i] = pickColor((getDrawAreaHeight() + topMargin).toInt() - i, amplitudes)
         return colors
     }
 
     private fun pickColor(pixelPosition: Int, amplitudes: DoubleArray): Int {
-        return intensity_map.pickColor(getDezibelFromAmplitude(amplitudes[indexArray[pixelPosition - top_margin.toInt() - 1]]) / SettingsBundle.normalisationConstant)
+        return intensityMap.pickColor(getDezibelFromAmplitude(amplitudes[indexArray[pixelPosition - topMargin.toInt() - 1]]) / SettingsBundle.normalisationConstant)
     }
 
     private fun drawSpectrogramBar(colors: IntArray, x: Float, width: Float) {
@@ -215,18 +215,18 @@ class SpectrogramView : View, InstrumentViewInterface {
 
     private fun drawFrequencyLine(canvas: Canvas?) {
         canvas?.let {
-            it.drawLine(left_margin, yPosLine, getDrawAreaWidth() + left_margin, yPosLine, decorationSettings.paint)
+            it.drawLine(leftMargin, yPosLine, getDrawAreaWidth() + leftMargin, yPosLine, decorationSettings.paint)
             val frequency = scale.valueFromPixel(yPosLine.roundToInt())
-            drawText("${frequency.toInt()} Hz", left_margin, yPosLine, it)
+            drawText("${frequency.toInt()} Hz", leftMargin, yPosLine, it)
         }
     }
 
     private fun drawBorder(canvas: Canvas) {
-        val bottom = (height - bottom_margin + border_thickness)
-        val right = (width - right_margin + border_thickness)
-        canvas.drawRect(decorationSettings.drawArea.left - border_thickness,
-                decorationSettings.drawArea.top - border_thickness,
-                decorationSettings.drawArea.right + border_thickness,
+        val bottom = (height - bottomMargin + borderThickness)
+        val right = (width - rightMargin + borderThickness)
+        canvas.drawRect(decorationSettings.drawArea.left - borderThickness,
+                decorationSettings.drawArea.top - borderThickness,
+                decorationSettings.drawArea.right + borderThickness,
                 bottom,
                 decorationSettings.paint)
     }
@@ -252,9 +252,9 @@ class SpectrogramView : View, InstrumentViewInterface {
 
     private fun drawScale(canvas: Canvas) {
         canvas.drawLine(
-                decorationSettings.drawArea.right + border_thickness,
+                decorationSettings.drawArea.right + borderThickness,
                 decorationSettings.drawArea.bottom,
-                decorationSettings.drawArea.right + border_thickness,
+                decorationSettings.drawArea.right + borderThickness,
                 decorationSettings.drawArea.top,
                 decorationSettings.paint)
         val ticklist = getTicks().sortedWith(compareBy { it.value })
@@ -276,7 +276,7 @@ class SpectrogramView : View, InstrumentViewInterface {
         canvas.drawLine(
                 decorationSettings.drawArea.right - tickLength,
                 position,
-                decorationSettings.drawArea.right + border_thickness,
+                decorationSettings.drawArea.right + borderThickness,
                 position,
                 decorationSettings.paint)
         if (drawText) drawText(text, decorationSettings.drawArea.right, position, aboveLine, false, canvas)
@@ -299,7 +299,7 @@ class SpectrogramView : View, InstrumentViewInterface {
         } else {
             val rect = Rect()
             decorationSettings.paint.getTextBounds(text, 0, text.length - 1, rect)
-            x - distanceFromPosition - rect.right + rect.left - right_margin - 2 * decorationSettings.paint.strokeWidth
+            x - distanceFromPosition - rect.right + rect.left - rightMargin - 2 * decorationSettings.paint.strokeWidth
         }
 
         canvas?.drawText(text, xPos, yPos, decorationSettings.paint)
@@ -310,10 +310,10 @@ class SpectrogramView : View, InstrumentViewInterface {
         super.onDraw(canvas)
 
         canvas?.let { canvas ->
-            canvas.drawBitmap(mBitmap, left_margin, top_margin, mPaint)
+            canvas.drawBitmap(mBitmap, leftMargin, topMargin, mPaint)
             canvas.drawPath(mPath, mPaint)
             // Draw Instrument Tools
-            if (draw_border) drawBorder(canvas)
+            if (drawBorder) drawBorder(canvas)
             if (drawLine) drawFrequencyLine(canvas)
             if (settings.drawScale) drawScale(canvas)
         }
@@ -374,7 +374,7 @@ class SpectrogramView : View, InstrumentViewInterface {
     }
 
     fun clearBitmapAndBuffer() {
-        mBitmap = Bitmap.createBitmap((width - left_margin - right_margin).toInt(), (height - top_margin - bottom_margin).toInt(), Bitmap.Config.ARGB_8888)
+        mBitmap = Bitmap.createBitmap((width - leftMargin - rightMargin).toInt(), (height - topMargin - bottomMargin).toInt(), Bitmap.Config.ARGB_8888)
         mCanvas = Canvas(mBitmap)
         buffer = IntArray((getDrawAreaHeight() * getDrawAreaWidth()).toInt())
     }
@@ -395,16 +395,15 @@ class SpectrogramView : View, InstrumentViewInterface {
 
     private fun updateScaling() {
         if (height > 0) {
-            val from = PixelFrequencyPair((getDrawAreaHeight() + top_margin).toInt(), settings.fromFrequency)
-            val until = PixelFrequencyPair((top_margin).toInt(), settings.tillFrequency)
+            val from = PixelFrequencyPair((getDrawAreaHeight() + topMargin).toInt(), settings.fromFrequency)
+            val until = PixelFrequencyPair((topMargin).toInt(), settings.tillFrequency)
             scale = if (settings.isLogarithmic) {
                 ExponentialScalingFunction(from, until)
             } else {
                 LinearScalingFunction(from, until)
             }
             indexArray = IntArray(getDrawAreaHeight().toInt())
-            for (i in 0 until indexArray.size) indexArray[i] = indexOfFrequency(scale.valueFromPixel(top_margin.toInt() + i))
+            for (i in 0 until indexArray.size) indexArray[i] = indexOfFrequency(scale.valueFromPixel(topMargin.toInt() + i))
         }
     }
 }
-
