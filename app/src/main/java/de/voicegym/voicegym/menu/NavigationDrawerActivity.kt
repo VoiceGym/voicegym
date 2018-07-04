@@ -17,13 +17,14 @@ import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import android.widget.Toast
+import de.voicegym.voicegym.PlaybackFragment
 import de.voicegym.voicegym.R
-import de.voicegym.voicegym.recordActivity.RecordActivity
-import de.voicegym.voicegym.util.SwitchToRecordingViewListener
 import de.voicegym.voicegym.menu.dummy.ExerciseContent
 import de.voicegym.voicegym.menu.settings.SettingsActivity
 import de.voicegym.voicegym.model.Recording
+import de.voicegym.voicegym.recordActivity.RecordActivity
 import de.voicegym.voicegym.recordings.RecordingsFragment
+import de.voicegym.voicegym.util.SwitchToRecordingViewListener
 import kotlinx.android.synthetic.main.activity_navigation_drawer.drawer_layout
 import kotlinx.android.synthetic.main.activity_navigation_drawer.nav_view
 import kotlinx.android.synthetic.main.app_bar_navigation_drawer.toolbar
@@ -59,13 +60,13 @@ class NavigationDrawerActivity : AppCompatActivity(),
          * READ and WRITE belong to the same permission group (STORAGE).
          * For now(API 27), giving permission to one, doesn't force user interaction for the other.
          */
-        val permissionsToRequest = listOf(permissionAudioResult,permissionStorageReadResult,permissioStorageWriteResult)
-            .zip( listOf(
-                    Manifest.permission.RECORD_AUDIO,
-                    Manifest.permission.READ_EXTERNAL_STORAGE,
-                    Manifest.permission.WRITE_EXTERNAL_STORAGE))
-            .filter { it.first != PackageManager.PERMISSION_GRANTED  }
-            .map { it.second }
+        val permissionsToRequest = listOf(permissionAudioResult, permissionStorageReadResult, permissioStorageWriteResult)
+                .zip(listOf(
+                        Manifest.permission.RECORD_AUDIO,
+                        Manifest.permission.READ_EXTERNAL_STORAGE,
+                        Manifest.permission.WRITE_EXTERNAL_STORAGE))
+                .filter { it.first != PackageManager.PERMISSION_GRANTED }
+                .map { it.second }
 
 
         if (permissionsToRequest.isNotEmpty()) {
@@ -103,8 +104,7 @@ class NavigationDrawerActivity : AppCompatActivity(),
         nav_view.setNavigationItemSelectedListener(this)
 
         requestPermission()
-
-        loadRecordingsFragment()
+        if (savedInstanceState == null) loadRecordingsFragment()
     }
 
     override fun onBackPressed() {
@@ -127,7 +127,7 @@ class NavigationDrawerActivity : AppCompatActivity(),
         // as you specify a parent activity in AndroidManifest.xml.
         when (item.itemId) {
             R.id.action_settings -> return true
-            else -> return super.onOptionsItemSelected(item)
+            else                 -> return super.onOptionsItemSelected(item)
         }
 
     }
@@ -139,23 +139,23 @@ class NavigationDrawerActivity : AppCompatActivity(),
                 loadInstrumentsFragment()
             }
 
-            R.id.nav_exercises -> {
+            R.id.nav_exercises   -> {
                 loadExercisesFragment()
             }
 
-            R.id.nav_recordings -> {
+            R.id.nav_recordings  -> {
                 loadRecordingsFragment()
             }
 
-            R.id.nav_reports -> {
-                loadReportsFragment()
+            R.id.nav_playback    -> {
+                loadPlaybackFragment()
             }
 
-            R.id.nav_share -> {
+            R.id.nav_share       -> {
                 // load share action
             }
 
-            R.id.nav_settings -> {
+            R.id.nav_settings    -> {
                 val intent = Intent(this, SettingsActivity::class.java)
                 startActivity(intent)
             }
@@ -168,9 +168,9 @@ class NavigationDrawerActivity : AppCompatActivity(),
     private fun loadFragment(fragment: Fragment, TAG: String) {
         contentView!!.post {
             supportFragmentManager.beginTransaction()
-                .setCustomAnimations(android.R.anim.fade_in, android.R.anim.fade_out)
-                .replace(R.id.content_area, fragment, TAG)
-                .commitAllowingStateLoss()
+                    .setCustomAnimations(android.R.anim.fade_in, android.R.anim.fade_out)
+                    .replace(R.id.content_area, fragment, TAG)
+                    .commitAllowingStateLoss()
         }
     }
 
@@ -178,8 +178,8 @@ class NavigationDrawerActivity : AppCompatActivity(),
         loadFragment(RecordingsFragment(), "RECORDINGS")
     }
 
-    private fun loadReportsFragment() {
-        loadFragment(ReportsFragment(), "REPORTS")
+    private fun loadPlaybackFragment() {
+        loadFragment(PlaybackFragment(), "PLAYBACK")
     }
 
     private fun loadExercisesFragment() {

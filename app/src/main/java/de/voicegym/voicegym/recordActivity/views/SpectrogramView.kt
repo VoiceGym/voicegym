@@ -76,9 +76,9 @@ class SpectrogramView : View, InstrumentViewInterface {
     private fun getDrawAreaHeight(): Float = (height - topMargin - bottomMargin)
 
 
-    private lateinit var settings: FourierInstrumentViewSettings
+    private var settings: FourierInstrumentViewSettings = FourierInstrumentViewSettings(4096, 2, 10.0, 1000.0, 100, false, false)
 
-    private lateinit var scale: ScalingFunction
+    private var scale: ScalingFunction = LinearScalingFunction(PixelFrequencyPair(10, 10.0), PixelFrequencyPair(200, 1000.0))
 
 
     private var mCanvas: Canvas? = null

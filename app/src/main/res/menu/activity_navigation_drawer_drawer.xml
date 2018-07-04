@@ -19,9 +19,9 @@
             android:icon="@drawable/ic_hearing_black_24dp"
             android:title="@string/recordings" />
         <item
-            android:id="@+id/nav_reports"
+            android:id="@+id/nav_playback"
             android:icon="@drawable/ic_show_chart_black_24dp"
-            android:title="@string/reports" />
+            android:title="@string/playback" />
     </group>
     <group android:id="@+id/group_2">
             <item
