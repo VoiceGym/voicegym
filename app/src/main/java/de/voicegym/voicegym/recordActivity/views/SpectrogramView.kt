@@ -232,7 +232,7 @@ class SpectrogramView : View, InstrumentViewInterface {
     }
 
 
-    private fun getTicks(): ArrayList<Tick> {
+    private fun getTicks(): List<Tick> {
         when (scale) {
             is LinearScalingFunction      -> {
                 return getLinearTicklist(scale.from.correspondingFrequency, scale.until.correspondingFrequency)

@@ -4,38 +4,30 @@ import java.math.BigDecimal
 import java.math.MathContext
 import java.math.RoundingMode
 
-fun getExponentialTicklist(from: Double, until: Double): ArrayList<Tick> {
-    val tickList = ArrayList<Tick>()
+fun getExponentialTicklist(from: Double, until: Double): List<Tick> {
     // get exponents of range limits
-    val loExponent = BigDecimal(Math.log10(from)).round(MathContext(1, RoundingMode.DOWN)).toDouble()
-    val hiExponent = BigDecimal(Math.log10(until)).round(MathContext(1, RoundingMode.DOWN)).toDouble()
-    val listOfExponents = ArrayList<Double>()
-    // make a list of all exponents in range
-    var exponent = loExponent
-    while (exponent <= hiExponent) {
-        listOfExponents.add(exponent)
-        exponent += 1.0
-    }
+    val loExponent = BigDecimal(Math.log10(from)).round(MathContext(1, RoundingMode.DOWN)).toInt()
+    val hiExponent = BigDecimal(Math.log10(until)).round(MathContext(1, RoundingMode.DOWN)).toInt()
+    val exponents = loExponent..hiExponent
+
     // for each exponent e check which values a*10^e (with a=1..9) are in range and add them to the ticklist
-    listOfExponents.forEach {
-        val base = Math.pow(10.0, it)
-        if (base <= until && base >= from) {
-            tickList.add(Tick(base, true))
-        }
-        for (i in 2..9) {
-            if (i * base <= until && i * base >= from) {
-                tickList.add(Tick(i * base, false))
+    return exponents.flatMap { exponent ->
+        val base = Math.pow(10.0, exponent.toDouble())
+        (1..9).filter { it * base in from..until }
+            .map {
+                Tick(it * base, it == 1)
             }
-        }
     }
-    return tickList
+
 }
 
 fun getLinearTicklist(from: Double, until: Double): ArrayList<Tick> {
     val tickList = ArrayList<Tick>()
     // initialize with highest big tick
     val highestLabel = BigDecimal(until).round(MathContext(1, RoundingMode.DOWN)).toDouble()
+
     val m = getOrderOfMagnitude(highestLabel, false)
+
     var tickValue = highestLabel + m / 10
     // small ticks above
     while (tickValue < until) {
