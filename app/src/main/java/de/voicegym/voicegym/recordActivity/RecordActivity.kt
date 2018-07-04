@@ -156,9 +156,17 @@ class RecordActivity : AppCompatActivity(),
         }
     }
 
+    var wasListeningBeforeStop: Boolean = false
+
     override fun onStop() {
+        wasListeningBeforeStop = recorder?.shouldRecord ?: false
         stopListeningAndFreeRessource()
         super.onStop()
+    }
+
+    override fun onResume() {
+        if (wasListeningBeforeStop) startListening()
+        super.onResume()
     }
 
     override fun onDestroy() {
