@@ -30,6 +30,11 @@
             android:defaultValue="false"
             android:key="display_logarithmic"
             android:title="Logarithmic Display" />
+
+        <CheckBoxPreference
+            android:defaultValue="false"
+            android:key="display_scale"
+            android:title="Display a Scale" />
     </PreferenceCategory>
 
     <PreferenceCategory android:title="Fourier Transformation Settings">

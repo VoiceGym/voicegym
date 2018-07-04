@@ -29,9 +29,10 @@ object SettingsBundle {
         val fromFrequency = sharedPreferences.getString("from_frequency", "10").toDouble()
         val tillFrequency = sharedPreferences.getString("till_frequency", "1000").toDouble()
         val isLogarithmic = sharedPreferences.getBoolean("display_logarithmic", false)
+        val drawScale = sharedPreferences.getBoolean("display_scale", false)
         val displayedDatapoints = sharedPreferences.getString("display_sample_numbers", "100").toInt()
 
-        return FourierInstrumentViewSettings(blockSize, binning, fromFrequency, tillFrequency, displayedDatapoints, isLogarithmic)
+        return FourierInstrumentViewSettings(blockSize, binning, fromFrequency, tillFrequency, displayedDatapoints, isLogarithmic, drawScale)
     }
 }
 
@@ -44,7 +45,8 @@ data class FourierInstrumentViewSettings(
         val fromFrequency: Double,
         val tillFrequency: Double,
         val displayedDatapoints: Int,
-        val isLogarithmic: Boolean) {
+        val isLogarithmic: Boolean,
+        val drawScale: Boolean) {
 
     val samplesPerDatapoint by lazy { blockSize * binning }
 }

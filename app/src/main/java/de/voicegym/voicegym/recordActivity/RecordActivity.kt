@@ -2,12 +2,10 @@ package de.voicegym.voicegym.recordActivity
 
 import android.content.Context
 import android.content.pm.ActivityInfo
-import android.content.res.Configuration
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
 import android.os.Bundle
 import android.os.Handler
-import android.os.PersistableBundle
 import android.support.v4.app.Fragment
 import android.support.v7.app.AppCompatActivity
 import android.util.Log
@@ -124,6 +122,7 @@ class RecordActivity : AppCompatActivity(),
         window.decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_FULLSCREEN
         setContentView(R.layout.activity_record)
         window.decorView.setBackgroundColor(Color.BLACK)
+
         // obtain settings and initialize the FourierHelper
         settings = SettingsBundle.getFourierInstrumentViewSettings(this)
         fourierHelper = FourierHelper(
@@ -143,6 +142,8 @@ class RecordActivity : AppCompatActivity(),
         // activate the recordhelper to listen to microphone
         startListening()
 
+        // deactivate sleep mode
+        window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
 
     }
 
@@ -155,9 +156,17 @@ class RecordActivity : AppCompatActivity(),
         }
     }
 
+    var wasListeningBeforeStop: Boolean = false
+
     override fun onStop() {
+        wasListeningBeforeStop = recorder?.shouldRecord ?: false
         stopListeningAndFreeRessource()
         super.onStop()
+    }
+
+    override fun onResume() {
+        if (wasListeningBeforeStop) startListening()
+        super.onResume()
     }
 
     override fun onDestroy() {

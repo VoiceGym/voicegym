@@ -16,7 +16,6 @@ import de.voicegym.voicegym.util.RecordBufferListener
 class RecordHelper(private val preferredBufferSize: Int) {
 
 
-
     private val bytesPerBufferSlot = when (audioFormat) {
         ENCODING_PCM_16BIT -> 2
         else               -> throw Error("Unsupported AudioFormat")
@@ -38,7 +37,8 @@ class RecordHelper(private val preferredBufferSize: Int) {
     private var recordObject: AudioRecord? = null
 
     // control variable to stop the background thread that collects samples from the microphone
-    private var shouldRecord: Boolean = true
+    var shouldRecord: Boolean = true
+        private set
 
     init {
         Log.e("RecordHelper", "Recordhelper initialized")
