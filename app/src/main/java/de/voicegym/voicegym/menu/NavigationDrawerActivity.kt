@@ -5,7 +5,6 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Bundle
-import android.os.PersistableBundle
 import android.support.design.widget.NavigationView
 import android.support.v4.app.ActivityCompat
 import android.support.v4.app.Fragment
@@ -101,7 +100,7 @@ class NavigationDrawerActivity : AppCompatActivity(),
         setSupportActionBar(toolbar)
         cView = contentView
         fManager = supportFragmentManager
-        
+
         val toggle = ActionBarDrawerToggle(this, drawer_layout, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close)
         drawer_layout.addDrawerListener(toggle)
         toggle.syncState()
@@ -229,8 +228,8 @@ class NavigationDrawerActivity : AppCompatActivity(),
             return fragment
         }
 
-        fun loadPlaybackFragment(fromView: View, withFileName: String) {
-            loadFragment(PlaybackFragment(), "PLAYBACK").loadFile(fromView, withFileName)
+        fun loadPlaybackFragment(withFileName: String) {
+            loadFragment(PlaybackFragment(), "PLAYBACK").loadFile(withFileName)
         }
     }
 

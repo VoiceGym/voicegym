@@ -73,7 +73,8 @@ class RecordingsAdapter(
                     .dropLast(4)
             //            nameView.text = recording.id.toString()
             floatingActionButton2.setOnClickListener {
-                NavigationDrawerActivity.loadPlaybackFragment(it, recording.fileName)
+                //TODO: FIND A DIFFERENT WAY THAN A COMPANION OBJECT TO CALL THE FRAGMENT
+                NavigationDrawerActivity.loadPlaybackFragment(recording.fileName)
             }
         }
     }

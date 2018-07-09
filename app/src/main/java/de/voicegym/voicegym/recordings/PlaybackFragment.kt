@@ -1,7 +1,6 @@
 package de.voicegym.voicegym.recordings
 
 import android.os.Bundle
-import android.support.design.widget.Snackbar
 import android.support.v4.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
@@ -18,6 +17,8 @@ class PlaybackFragment : Fragment() {
      * Access to the frequency space
      */
     private lateinit var fourierHelper: FourierHelper
+
+    private lateinit var fileName: String
 
     /**
      * here the FourierInstrumentViewSettings are stored that were active when the activity was started
@@ -42,8 +43,8 @@ class PlaybackFragment : Fragment() {
         return view
     }
 
-    fun loadFile(fromView: View, fileName: String) {
-        Snackbar.make(fromView, fileName, Snackbar.LENGTH_SHORT).show()
+    fun loadFile(fileName: String) {
+        this.fileName = fileName
     }
 
 
