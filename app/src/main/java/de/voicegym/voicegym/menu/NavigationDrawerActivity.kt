@@ -5,9 +5,11 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Bundle
+import android.os.PersistableBundle
 import android.support.design.widget.NavigationView
 import android.support.v4.app.ActivityCompat
 import android.support.v4.app.Fragment
+import android.support.v4.app.FragmentManager
 import android.support.v4.content.ContextCompat
 import android.support.v4.view.GravityCompat
 import android.support.v7.app.ActionBarDrawerToggle
@@ -16,13 +18,14 @@ import android.support.v7.app.AppCompatActivity
 import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
+import android.view.View
 import android.widget.Toast
-import de.voicegym.voicegym.PlaybackFragment
 import de.voicegym.voicegym.R
 import de.voicegym.voicegym.menu.dummy.ExerciseContent
 import de.voicegym.voicegym.menu.settings.SettingsActivity
 import de.voicegym.voicegym.model.Recording
 import de.voicegym.voicegym.recordActivity.RecordActivity
+import de.voicegym.voicegym.recordings.PlaybackFragment
 import de.voicegym.voicegym.recordings.RecordingsFragment
 import de.voicegym.voicegym.util.SwitchToRecordingViewListener
 import kotlinx.android.synthetic.main.activity_navigation_drawer.drawer_layout
@@ -96,7 +99,9 @@ class NavigationDrawerActivity : AppCompatActivity(),
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_navigation_drawer)
         setSupportActionBar(toolbar)
-
+        cView = contentView
+        fManager = supportFragmentManager
+        
         val toggle = ActionBarDrawerToggle(this, drawer_layout, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close)
         drawer_layout.addDrawerListener(toggle)
         toggle.syncState()
@@ -165,14 +170,6 @@ class NavigationDrawerActivity : AppCompatActivity(),
         return true
     }
 
-    private fun loadFragment(fragment: Fragment, TAG: String) {
-        contentView!!.post {
-            supportFragmentManager.beginTransaction()
-                    .setCustomAnimations(android.R.anim.fade_in, android.R.anim.fade_out)
-                    .replace(R.id.content_area, fragment, TAG)
-                    .commitAllowingStateLoss()
-        }
-    }
 
     private fun loadRecordingsFragment() {
         loadFragment(RecordingsFragment(), "RECORDINGS")
@@ -192,10 +189,12 @@ class NavigationDrawerActivity : AppCompatActivity(),
 
     override fun onListFragmentInteraction(item: ExerciseContent.ExerciseItem?) {
         Log.d("foo", "bar")
+
     }
 
     override fun onListFragmentInteraction(item: Recording) {
         Log.d("foo", "bar")
+
     }
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
@@ -211,6 +210,28 @@ class NavigationDrawerActivity : AppCompatActivity(),
 
     companion object {
         const val REQUEST_PERMISSIONS = 100
+
+        var cView: View? = null
+
+        var fManager: FragmentManager? = null
+
+        private fun <T : Fragment> loadFragment(fragment: T, TAG: String): T {
+            fManager?.let { manager ->
+                cView?.post {
+                    manager.beginTransaction()
+                            .setCustomAnimations(android.R.anim.fade_in, android.R.anim.fade_out)
+                            .replace(R.id.content_area, fragment, TAG)
+                            .commitAllowingStateLoss()
+                }
+
+            }
+
+            return fragment
+        }
+
+        fun loadPlaybackFragment(fromView: View, withFileName: String) {
+            loadFragment(PlaybackFragment(), "PLAYBACK").loadFile(fromView, withFileName)
+        }
     }
 
 }

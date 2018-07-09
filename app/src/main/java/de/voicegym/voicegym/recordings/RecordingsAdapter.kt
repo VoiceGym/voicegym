@@ -1,15 +1,15 @@
 package de.voicegym.voicegym.recordings
 
 
-import android.support.design.widget.Snackbar
 import android.support.v7.widget.RecyclerView
 import android.view.LayoutInflater
 import android.view.View
 import android.view.View.OnClickListener
 import android.view.ViewGroup
 import de.voicegym.voicegym.R
-import de.voicegym.voicegym.recordings.RecordingsFragment.OnListFragmentInteractionListener
+import de.voicegym.voicegym.menu.NavigationDrawerActivity
 import de.voicegym.voicegym.model.Recording
+import de.voicegym.voicegym.recordings.RecordingsFragment.OnListFragmentInteractionListener
 import kotlinx.android.extensions.LayoutContainer
 import kotlinx.android.synthetic.main.fragment_recordings.createdView
 import kotlinx.android.synthetic.main.fragment_recordings.durationView
@@ -24,6 +24,7 @@ class RecordingsAdapter(
         private var values: List<Recording>,
         private val listener: OnListFragmentInteractionListener?)
     : RecyclerView.Adapter<RecordingsAdapter.ViewHolder>() {
+
 
     private val mOnClickListener: OnClickListener
 
@@ -68,11 +69,11 @@ class RecordingsAdapter(
             createdView.text = recording.fileName
                     .split("/")
                     .last()
-                    .replace("_"," ")
+                    .replace("_", " ")
                     .dropLast(4)
-//            nameView.text = recording.id.toString()
+            //            nameView.text = recording.id.toString()
             floatingActionButton2.setOnClickListener {
-                Snackbar.make(it, recording.fileName, Snackbar.LENGTH_SHORT ).show()
+                NavigationDrawerActivity.loadPlaybackFragment(it, recording.fileName)
             }
         }
     }

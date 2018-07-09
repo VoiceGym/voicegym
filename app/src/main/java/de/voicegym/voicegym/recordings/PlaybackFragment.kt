@@ -1,10 +1,12 @@
-package de.voicegym.voicegym
+package de.voicegym.voicegym.recordings
 
 import android.os.Bundle
+import android.support.design.widget.Snackbar
 import android.support.v4.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import de.voicegym.voicegym.R
 import de.voicegym.voicegym.menu.settings.FourierInstrumentViewSettings
 import de.voicegym.voicegym.menu.settings.SettingsBundle
 import de.voicegym.voicegym.recordActivity.views.SpectrogramView
@@ -38,6 +40,10 @@ class PlaybackFragment : Fragment() {
         val instrument = view.findViewById<SpectrogramView>(R.id.playback_instrumentView)
         instrument.frequencyArray = fourierHelper.frequencyArray()
         return view
+    }
+
+    fun loadFile(fromView: View, fileName: String) {
+        Snackbar.make(fromView, fileName, Snackbar.LENGTH_SHORT).show()
     }
 
 
