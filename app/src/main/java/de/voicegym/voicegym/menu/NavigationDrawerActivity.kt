@@ -35,6 +35,7 @@ import org.jetbrains.anko.contentView
 class NavigationDrawerActivity : AppCompatActivity(),
         NavigationView.OnNavigationItemSelectedListener,
         RecordingsFragment.OnListFragmentInteractionListener,
+        RecordingsFragment.SwitchToPlaybackFragmentListener,
         InstrumentsFragment.OnFragmentInteractionListener,
         ExercisesFragment.OnListFragmentInteractionListener,
         ReportsFragment.OnFragmentInteractionListener,
@@ -193,7 +194,10 @@ class NavigationDrawerActivity : AppCompatActivity(),
 
     override fun onListFragmentInteraction(item: Recording) {
         Log.d("foo", "bar")
+    }
 
+    override fun onClick(fileName: String) {
+        loadFragment(PlaybackFragment(), "PLAYBACK").loadFile(fileName)
     }
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
@@ -227,10 +231,5 @@ class NavigationDrawerActivity : AppCompatActivity(),
 
             return fragment
         }
-
-        fun loadPlaybackFragment(withFileName: String) {
-            loadFragment(PlaybackFragment(), "PLAYBACK").loadFile(withFileName)
-        }
     }
-
 }
