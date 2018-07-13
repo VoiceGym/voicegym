@@ -22,7 +22,7 @@ class SoundFileTest {
         val context = InstrumentationRegistry.getInstrumentation().context
 
         // copy file to device folder
-        val inStream = context.assets.open("testfile2.m4a")
+        val inStream = context.assets.open("220Hz-A3.m4a")
         //        val inputFile = "/input.pcm"
         val data=ByteArray(inStream.available())
         inStream.read(data)

@@ -197,7 +197,11 @@ class NavigationDrawerActivity : AppCompatActivity(),
     }
 
     override fun onClick(fileName: String) {
-        loadFragment(PlaybackFragment(), "PLAYBACK").loadFile(fileName)
+        val argumentsBundle = Bundle()
+        argumentsBundle.putString(PlaybackFragment.AUDIO_FILE, fileName)
+        val fragment = PlaybackFragment()
+        fragment.arguments = argumentsBundle
+        loadFragment(fragment, "PLAYBACK")
     }
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
