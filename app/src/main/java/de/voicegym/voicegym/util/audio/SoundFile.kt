@@ -107,7 +107,7 @@ private constructor() {
         }
     }
 
-    private fun setProgressListener(progressListener: ProgressListener) {
+    private fun setProgressListener(progressListener: ProgressListener?) {
         mProgressListener = progressListener
     }
 
@@ -403,7 +403,7 @@ private constructor() {
         // Create and return a SoundFile object using the file fileName.
         @Throws(java.io.FileNotFoundException::class, java.io.IOException::class, InvalidInputException::class)
         fun create(fileName: String,
-                   progressListener: ProgressListener): SoundFile? {
+                   progressListener: ProgressListener?): SoundFile? {
             // First check that the file exists and that its extension is supported.
             val f = File(fileName)
             if (!f.exists()) {
