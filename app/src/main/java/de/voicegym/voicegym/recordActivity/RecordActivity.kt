@@ -255,11 +255,7 @@ class RecordActivity : AppCompatActivity(),
      */
     override fun onBufferReady(data: ShortArray) {
         inputQueue.add(data)
-        // Get a handler that can be used to post something on the main thread
-        Handler(this.mainLooper).post {
-            // execute updateActivity() on the main thread
-            updateActivity()
-        }
+        updateActivity()
     }
 
     /**
@@ -270,6 +266,7 @@ class RecordActivity : AppCompatActivity(),
         val shortArray = inputQueue.poll()
         fourierHelper.fft(getDoubleArrayFromShortArray(1.0, shortArray))
         instrumentFragment?.insertNewAmplitudes(fourierHelper.amplitudeArray())
+        instrumentFragment?.invalidateFromBackground()
     }
 
 

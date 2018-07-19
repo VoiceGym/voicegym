@@ -13,6 +13,7 @@ import android.view.MotionEvent
 import android.view.MotionEvent.ACTION_DOWN
 import android.view.MotionEvent.ACTION_MOVE
 import android.view.MotionEvent.ACTION_UP
+import android.view.SurfaceView
 import android.view.View
 import de.voicegym.voicegym.R
 import de.voicegym.voicegym.menu.settings.FourierInstrumentViewSettings
@@ -28,7 +29,8 @@ import org.jetbrains.anko.backgroundColor
 import kotlin.math.absoluteValue
 import kotlin.math.roundToInt
 
-class SpectrogramView : View, InstrumentViewInterface {
+//TODO VG-67 Bitmap operationen in den Background verlagern
+class SpectrogramView : SurfaceView, InstrumentViewInterface {
 
     /**
      *  The instrument is drawn below the topMargin
@@ -182,16 +184,17 @@ class SpectrogramView : View, InstrumentViewInterface {
 
     private fun pixelPerDatapoint() = (getDrawAreaWidth() / settings.displayedDatapoints).toInt()
 
-    fun addLeft(amplitudes: DoubleArray) {
+    fun addLeft(amplitudes: DoubleArray, immediateDraw:Boolean) {
         if (indexArray.isNotEmpty()) {
             rotateBitmap(-pixelPerDatapoint())
             val colors = getPixelColorArray(amplitudes)
             val width = getDrawAreaWidth() / settings.displayedDatapoints
             drawSpectrogramBar(colors, 0f, width)
         }
+        if(immediateDraw) drawOnBackgroundThread()
     }
 
-    fun addRight(amplitudes: DoubleArray) {
+    fun addRight(amplitudes: DoubleArray, immediateDraw:Boolean) {
         if (indexArray.isNotEmpty()) {
             rotateBitmap(pixelPerDatapoint())
             val colors = getPixelColorArray(amplitudes)
@@ -199,6 +202,7 @@ class SpectrogramView : View, InstrumentViewInterface {
             val x = width * (settings.displayedDatapoints - 1)
             drawSpectrogramBar(colors, x, width)
         }
+        if(immediateDraw) drawOnBackgroundThread()
     }
 
 
@@ -305,18 +309,38 @@ class SpectrogramView : View, InstrumentViewInterface {
         canvas?.drawText(text, xPos, yPos, decorationSettings.paint)
     }
 
+
+    private var mayDraw = false
+
+    fun drawOnBackgroundThread() {
+        if (mayDraw && holder.surface.isValid && mBitmap != null) {
+            val canvas = holder.surface.lockCanvas(null)
+            synchronized(mBitmap!!) {
+                canvas.let { canvas ->
+                    canvas.drawBitmap(mBitmap, leftMargin, topMargin, mPaint)
+                    canvas.drawPath(mPath, mPaint)
+                    // Draw Instrument Tools
+                    if (drawBorder) drawBorder(canvas)
+                    if (drawLine) drawFrequencyLine(canvas)
+                    if (settings.drawScale) drawScale(canvas)
+                }
+            }
+            holder.surface.unlockCanvasAndPost(canvas)
+        }
+    }
+
+    override fun onVisibilityChanged(changedView: View?, visibility: Int) {
+        super.onVisibilityChanged(changedView, visibility)
+        mayDraw = when (visibility) {
+            View.VISIBLE -> true
+            else         -> false
+
+        }
+    }
+
     override fun onDraw(canvas: Canvas?) {
         backgroundColor = Color.BLACK
         super.onDraw(canvas)
-
-        canvas?.let { canvas ->
-            canvas.drawBitmap(mBitmap, leftMargin, topMargin, mPaint)
-            canvas.drawPath(mPath, mPaint)
-            // Draw Instrument Tools
-            if (drawBorder) drawBorder(canvas)
-            if (drawLine) drawFrequencyLine(canvas)
-            if (settings.drawScale) drawScale(canvas)
-        }
     }
 
     var touchedAtXpos: Float = 0f

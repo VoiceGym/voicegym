@@ -1,6 +1,7 @@
 package de.voicegym.voicegym.recordActivity.fragments
 
 import android.os.Bundle
+import android.os.Handler
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -13,6 +14,11 @@ import de.voicegym.voicegym.recordActivity.views.SpectrogramView
 
 
 class SpectrogramFragment : AbstractInstrumentFragment() {
+    override fun invalidateFromBackground() {
+        Handler(context?.mainLooper).post {
+            spectrogramView.invalidate()
+        }
+    }
 
     /**
      * this stores the current settings, initialized with bogus settings
@@ -67,8 +73,7 @@ class SpectrogramFragment : AbstractInstrumentFragment() {
      * this is the callback that receives a new amplitudeArray
      */
     override fun insertNewAmplitudes(spectrum: DoubleArray) {
-        spectrogramView.addRight(spectrum)
-        spectrogramView.invalidate()
+        spectrogramView.addRight(spectrum, true)
         if (spectrogramView.spectrogramViewState == RECORDING_DATA) {
             savedSpectra.add(spectrum)
             currentPosition++
@@ -84,18 +89,20 @@ class SpectrogramFragment : AbstractInstrumentFragment() {
                             it
                         } else {
                             savedSpectra[leftBorderPosition()]
-                        })
+                        }, false)
             }
         }
+        spectrogramView.drawOnBackgroundThread()
         spectrogramView.invalidate()
     }
 
     private fun scrollRight() {
         if (spectrogramView.spectrogramViewState == PLAYBACK) {
             if (currentPosition < savedSpectra.size - 1) {
-                spectrogramView.addRight(savedSpectra[++currentPosition])
+                spectrogramView.addRight(savedSpectra[++currentPosition], false)
             }
         }
+        spectrogramView.drawOnBackgroundThread()
         spectrogramView.invalidate()
     }
 
@@ -133,7 +140,8 @@ class SpectrogramFragment : AbstractInstrumentFragment() {
         spectrogramView.spectrogramViewState = InstrumentState.PLAYBACK
         spectrogramView.clearBitmapAndBuffer()
         val left = if (leftBorderPosition() >= 0) currentPosition - settings.displayedDatapoints else 0
-        for (i in left until savedSpectra.size - 1) spectrogramView.addRight(savedSpectra[i])
+        for (i in left until savedSpectra.size - 1) spectrogramView.addRight(savedSpectra[i],false)
+        spectrogramView.drawOnBackgroundThread()
         spectrogramView.invalidate()
     }
 
