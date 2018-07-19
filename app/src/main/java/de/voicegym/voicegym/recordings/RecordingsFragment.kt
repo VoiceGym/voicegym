@@ -77,7 +77,7 @@ class RecordingsFragment : Fragment(),
         view.layoutManager = LinearLayoutManager(context)
         view.addItemDecoration(DividerItemDecoration(context, DividerItemDecoration.VERTICAL))
         view.itemAnimator = DefaultItemAnimator()
-        adapter = RecordingsAdapter(emptyList(), listener)
+        adapter = RecordingsAdapter(emptyList(), listener, listener as SwitchToPlaybackFragmentListener)
         view.adapter = adapter
         val itemTouchHelperCallback = RecyclerItemTouchHelper(0, ItemTouchHelper.LEFT, this)
         ItemTouchHelper(itemTouchHelperCallback).attachToRecyclerView(view)
@@ -108,5 +108,9 @@ class RecordingsFragment : Fragment(),
     interface OnListFragmentInteractionListener {
         // TODO: Update argument type and name
         fun onListFragmentInteraction(item: Recording)
+    }
+
+    interface SwitchToPlaybackFragmentListener {
+        fun onClick(fileName: String)
     }
 }

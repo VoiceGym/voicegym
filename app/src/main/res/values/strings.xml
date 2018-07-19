@@ -9,8 +9,9 @@
     <!-- Menu Strings -->
     <string name="instruments">Instrumente</string>
     <string name="exercises">Übungen</string>
-    <string name="reports">Reports</string>
+    <string name="playback">Player</string>
     <string name="recordings">Aufnahmen</string>
+    <string name="settings">Einstellungen</string>
 
     <string name="title_activity_navigation_drawer">VoiceGym</string>
     <string name="navigation_drawer_open">Open navigation drawer</string>
@@ -93,4 +94,7 @@
     <string name="permission_alert_dialog_title">Record Audio</string>
     <string name="permission_alert_dialog_text">We want to analyze your voice, and need your permission to record audio for that in the next dialog</string>
     <string name="delete">DELETE</string>
+
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
 </resources>

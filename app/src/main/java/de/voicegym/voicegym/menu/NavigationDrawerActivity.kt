@@ -8,6 +8,7 @@ import android.os.Bundle
 import android.support.design.widget.NavigationView
 import android.support.v4.app.ActivityCompat
 import android.support.v4.app.Fragment
+import android.support.v4.app.FragmentManager
 import android.support.v4.content.ContextCompat
 import android.support.v4.view.GravityCompat
 import android.support.v7.app.ActionBarDrawerToggle
@@ -16,14 +17,15 @@ import android.support.v7.app.AppCompatActivity
 import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
+import android.view.View
 import android.widget.Toast
 import de.voicegym.voicegym.R
-import de.voicegym.voicegym.recordActivity.RecordActivity
-import de.voicegym.voicegym.util.SwitchToRecordingViewListener
-import de.voicegym.voicegym.menu.dummy.ExerciseContent
 import de.voicegym.voicegym.menu.settings.SettingsActivity
 import de.voicegym.voicegym.model.Recording
+import de.voicegym.voicegym.recordActivity.RecordActivity
+import de.voicegym.voicegym.recordings.PlaybackFragment
 import de.voicegym.voicegym.recordings.RecordingsFragment
+import de.voicegym.voicegym.util.SwitchToRecordingViewListener
 import kotlinx.android.synthetic.main.activity_navigation_drawer.drawer_layout
 import kotlinx.android.synthetic.main.activity_navigation_drawer.nav_view
 import kotlinx.android.synthetic.main.app_bar_navigation_drawer.toolbar
@@ -32,9 +34,8 @@ import org.jetbrains.anko.contentView
 class NavigationDrawerActivity : AppCompatActivity(),
         NavigationView.OnNavigationItemSelectedListener,
         RecordingsFragment.OnListFragmentInteractionListener,
+        RecordingsFragment.SwitchToPlaybackFragmentListener,
         InstrumentsFragment.OnFragmentInteractionListener,
-        ExercisesFragment.OnListFragmentInteractionListener,
-        ReportsFragment.OnFragmentInteractionListener,
         SwitchToRecordingViewListener {
 
     override fun switchToRecordingView() {
@@ -59,13 +60,13 @@ class NavigationDrawerActivity : AppCompatActivity(),
          * READ and WRITE belong to the same permission group (STORAGE).
          * For now(API 27), giving permission to one, doesn't force user interaction for the other.
          */
-        val permissionsToRequest = listOf(permissionAudioResult,permissionStorageReadResult,permissioStorageWriteResult)
-            .zip( listOf(
-                    Manifest.permission.RECORD_AUDIO,
-                    Manifest.permission.READ_EXTERNAL_STORAGE,
-                    Manifest.permission.WRITE_EXTERNAL_STORAGE))
-            .filter { it.first != PackageManager.PERMISSION_GRANTED  }
-            .map { it.second }
+        val permissionsToRequest = listOf(permissionAudioResult, permissionStorageReadResult, permissioStorageWriteResult)
+                .zip(listOf(
+                        Manifest.permission.RECORD_AUDIO,
+                        Manifest.permission.READ_EXTERNAL_STORAGE,
+                        Manifest.permission.WRITE_EXTERNAL_STORAGE))
+                .filter { it.first != PackageManager.PERMISSION_GRANTED }
+                .map { it.second }
 
 
         if (permissionsToRequest.isNotEmpty()) {
@@ -95,6 +96,8 @@ class NavigationDrawerActivity : AppCompatActivity(),
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_navigation_drawer)
         setSupportActionBar(toolbar)
+        cView = contentView
+        fManager = supportFragmentManager
 
         val toggle = ActionBarDrawerToggle(this, drawer_layout, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close)
         drawer_layout.addDrawerListener(toggle)
@@ -103,8 +106,7 @@ class NavigationDrawerActivity : AppCompatActivity(),
         nav_view.setNavigationItemSelectedListener(this)
 
         requestPermission()
-
-        loadRecordingsFragment()
+        if (savedInstanceState == null) loadRecordingsFragment()
     }
 
     override fun onBackPressed() {
@@ -115,47 +117,16 @@ class NavigationDrawerActivity : AppCompatActivity(),
         }
     }
 
-    override fun onCreateOptionsMenu(menu: Menu): Boolean {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        menuInflater.inflate(R.menu.navigation_drawer, menu)
-        return true
-    }
-
-    override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        when (item.itemId) {
-            R.id.action_settings -> return true
-            else -> return super.onOptionsItemSelected(item)
-        }
-
-    }
-
     override fun onNavigationItemSelected(item: MenuItem): Boolean {
         // Handle navigation view item clicks here.
         when (item.itemId) {
             R.id.nav_instruments -> {
                 loadInstrumentsFragment()
             }
-
-            R.id.nav_exercises -> {
-                loadExercisesFragment()
-            }
-
-            R.id.nav_recordings -> {
+            R.id.nav_recordings  -> {
                 loadRecordingsFragment()
             }
-
-            R.id.nav_reports -> {
-                loadReportsFragment()
-            }
-
-            R.id.nav_share -> {
-                // load share action
-            }
-
-            R.id.nav_settings -> {
+            R.id.nav_settings    -> {
                 val intent = Intent(this, SettingsActivity::class.java)
                 startActivity(intent)
             }
@@ -165,37 +136,25 @@ class NavigationDrawerActivity : AppCompatActivity(),
         return true
     }
 
-    private fun loadFragment(fragment: Fragment, TAG: String) {
-        contentView!!.post {
-            supportFragmentManager.beginTransaction()
-                .setCustomAnimations(android.R.anim.fade_in, android.R.anim.fade_out)
-                .replace(R.id.content_area, fragment, TAG)
-                .commitAllowingStateLoss()
-        }
-    }
 
     private fun loadRecordingsFragment() {
         loadFragment(RecordingsFragment(), "RECORDINGS")
-    }
-
-    private fun loadReportsFragment() {
-        loadFragment(ReportsFragment(), "REPORTS")
-    }
-
-    private fun loadExercisesFragment() {
-        loadFragment(ExercisesFragment(), "EXERCISES")
     }
 
     private fun loadInstrumentsFragment() {
         loadFragment(InstrumentsFragment(), "INSTRUMENTS")
     }
 
-    override fun onListFragmentInteraction(item: ExerciseContent.ExerciseItem?) {
+    override fun onListFragmentInteraction(item: Recording) {
         Log.d("foo", "bar")
     }
 
-    override fun onListFragmentInteraction(item: Recording) {
-        Log.d("foo", "bar")
+    override fun onClick(fileName: String) {
+        val argumentsBundle = Bundle()
+        argumentsBundle.putString(PlaybackFragment.AUDIO_FILE, fileName)
+        val fragment = PlaybackFragment()
+        fragment.arguments = argumentsBundle
+        loadFragment(fragment, "PLAYBACK")
     }
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
@@ -211,6 +170,23 @@ class NavigationDrawerActivity : AppCompatActivity(),
 
     companion object {
         const val REQUEST_PERMISSIONS = 100
-    }
 
+        var cView: View? = null
+
+        var fManager: FragmentManager? = null
+
+        private fun <T : Fragment> loadFragment(fragment: T, TAG: String): T {
+            fManager?.let { manager ->
+                cView?.post {
+                    manager.beginTransaction()
+                            .setCustomAnimations(android.R.anim.fade_in, android.R.anim.fade_out)
+                            .replace(R.id.content_area, fragment, TAG)
+                            .commitAllowingStateLoss()
+                }
+
+            }
+
+            return fragment
+        }
+    }
 }
