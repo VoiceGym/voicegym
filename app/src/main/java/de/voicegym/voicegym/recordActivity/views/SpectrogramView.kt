@@ -34,73 +34,7 @@ import kotlin.concurrent.thread
 import kotlin.math.absoluteValue
 import kotlin.math.roundToInt
 
-//TODO VG-67 Bitmap operationen in den Background verlagern
 class SpectrogramView : SurfaceView, InstrumentViewInterface, Runnable {
-
-    private var renderThread: Thread? = null
-    private val renderQueue = ConcurrentLinkedQueue<RenderJob>()
-    private var rendering: Boolean = false
-
-    override fun run() {
-        setThreadPriority(THREAD_PRIORITY_URGENT_DISPLAY)
-        var needsRendering = false
-
-        while (rendering) {
-            when {
-                visibility == View.INVISIBLE -> sleep(20)
-
-                renderQueue.isEmpty()        -> {
-                    if (needsRendering) {
-                        drawOnBackgroundThread()
-                        needsRendering = false
-                    }
-                    sleep(10)
-                }
-
-                else                         -> {
-                    val job = renderQueue.poll()
-                    // if the last added things didn't needed to be drawn immediately but we now hit a immediateDrawJob
-                    if (needsRendering && job.renderImmediately) {
-                        drawOnBackgroundThread()
-                        needsRendering = false
-                    } else {
-                        needsRendering = !job.renderImmediately
-                    }
-
-                    when (job.position) {
-                        AddPosition.LEFT  -> addLeftRenderThread(job.amplitudes, job.renderImmediately)
-                        AddPosition.RIGHT -> addRightRenderThread(job.amplitudes, job.renderImmediately)
-                    }
-                }
-            }
-        }
-    }
-
-    fun startRendering() {
-        Log.i("RenderThread", "startRendering() called")
-        if (!rendering && renderThread == null) {
-            rendering = true
-            renderThread = thread(start = true) { this.run() }
-            Log.i("RenderThread", "renderThread instantiated")
-        }
-    }
-
-    private fun interruptRendering(block: () -> Unit) {
-        val rendering = renderThread?.isAlive ?: false
-        if (rendering) stopRendering()
-        block.invoke()
-        if (rendering) startRendering()
-    }
-
-    fun stopRendering() {
-        Log.i("RenderThread", "stopRendering() called")
-        if (rendering && renderThread != null) {
-            rendering = false
-            renderThread?.join()
-            renderThread = null
-        }
-    }
-
 
     /**
      * Which color to pick for the decorations
@@ -179,6 +113,85 @@ class SpectrogramView : SurfaceView, InstrumentViewInterface, Runnable {
         }
     }
 
+    override fun onWindowFocusChanged(hasWindowFocus: Boolean) {
+        interruptRendering {
+            super.onWindowFocusChanged(hasWindowFocus)
+            updateScaling()
+        }
+    }
+
+    override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
+        interruptRendering {
+            super.onSizeChanged(w, h, oldw, oldh)
+
+            clearBitmapAndBuffer()
+            updateScaling()
+            updateDecorationSettings()
+            //TODO VG-61 repaint bitmap
+        }
+    }
+
+    override fun onLayout(changed: Boolean, left: Int, top: Int, right: Int, bottom: Int) {
+        interruptRendering {
+            super.onLayout(changed, left, top, right, bottom)
+            updateScaling()
+            updateDecorationSettings()
+        }
+    }
+
+    override fun onVisibilityChanged(changedView: View?, visibility: Int) {
+        interruptRendering {
+            super.onVisibilityChanged(changedView, visibility)
+        }
+    }
+
+
+    var touchedAtXpos: Float = 0f
+
+    var spectrogramViewState = LIVE_DISPLAY
+
+    override fun onTouchEvent(event: MotionEvent?): Boolean {
+        when (spectrogramViewState) {
+            LIVE_DISPLAY, RECORDING_DATA -> {
+                when (event?.action) {
+                    ACTION_DOWN -> {
+                        drawLine = !drawLine
+                        yPosLine = event.y
+
+                    }
+
+                    ACTION_MOVE -> yPosLine = event.y
+                    ACTION_UP   -> yPosLine = event.y
+                }
+                this.invalidate()
+            }
+
+            PLAYBACK                     -> {
+                if (context !is PlaybackModeControlListener) throw Error("SpectrogramView can only be used within Activities that implement PlaybackModeControlListener")
+                val controller = (context as PlaybackModeControlListener)
+                when (event?.action) {
+                    ACTION_DOWN -> {
+                        controller.playbackTouched()
+                        touchedAtXpos = event.x
+                    }
+
+                    ACTION_MOVE -> {
+                        controller.playbackSeekTo((event.x - touchedAtXpos) / width)
+                    }
+
+                    ACTION_UP   -> {
+                        controller.playbackReleased()
+                    }
+
+                }
+            }
+        }
+
+        return when (event?.action) {
+            ACTION_UP, ACTION_DOWN, ACTION_MOVE -> true
+            else                                -> super.onTouchEvent(event)
+        }
+    }
 
     var frequencyArray: DoubleArray? = null
 
@@ -217,38 +230,6 @@ class SpectrogramView : SurfaceView, InstrumentViewInterface, Runnable {
 
     fun addRight(amplitudes: DoubleArray, immediateDraw: Boolean) {
         renderQueue.add(RenderJob(amplitudes, immediateDraw, AddPosition.RIGHT))
-    }
-
-    private fun addLeftRenderThread(amplitudes: DoubleArray, immediateDraw: Boolean) {
-        if (indexArray.isNotEmpty()) {
-            rotateBitmap(-pixelPerDatapoint())
-            val colors = getPixelColorArray(amplitudes)
-            val xEnd = width.toFloat() / settings.displayedDatapoints
-            drawSpectrogramBar(colors, 0f, xEnd)
-        }
-        if (immediateDraw) drawOnBackgroundThread()
-    }
-
-    private fun addRightRenderThread(amplitudes: DoubleArray, immediateDraw: Boolean) {
-        if (indexArray.isNotEmpty()) {
-            rotateBitmap(pixelPerDatapoint())
-            val colors = getPixelColorArray(amplitudes)
-            val xEnd = width.toFloat() / settings.displayedDatapoints
-            val xStart = xEnd * (settings.displayedDatapoints - 1)
-            drawSpectrogramBar(colors, xStart, xEnd)
-        }
-        if (immediateDraw) drawOnBackgroundThread()
-    }
-
-
-    private fun rotateBitmap(numberOfPixels: Int) {
-        buffer?.let {
-            // Rolling through pixels
-            val cutSpaceLeft = if (numberOfPixels >= 0) numberOfPixels else 0
-            val cutSpaceRight = if (numberOfPixels < 0) -numberOfPixels else 0
-            mBitmap?.getPixels(it, 0, width, cutSpaceLeft, 0, width - numberOfPixels.absoluteValue, height)
-            mBitmap?.setPixels(it, 0, width, cutSpaceRight, 0, width - numberOfPixels.absoluteValue, height)
-        }
     }
 
 
@@ -334,7 +315,40 @@ class SpectrogramView : SurfaceView, InstrumentViewInterface, Runnable {
         canvas.drawText(text, xPos, yPos, decorationSettings.paint)
     }
 
-    private fun drawOnBackgroundThread() {
+
+
+    private fun addLeftForBackgroundThread(amplitudes: DoubleArray, immediateDraw: Boolean) {
+        if (indexArray.isNotEmpty()) {
+            rotateBitmapForBackgroundThread(-pixelPerDatapoint())
+            val colors = getPixelColorArray(amplitudes)
+            val xEnd = width.toFloat() / settings.displayedDatapoints
+            drawSpectrogramBar(colors, 0f, xEnd)
+        }
+        if (immediateDraw) drawForBackgroundThread()
+    }
+
+    private fun addRightForBackgroundThread(amplitudes: DoubleArray, immediateDraw: Boolean) {
+        if (indexArray.isNotEmpty()) {
+            rotateBitmapForBackgroundThread(pixelPerDatapoint())
+            val colors = getPixelColorArray(amplitudes)
+            val xEnd = width.toFloat() / settings.displayedDatapoints
+            val xStart = xEnd * (settings.displayedDatapoints - 1)
+            drawSpectrogramBar(colors, xStart, xEnd)
+        }
+        if (immediateDraw) drawForBackgroundThread()
+    }
+
+    private fun rotateBitmapForBackgroundThread(numberOfPixels: Int) {
+        buffer?.let {
+            // Rolling through pixels
+            val cutSpaceLeft = if (numberOfPixels >= 0) numberOfPixels else 0
+            val cutSpaceRight = if (numberOfPixels < 0) -numberOfPixels else 0
+            mBitmap?.getPixels(it, 0, width, cutSpaceLeft, 0, width - numberOfPixels.absoluteValue, height)
+            mBitmap?.setPixels(it, 0, width, cutSpaceRight, 0, width - numberOfPixels.absoluteValue, height)
+        }
+    }
+
+    private fun drawForBackgroundThread() {
         if (holder.surface.isValid && mBitmap != null) {
             val canvas = holder.surface.lockCanvas(null)
             synchronized(mBitmap!!) {
@@ -347,54 +361,6 @@ class SpectrogramView : SurfaceView, InstrumentViewInterface, Runnable {
                 }
             }
             holder.surface.unlockCanvasAndPost(canvas)
-        }
-    }
-
-
-    var touchedAtXpos: Float = 0f
-
-    var spectrogramViewState = LIVE_DISPLAY
-
-    override fun onTouchEvent(event: MotionEvent?): Boolean {
-        when (spectrogramViewState) {
-            LIVE_DISPLAY, RECORDING_DATA -> {
-                when (event?.action) {
-                    ACTION_DOWN -> {
-                        drawLine = !drawLine
-                        yPosLine = event.y
-
-                    }
-
-                    ACTION_MOVE -> yPosLine = event.y
-                    ACTION_UP   -> yPosLine = event.y
-                }
-                this.invalidate()
-            }
-
-            PLAYBACK                     -> {
-                if (context !is PlaybackModeControlListener) throw Error("SpectrogramView can only be used within Activities that implement PlaybackModeControlListener")
-                val controller = (context as PlaybackModeControlListener)
-                when (event?.action) {
-                    ACTION_DOWN -> {
-                        controller.playbackTouched()
-                        touchedAtXpos = event.x
-                    }
-
-                    ACTION_MOVE -> {
-                        controller.playbackSeekTo((event.x - touchedAtXpos) / width)
-                    }
-
-                    ACTION_UP   -> {
-                        controller.playbackReleased()
-                    }
-
-                }
-            }
-        }
-
-        return when (event?.action) {
-            ACTION_UP, ACTION_DOWN, ACTION_MOVE -> true
-            else                                -> super.onTouchEvent(event)
         }
     }
 
@@ -414,41 +380,15 @@ class SpectrogramView : SurfaceView, InstrumentViewInterface, Runnable {
         }
     }
 
-    override fun onWindowFocusChanged(hasWindowFocus: Boolean) {
-        interruptRendering {
-            super.onWindowFocusChanged(hasWindowFocus)
-            updateScaling()
-        }
-    }
 
-    override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
-        interruptRendering {
-            super.onSizeChanged(w, h, oldw, oldh)
+    /**
+     * This array contains the frequencies corresponding to the y-position of the pixel on the drawn bitmap
+     */
+    private var indexArray = IntArray(0)
 
-            clearBitmapAndBuffer()
-            updateScaling()
-            updateDecorationSettings()
-            //TODO repaint bitmap
-        }
-    }
-
-    override fun onLayout(changed: Boolean, left: Int, top: Int, right: Int, bottom: Int) {
-        interruptRendering {
-            super.onLayout(changed, left, top, right, bottom)
-            updateScaling()
-            updateDecorationSettings()
-        }
-    }
-
-    override fun onVisibilityChanged(changedView: View?, visibility: Int) {
-        interruptRendering {
-            super.onVisibilityChanged(changedView, visibility)
-        }
-
-    }
-
-    var indexArray = IntArray(0)
-
+    /**
+     * This function updates the indexArray when any settings or the screen layout have changed
+     */
     private fun updateScaling() {
         if (height > 0) {
             val from = PixelFrequencyPair(height, settings.fromFrequency)
@@ -462,8 +402,96 @@ class SpectrogramView : SurfaceView, InstrumentViewInterface, Runnable {
             for (i in 0 until indexArray.size) indexArray[i] = indexOfFrequency(scale.valueFromPixel(i))
         }
     }
-}
 
+    /**
+     * Render Thread that is running in the background
+     */
+    private var renderThread: Thread? = null
+
+    /**
+     * The Queue that holds the RenderJobs that have been given us by another thread
+     */
+    private val renderQueue = ConcurrentLinkedQueue<RenderJob>()
+
+    /**
+     * control variable for the renderThread
+     */
+    private var rendering: Boolean = false
+
+    /**
+     * Our Render Loop
+     */
+    override fun run() {
+        setThreadPriority(THREAD_PRIORITY_URGENT_DISPLAY)
+        var needsRendering = false
+
+        while (rendering) {
+            when {
+                visibility == View.INVISIBLE -> sleep(20)
+
+                renderQueue.isEmpty()        -> {
+                    if (needsRendering) {
+                        drawForBackgroundThread()
+                        needsRendering = false
+                    }
+                    sleep(10)
+                }
+
+                else                         -> {
+                    val job = renderQueue.poll()
+                    // if the last added things didn't needed to be drawn immediately but we now hit a immediateDrawJob
+                    if (needsRendering && job.renderImmediately) {
+                        drawForBackgroundThread()
+                        needsRendering = false
+                    } else {
+                        needsRendering = !job.renderImmediately
+                    }
+
+                    when (job.position) {
+                        AddPosition.LEFT  -> addLeftForBackgroundThread(job.amplitudes, job.renderImmediately)
+                        AddPosition.RIGHT -> addRightForBackgroundThread(job.amplitudes, job.renderImmediately)
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * If the rendering Thread is not yet running this will start the thread
+     */
+    fun startRendering() {
+        Log.i("RenderThread", "startRendering() called")
+        if (!rendering && renderThread == null) {
+            rendering = true
+            renderThread = thread(start = true) { this.run() }
+        }
+    }
+
+    /**
+     * This function stops the rendering Thread if it is running and ensures that block
+     * is invoked without an active renderThread
+     *
+     * @param block: the code to be executed with no active rendering
+     */
+    private fun interruptRendering(block: () -> Unit) {
+        val rendering = renderThread?.isAlive ?: false
+        if (rendering) stopRendering()
+        block.invoke()
+        if (rendering) startRendering()
+    }
+
+    /**
+     * This function stops the renderThread and locks the calling thread until renderThread has finished.
+     */
+    fun stopRendering() {
+        Log.i("RenderThread", "stopRendering() called")
+        if (rendering && renderThread != null) {
+            rendering = false
+            renderThread?.join()
+            renderThread = null
+        }
+    }
+}
 
 data class RenderJob(val amplitudes: DoubleArray, val renderImmediately: Boolean, val position: AddPosition)
 
