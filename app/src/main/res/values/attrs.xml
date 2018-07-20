@@ -10,11 +10,6 @@
     </declare-styleable>
 
     <declare-styleable name="SpectrogramView">
-        <attr name="top_margin" format="float"/>
-        <attr name="bottom_margin" format="float"/>
-        <attr name="left_margin" format="float"/>
-        <attr name="right_margin" format="float"/>
-        <attr name="draw_border" format="boolean"/>
         <attr name="draw_scale" format="boolean"/>
         <attr name="border_thickness" format="float"/>
         <attr name="color_map" format="enum">

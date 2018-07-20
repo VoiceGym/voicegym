@@ -17,6 +17,7 @@ import android.view.MotionEvent.ACTION_DOWN
 import android.view.MotionEvent.ACTION_MOVE
 import android.view.MotionEvent.ACTION_UP
 import android.view.SurfaceView
+import android.view.View
 import de.voicegym.voicegym.R
 import de.voicegym.voicegym.menu.settings.FourierInstrumentViewSettings
 import de.voicegym.voicegym.menu.settings.SettingsBundle
@@ -27,7 +28,6 @@ import de.voicegym.voicegym.recordActivity.fragments.InstrumentViewInterface
 import de.voicegym.voicegym.recordActivity.fragments.PlaybackModeControlListener
 import de.voicegym.voicegym.recordActivity.views.util.*
 import de.voicegym.voicegym.util.audio.getDezibelFromAmplitude
-import org.jetbrains.anko.backgroundColor
 import java.lang.Thread.sleep
 import java.util.concurrent.ConcurrentLinkedQueue
 import kotlin.concurrent.thread
@@ -46,25 +46,31 @@ class SpectrogramView : SurfaceView, InstrumentViewInterface, Runnable {
         var needsRendering = false
 
         while (rendering) {
-            if (renderQueue.isEmpty()) {
-                if (needsRendering) {
-                    drawOnBackgroundThread()
-                    needsRendering = false
-                }
-                sleep(10)
-            } else {
-                val job = renderQueue.poll()
-                // if the last added things didn't needed to be drawn immediately but we now hit a immediateDrawJob
-                if (needsRendering && job.renderImmediately) {
-                    drawOnBackgroundThread()
-                    needsRendering = false
-                } else {
-                    needsRendering = !job.renderImmediately
+            when {
+                visibility == View.INVISIBLE -> sleep(20)
+
+                renderQueue.isEmpty()        -> {
+                    if (needsRendering) {
+                        drawOnBackgroundThread()
+                        needsRendering = false
+                    }
+                    sleep(10)
                 }
 
-                when (job.position) {
-                    AddPosition.LEFT  -> addLeftRenderThread(job.amplitudes, job.renderImmediately)
-                    AddPosition.RIGHT -> addRightRenderThread(job.amplitudes, job.renderImmediately)
+                else                         -> {
+                    val job = renderQueue.poll()
+                    // if the last added things didn't needed to be drawn immediately but we now hit a immediateDrawJob
+                    if (needsRendering && job.renderImmediately) {
+                        drawOnBackgroundThread()
+                        needsRendering = false
+                    } else {
+                        needsRendering = !job.renderImmediately
+                    }
+
+                    when (job.position) {
+                        AddPosition.LEFT  -> addLeftRenderThread(job.amplitudes, job.renderImmediately)
+                        AddPosition.RIGHT -> addRightRenderThread(job.amplitudes, job.renderImmediately)
+                    }
                 }
             }
         }
@@ -79,7 +85,7 @@ class SpectrogramView : SurfaceView, InstrumentViewInterface, Runnable {
         }
     }
 
-    fun interruptRendering(block: () -> Unit) {
+    private fun interruptRendering(block: () -> Unit) {
         val rendering = renderThread?.isAlive ?: false
         if (rendering) stopRendering()
         block.invoke()
@@ -95,50 +101,22 @@ class SpectrogramView : SurfaceView, InstrumentViewInterface, Runnable {
         }
     }
 
-    /**
-     *  The instrument is drawn below the topMargin
-     */
-    var topMargin: Float = 20f
 
     /**
-     *  The instrument is drawn above the above_margin
+     * Which color to pick for the decorations
      */
-    var bottomMargin: Float = 20f
+    private var decorationColor = Color.GRAY
 
     /**
-     *  The instrument is drawn right to the leftMargin
+     * The thickness of drawn lines
      */
-    var leftMargin: Float = 50f
-
-    /**
-     * The instrument is drawn left to the rightMargin
-     */
-    var rightMargin: Float = 20f
-
-    /**
-     * Whether to draw a border around the instrument area
-     */
-    var drawBorder: Boolean = true
-
-    /**
-     * Which color to pick for the border
-     */
-    var borderColor = Color.GRAY
-
-    /**
-     * The thickness of the border
-     */
-    var borderThickness = 2f
+    private var drawLineThickness = 2f
 
 
     /**
      * Holds the ColorPicker that is used to select the appropriate color for the spectral intensity
      */
     var intensityMap: GradientPicker = HotGradientColorPicker
-
-    private fun getDrawAreaWidth(): Float = (width - leftMargin - rightMargin)
-
-    private fun getDrawAreaHeight(): Float = (height - topMargin - bottomMargin)
 
 
     private var settings: FourierInstrumentViewSettings = FourierInstrumentViewSettings(4096, 2, 10.0, 1000.0, 100, false, false)
@@ -173,16 +151,16 @@ class SpectrogramView : SurfaceView, InstrumentViewInterface, Runnable {
 
     private fun updateDecorationSettings() {
         val paint = Paint()
-        paint.color = borderColor
+        paint.color = decorationColor
         paint.isAntiAlias = true
         paint.isDither = true
         paint.strokeJoin = Paint.Join.ROUND
         paint.strokeCap = Paint.Cap.ROUND
-        paint.strokeWidth = borderThickness * resources.displayMetrics.density
+        paint.strokeWidth = drawLineThickness * resources.displayMetrics.density
         paint.style = Paint.Style.FILL
         paint.textSize = 16f * resources.displayMetrics.density
         paint.typeface = Typeface.SANS_SERIF
-        decorationSettings = SpectrogramViewDecorationSettings(paint, SpectrogramViewPaintArea(leftMargin, width - rightMargin, height - bottomMargin, topMargin))
+        decorationSettings = SpectrogramViewDecorationSettings(paint, SpectrogramViewPaintArea(0f, width.toFloat(), height.toFloat(), 0f))
 
     }
 
@@ -191,12 +169,7 @@ class SpectrogramView : SurfaceView, InstrumentViewInterface, Runnable {
     constructor(context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0) : super(context, attrs, defStyleAttr) {
         attrs?.let {
             val styleableAttributes = context.theme.obtainStyledAttributes(it, R.styleable.SpectrogramView, defStyleAttr, 0)
-            topMargin = styleableAttributes.getFloat(R.styleable.SpectrogramView_top_margin, 20f)
-            bottomMargin = styleableAttributes.getFloat(R.styleable.SpectrogramView_bottom_margin, 20f)
-            leftMargin = styleableAttributes.getFloat(R.styleable.SpectrogramView_left_margin, 50f)
-            rightMargin = styleableAttributes.getFloat(R.styleable.SpectrogramView_right_margin, 20f)
-            drawBorder = styleableAttributes.getBoolean(R.styleable.SpectrogramView_draw_border, true)
-            borderThickness = styleableAttributes.getFloat(R.styleable.SpectrogramView_border_thickness, 2f)
+            drawLineThickness = styleableAttributes.getFloat(R.styleable.SpectrogramView_border_thickness, 2f)
             intensityMap = when (styleableAttributes.getInteger(R.styleable.SpectrogramView_color_map, 0)) {
                 0    -> HotGradientColorPicker
                 else -> HotGradientColorPicker
@@ -220,24 +193,23 @@ class SpectrogramView : SurfaceView, InstrumentViewInterface, Runnable {
     }
 
     private fun getPixelColorArray(amplitudes: DoubleArray): IntArray {
-        val colors = IntArray(getDrawAreaHeight().toInt())
-        for (i in 0 until colors.size) colors[i] = pickColor((getDrawAreaHeight() + topMargin).toInt() - i, amplitudes)
+        val colors = IntArray(height)
+        for (i in 0 until colors.size) colors[i] = pickColor(height - i, amplitudes)
         return colors
     }
 
     private fun pickColor(pixelPosition: Int, amplitudes: DoubleArray): Int {
-        return intensityMap.pickColor(getDezibelFromAmplitude(amplitudes[indexArray[pixelPosition - topMargin.toInt() - 1]]) / SettingsBundle.normalisationConstant)
+        return intensityMap.pickColor(getDezibelFromAmplitude(amplitudes[indexArray[pixelPosition - 1]]) / SettingsBundle.normalisationConstant)
     }
 
     private fun drawSpectrogramBar(colors: IntArray, x: Float, width: Float) {
-        val lowerY = getDrawAreaHeight()
         colors.forEachIndexed { i, colorValue ->
             mPaint.color = colorValue
-            mCanvas?.drawLine(x, lowerY - i, x + width, lowerY - i, mPaint)
+            mCanvas?.drawLine(x, (height - i).toFloat(), x + width, (height - i).toFloat(), mPaint)
         }
     }
 
-    private fun pixelPerDatapoint() = (getDrawAreaWidth() / settings.displayedDatapoints).toInt()
+    private fun pixelPerDatapoint() = width / settings.displayedDatapoints
 
     fun addLeft(amplitudes: DoubleArray, immediateDraw: Boolean) {
         renderQueue.add(RenderJob(amplitudes, immediateDraw, AddPosition.LEFT))
@@ -251,8 +223,8 @@ class SpectrogramView : SurfaceView, InstrumentViewInterface, Runnable {
         if (indexArray.isNotEmpty()) {
             rotateBitmap(-pixelPerDatapoint())
             val colors = getPixelColorArray(amplitudes)
-            val width = getDrawAreaWidth() / settings.displayedDatapoints
-            drawSpectrogramBar(colors, 0f, width)
+            val xEnd = width.toFloat() / settings.displayedDatapoints
+            drawSpectrogramBar(colors, 0f, xEnd)
         }
         if (immediateDraw) drawOnBackgroundThread()
     }
@@ -261,9 +233,9 @@ class SpectrogramView : SurfaceView, InstrumentViewInterface, Runnable {
         if (indexArray.isNotEmpty()) {
             rotateBitmap(pixelPerDatapoint())
             val colors = getPixelColorArray(amplitudes)
-            val width = getDrawAreaWidth() / settings.displayedDatapoints
-            val x = width * (settings.displayedDatapoints - 1)
-            drawSpectrogramBar(colors, x, width)
+            val xEnd = width.toFloat() / settings.displayedDatapoints
+            val xStart = xEnd * (settings.displayedDatapoints - 1)
+            drawSpectrogramBar(colors, xStart, xEnd)
         }
         if (immediateDraw) drawOnBackgroundThread()
     }
@@ -274,28 +246,18 @@ class SpectrogramView : SurfaceView, InstrumentViewInterface, Runnable {
             // Rolling through pixels
             val cutSpaceLeft = if (numberOfPixels >= 0) numberOfPixels else 0
             val cutSpaceRight = if (numberOfPixels < 0) -numberOfPixels else 0
-            mBitmap?.getPixels(it, 0, getDrawAreaWidth().toInt(), cutSpaceLeft, 0, getDrawAreaWidth().toInt() - numberOfPixels.absoluteValue, getDrawAreaHeight().toInt())
-            mBitmap?.setPixels(it, 0, getDrawAreaWidth().toInt(), cutSpaceRight, 0, getDrawAreaWidth().toInt() - numberOfPixels.absoluteValue, getDrawAreaHeight().toInt())
+            mBitmap?.getPixels(it, 0, width, cutSpaceLeft, 0, width - numberOfPixels.absoluteValue, height)
+            mBitmap?.setPixels(it, 0, width, cutSpaceRight, 0, width - numberOfPixels.absoluteValue, height)
         }
     }
 
 
     private fun drawFrequencyLine(canvas: Canvas?) {
         canvas?.let {
-            it.drawLine(leftMargin, yPosLine, getDrawAreaWidth() + leftMargin, yPosLine, decorationSettings.paint)
+            it.drawLine(0f, yPosLine, width.toFloat(), yPosLine, decorationSettings.paint)
             val frequency = scale.valueFromPixel(yPosLine.roundToInt())
-            drawText("${frequency.toInt()} Hz", leftMargin, yPosLine, it)
+            drawText("${frequency.toInt()} Hz", 0f, yPosLine, it)
         }
-    }
-
-    private fun drawBorder(canvas: Canvas) {
-        val bottom = (height - bottomMargin + borderThickness)
-        val right = (width - rightMargin + borderThickness)
-        canvas.drawRect(decorationSettings.drawArea.left - borderThickness,
-                decorationSettings.drawArea.top - borderThickness,
-                decorationSettings.drawArea.right + borderThickness,
-                bottom,
-                decorationSettings.paint)
     }
 
 
@@ -319,9 +281,9 @@ class SpectrogramView : SurfaceView, InstrumentViewInterface, Runnable {
 
     private fun drawScale(canvas: Canvas) {
         canvas.drawLine(
-                decorationSettings.drawArea.right + borderThickness,
+                decorationSettings.drawArea.right + drawLineThickness,
                 decorationSettings.drawArea.bottom,
-                decorationSettings.drawArea.right + borderThickness,
+                decorationSettings.drawArea.right + drawLineThickness,
                 decorationSettings.drawArea.top,
                 decorationSettings.paint)
         val ticklist = getTicks().sortedWith(compareBy { it.value })
@@ -343,7 +305,7 @@ class SpectrogramView : SurfaceView, InstrumentViewInterface, Runnable {
         canvas.drawLine(
                 decorationSettings.drawArea.right - tickLength,
                 position,
-                decorationSettings.drawArea.right + borderThickness,
+                decorationSettings.drawArea.right + drawLineThickness,
                 position,
                 decorationSettings.paint)
         if (drawText) drawText(text, decorationSettings.drawArea.right, position, aboveLine, false, canvas)
@@ -366,10 +328,10 @@ class SpectrogramView : SurfaceView, InstrumentViewInterface, Runnable {
         } else {
             val rect = Rect()
             decorationSettings.paint.getTextBounds(text, 0, text.length - 1, rect)
-            x - distanceFromPosition - rect.right + rect.left - rightMargin - 2 * decorationSettings.paint.strokeWidth
+            x - distanceFromPosition - rect.right + rect.left - 2 * decorationSettings.paint.strokeWidth
         }
 
-        canvas?.drawText(text, xPos, yPos, decorationSettings.paint)
+        canvas.drawText(text, xPos, yPos, decorationSettings.paint)
     }
 
     private fun drawOnBackgroundThread() {
@@ -377,10 +339,9 @@ class SpectrogramView : SurfaceView, InstrumentViewInterface, Runnable {
             val canvas = holder.surface.lockCanvas(null)
             synchronized(mBitmap!!) {
                 canvas.let { canvas ->
-                    canvas.drawBitmap(mBitmap, leftMargin, topMargin, mPaint)
+                    canvas.drawBitmap(mBitmap, 0f, 0f, mPaint)
                     canvas.drawPath(mPath, mPaint)
                     // Draw Instrument Tools
-                    if (drawBorder) drawBorder(canvas)
                     if (drawLine) drawFrequencyLine(canvas)
                     if (settings.drawScale) drawScale(canvas)
                 }
@@ -389,11 +350,6 @@ class SpectrogramView : SurfaceView, InstrumentViewInterface, Runnable {
         }
     }
 
-
-    override fun onDraw(canvas: Canvas?) {
-        backgroundColor = Color.BLACK
-        super.onDraw(canvas)
-    }
 
     var touchedAtXpos: Float = 0f
 
@@ -425,7 +381,7 @@ class SpectrogramView : SurfaceView, InstrumentViewInterface, Runnable {
                     }
 
                     ACTION_MOVE -> {
-                        controller.playbackSeekTo((event.x - touchedAtXpos) / getDrawAreaWidth())
+                        controller.playbackSeekTo((event.x - touchedAtXpos) / width)
                     }
 
                     ACTION_UP   -> {
@@ -444,10 +400,10 @@ class SpectrogramView : SurfaceView, InstrumentViewInterface, Runnable {
 
 
     fun clearBitmapAndBuffer() {
-        mBitmap = Bitmap.createBitmap((width - leftMargin - rightMargin).toInt(), (height - topMargin - bottomMargin).toInt(), Bitmap.Config.ARGB_8888)
+        mBitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
         mBitmap?.setHasAlpha(false)
         mCanvas = Canvas(mBitmap)
-        buffer = IntArray((getDrawAreaHeight() * getDrawAreaWidth()).toInt())
+        buffer = IntArray(height * width)
     }
 
     override fun updateInstrumentViewSettings(settings: FourierInstrumentViewSettings) {
@@ -484,20 +440,26 @@ class SpectrogramView : SurfaceView, InstrumentViewInterface, Runnable {
         }
     }
 
+    override fun onVisibilityChanged(changedView: View?, visibility: Int) {
+        interruptRendering {
+            super.onVisibilityChanged(changedView, visibility)
+        }
+
+    }
 
     var indexArray = IntArray(0)
 
     private fun updateScaling() {
         if (height > 0) {
-            val from = PixelFrequencyPair((getDrawAreaHeight() + topMargin).toInt(), settings.fromFrequency)
-            val until = PixelFrequencyPair((topMargin).toInt(), settings.tillFrequency)
+            val from = PixelFrequencyPair(height, settings.fromFrequency)
+            val until = PixelFrequencyPair(0, settings.tillFrequency)
             scale = if (settings.isLogarithmic) {
                 ExponentialScalingFunction(from, until)
             } else {
                 LinearScalingFunction(from, until)
             }
-            indexArray = IntArray(getDrawAreaHeight().toInt())
-            for (i in 0 until indexArray.size) indexArray[i] = indexOfFrequency(scale.valueFromPixel(topMargin.toInt() + i))
+            indexArray = IntArray(height)
+            for (i in 0 until indexArray.size) indexArray[i] = indexOfFrequency(scale.valueFromPixel(i))
         }
     }
 }
