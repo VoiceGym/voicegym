@@ -8,7 +8,10 @@ import android.graphics.Paint
 import android.graphics.Path
 import android.graphics.Rect
 import android.graphics.Typeface
+import android.os.Process.THREAD_PRIORITY_DISPLAY
+import android.os.Process.setThreadPriority
 import android.util.AttributeSet
+import android.util.Log
 import android.view.MotionEvent
 import android.view.MotionEvent.ACTION_DOWN
 import android.view.MotionEvent.ACTION_MOVE
@@ -26,11 +29,65 @@ import de.voicegym.voicegym.recordActivity.fragments.PlaybackModeControlListener
 import de.voicegym.voicegym.recordActivity.views.util.*
 import de.voicegym.voicegym.util.audio.getDezibelFromAmplitude
 import org.jetbrains.anko.backgroundColor
+import java.lang.Thread.sleep
+import java.util.concurrent.ConcurrentLinkedQueue
+import kotlin.concurrent.thread
 import kotlin.math.absoluteValue
 import kotlin.math.roundToInt
 
 //TODO VG-67 Bitmap operationen in den Background verlagern
-class SpectrogramView : SurfaceView, InstrumentViewInterface {
+class SpectrogramView : SurfaceView, InstrumentViewInterface, Runnable {
+
+    private var renderThread: Thread? = null
+    private val renderQueue = ConcurrentLinkedQueue<RenderJob>()
+    private var rendering: Boolean = false
+
+    override fun run() {
+        setThreadPriority(THREAD_PRIORITY_DISPLAY)
+        var needsRendering = false
+
+        while (rendering) {
+            if (renderQueue.isEmpty()) {
+                if (needsRendering) {
+                    drawOnBackgroundThread()
+                    needsRendering = false
+                }
+                sleep(10)
+            } else {
+                val job = renderQueue.poll()
+                // if the last added things didn't needed to be drawn immediately but we now hit a immediateDrawJob
+                if (needsRendering && job.renderImmediately) {
+                    drawOnBackgroundThread()
+                    needsRendering = false
+                } else {
+                    needsRendering = !job.renderImmediately
+                }
+
+                when (job.position) {
+                    AddPosition.LEFT  -> addLeftRenderThread(job.amplitudes, job.renderImmediately)
+                    AddPosition.RIGHT -> addRightRenderThread(job.amplitudes, job.renderImmediately)
+                }
+            }
+        }
+    }
+
+    fun startRendering() {
+        Log.i("RenderThread", "startRendering() called")
+        if (!rendering && renderThread == null) {
+            rendering = true
+            renderThread = thread(start = true) { this.run() }
+            Log.i("RenderThread", "renderThread instantiated")
+        }
+    }
+
+    fun stopRendering() {
+        Log.i("RenderThread", "stopRendering() called")
+        if (rendering && renderThread != null) {
+            rendering = false
+            renderThread?.join()
+            renderThread = null
+        }
+    }
 
     /**
      *  The instrument is drawn below the topMargin
@@ -184,17 +241,25 @@ class SpectrogramView : SurfaceView, InstrumentViewInterface {
 
     private fun pixelPerDatapoint() = (getDrawAreaWidth() / settings.displayedDatapoints).toInt()
 
-    fun addLeft(amplitudes: DoubleArray, immediateDraw:Boolean) {
+    fun addLeft(amplitudes: DoubleArray, immediateDraw: Boolean) {
+        renderQueue.add(RenderJob(amplitudes, immediateDraw, AddPosition.LEFT))
+    }
+
+    fun addRight(amplitudes: DoubleArray, immediateDraw: Boolean) {
+        renderQueue.add(RenderJob(amplitudes, immediateDraw, AddPosition.RIGHT))
+    }
+
+    private fun addLeftRenderThread(amplitudes: DoubleArray, immediateDraw: Boolean) {
         if (indexArray.isNotEmpty()) {
             rotateBitmap(-pixelPerDatapoint())
             val colors = getPixelColorArray(amplitudes)
             val width = getDrawAreaWidth() / settings.displayedDatapoints
             drawSpectrogramBar(colors, 0f, width)
         }
-        if(immediateDraw) drawOnBackgroundThread()
+        if (immediateDraw) drawOnBackgroundThread()
     }
 
-    fun addRight(amplitudes: DoubleArray, immediateDraw:Boolean) {
+    private fun addRightRenderThread(amplitudes: DoubleArray, immediateDraw: Boolean) {
         if (indexArray.isNotEmpty()) {
             rotateBitmap(pixelPerDatapoint())
             val colors = getPixelColorArray(amplitudes)
@@ -202,7 +267,7 @@ class SpectrogramView : SurfaceView, InstrumentViewInterface {
             val x = width * (settings.displayedDatapoints - 1)
             drawSpectrogramBar(colors, x, width)
         }
-        if(immediateDraw) drawOnBackgroundThread()
+        if (immediateDraw) drawOnBackgroundThread()
     }
 
 
@@ -309,10 +374,10 @@ class SpectrogramView : SurfaceView, InstrumentViewInterface {
         canvas?.drawText(text, xPos, yPos, decorationSettings.paint)
     }
 
-
+    // TODO REMOVE??
     private var mayDraw = false
 
-    fun drawOnBackgroundThread() {
+    private fun drawOnBackgroundThread() {
         if (mayDraw && holder.surface.isValid && mBitmap != null) {
             val canvas = holder.surface.lockCanvas(null)
             synchronized(mBitmap!!) {
@@ -329,6 +394,7 @@ class SpectrogramView : SurfaceView, InstrumentViewInterface {
         }
     }
 
+    //TODO remove?
     override fun onVisibilityChanged(changedView: View?, visibility: Int) {
         super.onVisibilityChanged(changedView, visibility)
         mayDraw = when (visibility) {
@@ -399,6 +465,7 @@ class SpectrogramView : SurfaceView, InstrumentViewInterface {
 
     fun clearBitmapAndBuffer() {
         mBitmap = Bitmap.createBitmap((width - leftMargin - rightMargin).toInt(), (height - topMargin - bottomMargin).toInt(), Bitmap.Config.ARGB_8888)
+        mBitmap?.setHasAlpha(false)
         mCanvas = Canvas(mBitmap)
         buffer = IntArray((getDrawAreaHeight() * getDrawAreaWidth()).toInt())
     }
@@ -430,4 +497,11 @@ class SpectrogramView : SurfaceView, InstrumentViewInterface {
             for (i in 0 until indexArray.size) indexArray[i] = indexOfFrequency(scale.valueFromPixel(topMargin.toInt() + i))
         }
     }
+}
+
+
+data class RenderJob(val amplitudes: DoubleArray, val renderImmediately: Boolean, val position: AddPosition)
+
+enum class AddPosition { LEFT,
+    RIGHT
 }

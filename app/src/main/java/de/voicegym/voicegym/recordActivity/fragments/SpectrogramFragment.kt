@@ -92,7 +92,6 @@ class SpectrogramFragment : AbstractInstrumentFragment() {
                         }, false)
             }
         }
-        spectrogramView.drawOnBackgroundThread()
         spectrogramView.invalidate()
     }
 
@@ -102,8 +101,15 @@ class SpectrogramFragment : AbstractInstrumentFragment() {
                 spectrogramView.addRight(savedSpectra[++currentPosition], false)
             }
         }
-        spectrogramView.drawOnBackgroundThread()
         spectrogramView.invalidate()
+    }
+
+    override fun startRendering() {
+        spectrogramView.startRendering()
+    }
+
+    override fun stopRendering() {
+        spectrogramView.stopRendering()
     }
 
     override fun getCurrentSamplePosition(): Int = currentPosition * settings.samplesPerDatapoint
@@ -140,8 +146,7 @@ class SpectrogramFragment : AbstractInstrumentFragment() {
         spectrogramView.spectrogramViewState = InstrumentState.PLAYBACK
         spectrogramView.clearBitmapAndBuffer()
         val left = if (leftBorderPosition() >= 0) currentPosition - settings.displayedDatapoints else 0
-        for (i in left until savedSpectra.size - 1) spectrogramView.addRight(savedSpectra[i],false)
-        spectrogramView.drawOnBackgroundThread()
+        for (i in left until savedSpectra.size - 1) spectrogramView.addRight(savedSpectra[i], false)
         spectrogramView.invalidate()
     }
 

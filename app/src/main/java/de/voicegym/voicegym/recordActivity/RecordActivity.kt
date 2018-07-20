@@ -5,7 +5,6 @@ import android.content.pm.ActivityInfo
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
 import android.os.Bundle
-import android.os.Handler
 import android.support.v4.app.Fragment
 import android.support.v7.app.AppCompatActivity
 import android.util.Log
@@ -159,6 +158,11 @@ class RecordActivity : AppCompatActivity(),
 
     var wasListeningBeforeStop: Boolean = false
 
+    override fun onPause() {
+        super.onPause()
+        instrumentFragment?.stopRendering()
+    }
+
     override fun onStop() {
         wasListeningBeforeStop = recorder?.shouldRecord ?: false
         stopListeningAndFreeRessource()
@@ -167,8 +171,11 @@ class RecordActivity : AppCompatActivity(),
 
     override fun onResume() {
         if (wasListeningBeforeStop) startListening()
+        instrumentFragment?.startRendering()
         super.onResume()
+
     }
+
 
     override fun onDestroy() {
         this.stopListeningAndFreeRessource()
@@ -354,6 +361,7 @@ class RecordActivity : AppCompatActivity(),
             })
         }
     }
+
 
     /*
     The following variables and functions handle TouchEvents during PlaybackMode

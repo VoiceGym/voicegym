@@ -64,6 +64,8 @@ interface InstrumentFragmentInterface {
     fun cutToMaximumSampleNumber(samples: Int)
 
     fun invalidateFromBackground()
+    fun startRendering()
+    fun stopRendering()
 
 }
 
