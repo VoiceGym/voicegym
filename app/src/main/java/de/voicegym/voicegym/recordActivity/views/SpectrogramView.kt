@@ -9,6 +9,7 @@ import android.graphics.Path
 import android.graphics.Rect
 import android.graphics.Typeface
 import android.os.Process.THREAD_PRIORITY_DISPLAY
+import android.os.Process.THREAD_PRIORITY_URGENT_DISPLAY
 import android.os.Process.setThreadPriority
 import android.util.AttributeSet
 import android.util.Log
@@ -43,7 +44,7 @@ class SpectrogramView : SurfaceView, InstrumentViewInterface, Runnable {
     private var rendering: Boolean = false
 
     override fun run() {
-        setThreadPriority(THREAD_PRIORITY_DISPLAY)
+        setThreadPriority(THREAD_PRIORITY_URGENT_DISPLAY)
         var needsRendering = false
 
         while (rendering) {

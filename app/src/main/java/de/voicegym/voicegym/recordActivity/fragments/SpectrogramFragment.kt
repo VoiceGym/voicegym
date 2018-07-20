@@ -89,7 +89,7 @@ class SpectrogramFragment : AbstractInstrumentFragment() {
                             it
                         } else {
                             savedSpectra[leftBorderPosition()]
-                        }, false)
+                        }, true)
             }
         }
         spectrogramView.invalidate()
@@ -98,7 +98,7 @@ class SpectrogramFragment : AbstractInstrumentFragment() {
     private fun scrollRight() {
         if (spectrogramView.spectrogramViewState == PLAYBACK) {
             if (currentPosition < savedSpectra.size - 1) {
-                spectrogramView.addRight(savedSpectra[++currentPosition], false)
+                spectrogramView.addRight(savedSpectra[++currentPosition], true)
             }
         }
         spectrogramView.invalidate()
