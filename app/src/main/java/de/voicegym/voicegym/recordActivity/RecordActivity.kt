@@ -35,6 +35,7 @@ import de.voicegym.voicegym.util.audio.PCMPlayerListener
 import de.voicegym.voicegym.util.audio.PCMStorage
 import de.voicegym.voicegym.util.audio.RecordHelper
 import de.voicegym.voicegym.util.audio.getDoubleArrayFromShortArray
+import de.voicegym.voicegym.util.audio.getVoiceGymFolder
 import de.voicegym.voicegym.util.audio.savePCMInputStreamOnSDCard
 import de.voicegym.voicegym.util.math.FourierHelper
 import kotlinx.coroutines.experimental.CommonPool
@@ -351,7 +352,7 @@ class RecordActivity : AppCompatActivity(),
             val size = pcmStorage?.size ?: 0
             val sampleRate = pcmStorage?.sampleRate ?: 41000
             recordingDao.insert(Recording().also {
-                it.fileName = dateString
+                it.fileName = getVoiceGymFolder()?.absolutePath + "/${dateString}.m4a"
                 it.duration = size / sampleRate
             })
         }

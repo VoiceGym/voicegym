@@ -8,6 +8,7 @@ import android.os.Bundle
 import android.support.design.widget.NavigationView
 import android.support.v4.app.ActivityCompat
 import android.support.v4.app.Fragment
+import android.support.v4.app.FragmentManager
 import android.support.v4.content.ContextCompat
 import android.support.v4.view.GravityCompat
 import android.support.v7.app.ActionBarDrawerToggle
@@ -15,11 +16,15 @@ import android.support.v7.app.AlertDialog
 import android.support.v7.app.AppCompatActivity
 import android.util.Log
 import android.view.MenuItem
+import android.view.View
 import android.widget.Toast
 import de.voicegym.voicegym.R
+
 import de.voicegym.voicegym.menu.settings.SettingsActivity
 import de.voicegym.voicegym.model.Recording
 import de.voicegym.voicegym.recordActivity.RecordActivity
+import de.voicegym.voicegym.recordings.PlaybackFragment
+
 import de.voicegym.voicegym.recordings.RecordingsFragment
 import de.voicegym.voicegym.util.SwitchToRecordingViewListener
 import kotlinx.android.synthetic.main.activity_navigation_drawer.drawer_layout
@@ -30,6 +35,7 @@ import org.jetbrains.anko.contentView
 class NavigationDrawerActivity : AppCompatActivity(),
         NavigationView.OnNavigationItemSelectedListener,
         RecordingsFragment.OnListFragmentInteractionListener,
+        RecordingsFragment.SwitchToPlaybackFragmentListener,
         InstrumentsFragment.OnFragmentInteractionListener,
         SwitchToRecordingViewListener {
 
@@ -91,6 +97,8 @@ class NavigationDrawerActivity : AppCompatActivity(),
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_navigation_drawer)
         setSupportActionBar(toolbar)
+        cView = contentView
+        fManager = supportFragmentManager
 
         val toggle = ActionBarDrawerToggle(this, drawer_layout, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close)
         drawer_layout.addDrawerListener(toggle)
@@ -99,8 +107,7 @@ class NavigationDrawerActivity : AppCompatActivity(),
         nav_view.setNavigationItemSelectedListener(this)
 
         requestPermission()
-
-        loadRecordingsFragment()
+        if (savedInstanceState == null) loadRecordingsFragment()
     }
 
     override fun onBackPressed() {
@@ -111,15 +118,18 @@ class NavigationDrawerActivity : AppCompatActivity(),
         }
     }
 
+
     override fun onNavigationItemSelected(item: MenuItem): Boolean {
         // Handle navigation view item clicks here.
         when (item.itemId) {
             R.id.nav_instruments -> {
                 loadInstrumentsFragment()
             }
+
             R.id.nav_recordings  -> {
                 loadRecordingsFragment()
             }
+
             R.id.nav_settings    -> {
                 val intent = Intent(this, SettingsActivity::class.java)
                 startActivity(intent)
@@ -130,14 +140,6 @@ class NavigationDrawerActivity : AppCompatActivity(),
         return true
     }
 
-    private fun loadFragment(fragment: Fragment, TAG: String) {
-        contentView!!.post {
-            supportFragmentManager.beginTransaction()
-                .setCustomAnimations(android.R.anim.fade_in, android.R.anim.fade_out)
-                .replace(R.id.content_area, fragment, TAG)
-                .commitAllowingStateLoss()
-        }
-    }
 
     private fun loadRecordingsFragment() {
         loadFragment(RecordingsFragment(), "RECORDINGS")
@@ -147,8 +149,17 @@ class NavigationDrawerActivity : AppCompatActivity(),
         loadFragment(InstrumentsFragment(), "INSTRUMENTS")
     }
 
+
     override fun onListFragmentInteraction(item: Recording) {
         Log.d("foo", "bar")
+    }
+
+    override fun onClick(fileName: String) {
+        val argumentsBundle = Bundle()
+        argumentsBundle.putString(PlaybackFragment.AUDIO_FILE, fileName)
+        val fragment = PlaybackFragment()
+        fragment.arguments = argumentsBundle
+        loadFragment(fragment, "PLAYBACK")
     }
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
@@ -164,6 +175,23 @@ class NavigationDrawerActivity : AppCompatActivity(),
 
     companion object {
         const val REQUEST_PERMISSIONS = 100
-    }
 
+        var cView: View? = null
+
+        var fManager: FragmentManager? = null
+
+        private fun <T : Fragment> loadFragment(fragment: T, TAG: String): T {
+            fManager?.let { manager ->
+                cView?.post {
+                    manager.beginTransaction()
+                            .setCustomAnimations(android.R.anim.fade_in, android.R.anim.fade_out)
+                            .replace(R.id.content_area, fragment, TAG)
+                            .commitAllowingStateLoss()
+                }
+
+            }
+
+            return fragment
+        }
+    }
 }

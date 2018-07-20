@@ -1,15 +1,14 @@
 package de.voicegym.voicegym.recordings
 
 
-import android.support.design.widget.Snackbar
 import android.support.v7.widget.RecyclerView
 import android.view.LayoutInflater
 import android.view.View
 import android.view.View.OnClickListener
 import android.view.ViewGroup
 import de.voicegym.voicegym.R
-import de.voicegym.voicegym.recordings.RecordingsFragment.OnListFragmentInteractionListener
 import de.voicegym.voicegym.model.Recording
+import de.voicegym.voicegym.recordings.RecordingsFragment.OnListFragmentInteractionListener
 import kotlinx.android.extensions.LayoutContainer
 import kotlinx.android.synthetic.main.fragment_recordings.createdView
 import kotlinx.android.synthetic.main.fragment_recordings.durationView
@@ -22,8 +21,10 @@ import kotlinx.android.synthetic.main.fragment_recordings.floatingActionButton2
  */
 class RecordingsAdapter(
         private var values: List<Recording>,
-        private val listener: OnListFragmentInteractionListener?)
+        private val listener: OnListFragmentInteractionListener?,
+        private val switchToPlaybackFragmentListener: RecordingsFragment.SwitchToPlaybackFragmentListener)
     : RecyclerView.Adapter<RecordingsAdapter.ViewHolder>() {
+
 
     private val mOnClickListener: OnClickListener
 
@@ -39,7 +40,7 @@ class RecordingsAdapter(
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         val view = LayoutInflater.from(parent.context)
                 .inflate(R.layout.fragment_recordings, parent, false)
-        return ViewHolder(view)
+        return ViewHolder(view, switchToPlaybackFragmentListener)
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
@@ -61,18 +62,19 @@ class RecordingsAdapter(
 
     operator fun get(position: Int): Recording = values[position]
 
-    class ViewHolder(override val containerView: View) : RecyclerView.ViewHolder(containerView), LayoutContainer {
+    class ViewHolder(override val containerView: View, val listener: RecordingsFragment.SwitchToPlaybackFragmentListener) : RecyclerView.ViewHolder(containerView), LayoutContainer {
 
         fun bindRecording(recording: Recording) {
             durationView.text = "${recording.duration}s"
             createdView.text = recording.fileName
                     .split("/")
                     .last()
-                    .replace("_"," ")
+                    .replace("_", " ")
                     .dropLast(4)
-//            nameView.text = recording.id.toString()
+            //            nameView.text = recording.id.toString()
             floatingActionButton2.setOnClickListener {
-                Snackbar.make(it, recording.fileName, Snackbar.LENGTH_SHORT ).show()
+                //TODO: FIND A DIFFERENT WAY THAN A COMPANION OBJECT TO CALL THE FRAGMENT
+                listener.onClick(recording.fileName)
             }
         }
     }
