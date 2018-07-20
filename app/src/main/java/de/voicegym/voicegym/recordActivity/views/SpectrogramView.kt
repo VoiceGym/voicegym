@@ -8,7 +8,6 @@ import android.graphics.Paint
 import android.graphics.Path
 import android.graphics.Rect
 import android.graphics.Typeface
-import android.os.Process.THREAD_PRIORITY_DISPLAY
 import android.os.Process.THREAD_PRIORITY_URGENT_DISPLAY
 import android.os.Process.setThreadPriority
 import android.util.AttributeSet
@@ -18,7 +17,6 @@ import android.view.MotionEvent.ACTION_DOWN
 import android.view.MotionEvent.ACTION_MOVE
 import android.view.MotionEvent.ACTION_UP
 import android.view.SurfaceView
-import android.view.View
 import de.voicegym.voicegym.R
 import de.voicegym.voicegym.menu.settings.FourierInstrumentViewSettings
 import de.voicegym.voicegym.menu.settings.SettingsBundle
@@ -79,6 +77,13 @@ class SpectrogramView : SurfaceView, InstrumentViewInterface, Runnable {
             renderThread = thread(start = true) { this.run() }
             Log.i("RenderThread", "renderThread instantiated")
         }
+    }
+
+    fun interruptRendering(block: () -> Unit) {
+        val rendering = renderThread?.isAlive ?: false
+        if (rendering) stopRendering()
+        block.invoke()
+        if (rendering) startRendering()
     }
 
     fun stopRendering() {
@@ -213,14 +218,6 @@ class SpectrogramView : SurfaceView, InstrumentViewInterface, Runnable {
         }
         throw Error("FrequencyArray was not set before calling index function")
     }
-
-    override fun onLayout(changed: Boolean, left: Int, top: Int, right: Int, bottom: Int) {
-        super.onLayout(changed, left, top, right, bottom)
-
-        updateScaling()
-        updateDecorationSettings()
-    }
-
 
     private fun getPixelColorArray(amplitudes: DoubleArray): IntArray {
         val colors = IntArray(getDrawAreaHeight().toInt())
@@ -375,11 +372,8 @@ class SpectrogramView : SurfaceView, InstrumentViewInterface, Runnable {
         canvas?.drawText(text, xPos, yPos, decorationSettings.paint)
     }
 
-    // TODO REMOVE??
-    private var mayDraw = false
-
     private fun drawOnBackgroundThread() {
-        if (mayDraw && holder.surface.isValid && mBitmap != null) {
+        if (holder.surface.isValid && mBitmap != null) {
             val canvas = holder.surface.lockCanvas(null)
             synchronized(mBitmap!!) {
                 canvas.let { canvas ->
@@ -395,15 +389,6 @@ class SpectrogramView : SurfaceView, InstrumentViewInterface, Runnable {
         }
     }
 
-    //TODO remove?
-    override fun onVisibilityChanged(changedView: View?, visibility: Int) {
-        super.onVisibilityChanged(changedView, visibility)
-        mayDraw = when (visibility) {
-            View.VISIBLE -> true
-            else         -> false
-
-        }
-    }
 
     override fun onDraw(canvas: Canvas?) {
         backgroundColor = Color.BLACK
@@ -457,12 +442,6 @@ class SpectrogramView : SurfaceView, InstrumentViewInterface, Runnable {
         }
     }
 
-    override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
-        super.onSizeChanged(w, h, oldw, oldh)
-
-        clearBitmapAndBuffer()
-        //TODO repaint bitmap
-    }
 
     fun clearBitmapAndBuffer() {
         mBitmap = Bitmap.createBitmap((width - leftMargin - rightMargin).toInt(), (height - topMargin - bottomMargin).toInt(), Bitmap.Config.ARGB_8888)
@@ -472,16 +451,39 @@ class SpectrogramView : SurfaceView, InstrumentViewInterface, Runnable {
     }
 
     override fun updateInstrumentViewSettings(settings: FourierInstrumentViewSettings) {
-        this.settings = settings
-        updateScaling()
-        updateDecorationSettings()
+        interruptRendering {
+            this.settings = settings
+            updateScaling()
+            updateDecorationSettings()
+        }
     }
 
     override fun onWindowFocusChanged(hasWindowFocus: Boolean) {
-        super.onWindowFocusChanged(hasWindowFocus)
-
-        updateScaling()
+        interruptRendering {
+            super.onWindowFocusChanged(hasWindowFocus)
+            updateScaling()
+        }
     }
+
+    override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
+        interruptRendering {
+            super.onSizeChanged(w, h, oldw, oldh)
+
+            clearBitmapAndBuffer()
+            updateScaling()
+            updateDecorationSettings()
+            //TODO repaint bitmap
+        }
+    }
+
+    override fun onLayout(changed: Boolean, left: Int, top: Int, right: Int, bottom: Int) {
+        interruptRendering {
+            super.onLayout(changed, left, top, right, bottom)
+            updateScaling()
+            updateDecorationSettings()
+        }
+    }
+
 
     var indexArray = IntArray(0)
 
