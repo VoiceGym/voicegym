@@ -15,16 +15,16 @@ import android.support.v7.app.ActionBarDrawerToggle
 import android.support.v7.app.AlertDialog
 import android.support.v7.app.AppCompatActivity
 import android.util.Log
-import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import android.widget.Toast
 import de.voicegym.voicegym.R
-import de.voicegym.voicegym.menu.dummy.ExerciseContent
+
 import de.voicegym.voicegym.menu.settings.SettingsActivity
 import de.voicegym.voicegym.model.Recording
 import de.voicegym.voicegym.recordActivity.RecordActivity
 import de.voicegym.voicegym.recordings.PlaybackFragment
+
 import de.voicegym.voicegym.recordings.RecordingsFragment
 import de.voicegym.voicegym.util.SwitchToRecordingViewListener
 import kotlinx.android.synthetic.main.activity_navigation_drawer.drawer_layout
@@ -37,8 +37,6 @@ class NavigationDrawerActivity : AppCompatActivity(),
         RecordingsFragment.OnListFragmentInteractionListener,
         RecordingsFragment.SwitchToPlaybackFragmentListener,
         InstrumentsFragment.OnFragmentInteractionListener,
-        ExercisesFragment.OnListFragmentInteractionListener,
-        ReportsFragment.OnFragmentInteractionListener,
         SwitchToRecordingViewListener {
 
     override fun switchToRecordingView() {
@@ -120,22 +118,6 @@ class NavigationDrawerActivity : AppCompatActivity(),
         }
     }
 
-    override fun onCreateOptionsMenu(menu: Menu): Boolean {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        menuInflater.inflate(R.menu.navigation_drawer, menu)
-        return true
-    }
-
-    override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        when (item.itemId) {
-            R.id.action_settings -> return true
-            else                 -> return super.onOptionsItemSelected(item)
-        }
-
-    }
 
     override fun onNavigationItemSelected(item: MenuItem): Boolean {
         // Handle navigation view item clicks here.
@@ -144,20 +126,8 @@ class NavigationDrawerActivity : AppCompatActivity(),
                 loadInstrumentsFragment()
             }
 
-            R.id.nav_exercises   -> {
-                loadExercisesFragment()
-            }
-
             R.id.nav_recordings  -> {
                 loadRecordingsFragment()
-            }
-
-            R.id.nav_playback    -> {
-                loadPlaybackFragment()
-            }
-
-            R.id.nav_share       -> {
-                // load share action
             }
 
             R.id.nav_settings    -> {
@@ -175,22 +145,10 @@ class NavigationDrawerActivity : AppCompatActivity(),
         loadFragment(RecordingsFragment(), "RECORDINGS")
     }
 
-    private fun loadPlaybackFragment() {
-        loadFragment(PlaybackFragment(), "PLAYBACK")
-    }
-
-    private fun loadExercisesFragment() {
-        loadFragment(ExercisesFragment(), "EXERCISES")
-    }
-
     private fun loadInstrumentsFragment() {
         loadFragment(InstrumentsFragment(), "INSTRUMENTS")
     }
 
-    override fun onListFragmentInteraction(item: ExerciseContent.ExerciseItem?) {
-        Log.d("foo", "bar")
-
-    }
 
     override fun onListFragmentInteraction(item: Recording) {
         Log.d("foo", "bar")
