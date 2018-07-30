@@ -19,12 +19,9 @@ import android.view.MenuItem
 import android.view.View
 import android.widget.Toast
 import de.voicegym.voicegym.R
-
 import de.voicegym.voicegym.menu.settings.SettingsActivity
 import de.voicegym.voicegym.model.Recording
 import de.voicegym.voicegym.recordActivity.RecordActivity
-import de.voicegym.voicegym.recordings.PlaybackFragment
-
 import de.voicegym.voicegym.recordings.RecordingsFragment
 import de.voicegym.voicegym.util.SwitchToRecordingViewListener
 import kotlinx.android.synthetic.main.activity_navigation_drawer.drawer_layout
@@ -39,8 +36,18 @@ class NavigationDrawerActivity : AppCompatActivity(),
         InstrumentsFragment.OnFragmentInteractionListener,
         SwitchToRecordingViewListener {
 
+
     override fun switchToRecordingView() {
+        switchToRecordingView(null)
+    }
+
+    override fun switchToRecordingView(startWithFileName: String?) {
         val intent = Intent(this, RecordActivity::class.java).apply { }
+        if (startWithFileName != null) {
+            val argumentsBundle = Bundle()
+            argumentsBundle.putString(RecordActivity.AUDIO_FILE, startWithFileName)
+            intent.putExtras(argumentsBundle)
+        }
         startActivity(intent)
     }
 
@@ -155,11 +162,7 @@ class NavigationDrawerActivity : AppCompatActivity(),
     }
 
     override fun onClick(fileName: String) {
-        val argumentsBundle = Bundle()
-        argumentsBundle.putString(PlaybackFragment.AUDIO_FILE, fileName)
-        val fragment = PlaybackFragment()
-        fragment.arguments = argumentsBundle
-        loadFragment(fragment, "PLAYBACK")
+        switchToRecordingView(fileName)
     }
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {

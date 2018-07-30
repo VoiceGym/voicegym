@@ -4,9 +4,10 @@ package de.voicegym.voicegym.recordActivity
  * The state in which the RecordActivity currently resides in
  */
 enum class RecordActivityState {
-    WAITING,
+    LIVEVIEW,
     RECORDING,
-    PLAYBACK
+    PLAYBACK,
+    PLAYBACK_FROM_FILE
 }
 
 /**

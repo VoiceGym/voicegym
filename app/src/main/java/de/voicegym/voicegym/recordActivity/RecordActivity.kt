@@ -16,9 +16,10 @@ import de.voicegym.voicegym.menu.settings.FourierInstrumentViewSettings
 import de.voicegym.voicegym.menu.settings.SettingsBundle
 import de.voicegym.voicegym.model.AppDatabase
 import de.voicegym.voicegym.model.Recording
+import de.voicegym.voicegym.recordActivity.RecordActivityState.LIVEVIEW
 import de.voicegym.voicegym.recordActivity.RecordActivityState.PLAYBACK
+import de.voicegym.voicegym.recordActivity.RecordActivityState.PLAYBACK_FROM_FILE
 import de.voicegym.voicegym.recordActivity.RecordActivityState.RECORDING
-import de.voicegym.voicegym.recordActivity.RecordActivityState.WAITING
 import de.voicegym.voicegym.recordActivity.TouchPlaybackState.RELEASED
 import de.voicegym.voicegym.recordActivity.TouchPlaybackState.TOUCHED
 import de.voicegym.voicegym.recordActivity.TouchPlaybackState.TOUCHED_WHILE_PLAYING
@@ -33,6 +34,7 @@ import de.voicegym.voicegym.util.audio.PCMPlayer
 import de.voicegym.voicegym.util.audio.PCMPlayerListener
 import de.voicegym.voicegym.util.audio.PCMStorage
 import de.voicegym.voicegym.util.audio.RecordHelper
+import de.voicegym.voicegym.util.audio.SoundFile
 import de.voicegym.voicegym.util.audio.getDoubleArrayFromShortArray
 import de.voicegym.voicegym.util.audio.getVoiceGymFolder
 import de.voicegym.voicegym.util.audio.savePCMInputStreamOnSDCard
@@ -65,7 +67,7 @@ class RecordActivity : AppCompatActivity(),
         pcmPlayer = null
         stopListeningAndFreeRessource()
         // Start up
-        recordActivityState = WAITING
+        recordActivityState = LIVEVIEW
         startListening()
         switchToRecordControlFragment()
     }
@@ -98,7 +100,7 @@ class RecordActivity : AppCompatActivity(),
     /**
      * The RecordActivityState the RecordActivity currently resides in
      */
-    private var recordActivityState: RecordActivityState = WAITING
+    private var recordActivityState: RecordActivityState = LIVEVIEW
 
     /**
      * here we store our currently used Feedbackinstrument for example our SpectrogramFragment
@@ -106,7 +108,7 @@ class RecordActivity : AppCompatActivity(),
     private var instrumentFragment: AbstractInstrumentFragment? = null
 
     /**
-     * RecordModeControlFragment that controls the RecordActivity while being in WAITING or RECORDING MODE
+     * RecordModeControlFragment that controls the RecordActivity while being in LIVEVIEW or RECORDING MODE
      */
     private val recorderControlFragment = RecordModeControlFragment()
 
@@ -131,16 +133,31 @@ class RecordActivity : AppCompatActivity(),
                 settings.samplesPerDatapoint,
                 SettingsBundle.sampleRate)
 
-        // handle fragments
-        switchToRecordControlFragment()
+
+        val recordFileName = if (intent.hasExtra(AUDIO_FILE)) {
+            recordActivityState = PLAYBACK_FROM_FILE
+            intent.getStringExtra(AUDIO_FILE)
+        } else null
+
 
         // initialize the instrumentFragment
         instrumentFragment = supportFragmentManager.findFragmentById(R.id.spectrogramFragment) as SpectrogramFragment
         instrumentFragment?.updateFrequencyArray(fourierHelper.frequencyArray())
         instrumentFragment?.updateInstrumentViewSettings(settings)
 
-        // activate the recordhelper to listen to microphone
-        startListening()
+        when (recordActivityState) {
+            LIVEVIEW           -> {
+                switchToRecordControlFragment()
+                startListening()
+            }
+
+            PLAYBACK_FROM_FILE -> {
+                switchToPlaybackControlFragment()
+                loadFromSdCard(recordFileName!!)
+            }
+
+        // deactivate sleep mode
+        }
 
         // deactivate sleep mode
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
@@ -150,9 +167,10 @@ class RecordActivity : AppCompatActivity(),
 
     override fun onBackPressed() {
         when (recordActivityState) {
-            WAITING   -> if (pcmStorage == null) finish()
-            RECORDING -> switchToPlayback()
-            PLAYBACK  -> restart()
+            LIVEVIEW           -> if (pcmStorage == null) finish()
+            RECORDING          -> switchToPlayback()
+            PLAYBACK           -> restart()
+            PLAYBACK_FROM_FILE -> finish()
         }
     }
 
@@ -306,7 +324,7 @@ class RecordActivity : AppCompatActivity(),
      */
 
     override fun startRecording() {
-        if (recordActivityState == WAITING) storePCMSamples()
+        if (recordActivityState == LIVEVIEW) storePCMSamples()
     }
 
     override fun finishRecording() {
@@ -314,9 +332,10 @@ class RecordActivity : AppCompatActivity(),
     }
 
     override fun isRecording(): Boolean = when (recordActivityState) {
-        WAITING   -> false
-        RECORDING -> true
-        PLAYBACK  -> false
+        LIVEVIEW           -> false
+        RECORDING          -> true
+        PLAYBACK           -> false
+        PLAYBACK_FROM_FILE -> false
     }
 
 
@@ -342,6 +361,7 @@ class RecordActivity : AppCompatActivity(),
 
     override fun receiveRating(rating: Int) {
         //TODO get rating into datamodel
+
         Log.i("Rated", "Record was rated $rating")
     }
 
@@ -362,7 +382,28 @@ class RecordActivity : AppCompatActivity(),
         }
     }
 
+    private fun loadFromSdCard(fileName: String) {
+        val soundFile = SoundFile.create(fileName, null)
+        if (soundFile != null) {
+            val samplesBuffer = soundFile.samples
+                    ?: throw Error("Error probably while processing Audiofile. Samples null.")
 
+            pcmStorage = PCMStorage(soundFile.sampleRate)
+            instrumentFragment?.startRecording()
+
+            while(samplesBuffer.hasRemaining()) {
+                val samplesArray = ShortArray(settings.samplesPerDatapoint)
+                samplesBuffer.get(samplesArray)
+                pcmStorage?.onBufferReady(samplesArray)
+                onBufferReady(samplesArray.copyOf())
+            }
+            pcmStorage?.stopListening()
+
+            pcmPlayer = PCMPlayer(soundFile.sampleRate, pcmStorage!!.asShortBuffer(), this)
+
+
+        }
+    }
     /*
     The following variables and functions handle TouchEvents during PlaybackMode
      */
@@ -429,5 +470,10 @@ class RecordActivity : AppCompatActivity(),
 
     fun unLockScreenPosition() {
         requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
+    }
+
+
+    companion object {
+        const val AUDIO_FILE = "recordAudioFileName"
     }
 }
