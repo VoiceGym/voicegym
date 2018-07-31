@@ -336,6 +336,17 @@ class RecordActivity : AppCompatActivity(),
         instrumentFragment?.invalidateFromBackground()
     }
 
+    /**
+     * this empties the whole input queue and skips invalidating until every array is added to the instrumentFragment
+     */
+    private fun emptyInputQueueIntoInstrumentFragment() {
+        while (!inputQueue.isEmpty()) {
+            val shortArray = inputQueue.poll()
+            fourierHelper.fft(getDoubleArrayFromShortArray(1.0, shortArray))
+            instrumentFragment?.insertNewAmplitudes(fourierHelper.amplitudeArray())
+        }
+    }
+
 
     fun getInstrumentFragment(): Fragment? = supportFragmentManager.findFragmentById(R.id.spectrogramFragment)
 
@@ -416,14 +427,15 @@ class RecordActivity : AppCompatActivity(),
                 val samplesArray = ShortArray(settings.samplesPerDatapoint)
                 samplesBuffer.get(samplesArray)
                 pcmStorage?.onBufferReady(samplesArray)
-                onBufferReady(samplesArray.copyOf())
+                inputQueue.add(samplesArray.copyOf())
             }
             pcmStorage?.stopListening()
 
+            emptyInputQueueIntoInstrumentFragment()
             instrumentFragment?.doneRecordingSwitchToPlayback()
-
+ 
             pcmPlayer = PCMPlayer(soundFile.sampleRate, pcmStorage!!.asShortBuffer(), this)
-
+            pcmPlayer?.subscribeListener(this)
 
         }
     }
