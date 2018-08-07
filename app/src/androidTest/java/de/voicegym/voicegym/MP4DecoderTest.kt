@@ -3,6 +3,7 @@ package de.voicegym.voicegym
 import android.support.test.InstrumentationRegistry
 import android.support.test.runner.AndroidJUnit4
 import de.voicegym.voicegym.util.audio.MP4Decoder
+import de.voicegym.voicegym.util.audio.MP4Helper
 import de.voicegym.voicegym.util.audio.PCMStorage
 import org.junit.Assert
 import org.junit.Test
@@ -38,7 +39,8 @@ class MP4DecoderTest {
         out.write(data)
         out.close()
 
-        val obj = MP4Decoder.getPCMStorage(outFile.absolutePath)
-        Assert.assertTrue(obj is PCMStorage)
+
+        val obj2 =MP4Helper.getPCMStorage(outFile)
+        Assert.assertTrue(obj2 is PCMStorage)
     }
 }
