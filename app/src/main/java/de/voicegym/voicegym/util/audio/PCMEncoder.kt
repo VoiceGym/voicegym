@@ -36,7 +36,7 @@ class PCMEncoder
     private var bufferInfo: MediaCodec.BufferInfo? = null
     private var audioTrackId: Int = 0
     private var totalBytesRead: Int = 0
-    private var presentationTimeUs: Double = 0.toDouble()
+    private var presentationTimeUs = 0L
     var outputPath: String? = null
 
 
@@ -48,6 +48,9 @@ class PCMEncoder
             mediaFormat = MediaFormat.createAudioFormat(COMPRESSED_AUDIO_FILE_MIME_TYPE, sampleRate, channelCount)
             mediaFormat?.setInteger(MediaFormat.KEY_AAC_PROFILE, MediaCodecInfo.CodecProfileLevel.AACObjectLC)
             mediaFormat?.setInteger(MediaFormat.KEY_BIT_RATE, bitrate)
+            mediaFormat?.setInteger(MediaFormat.KEY_CHANNEL_COUNT, 1);
+            mediaFormat?.setInteger(MediaFormat.KEY_SAMPLE_RATE, sampleRate)
+
 
             mediaCodec = MediaCodec.createEncoderByType(COMPRESSED_AUDIO_FILE_MIME_TYPE)
             mediaCodec?.configure(mediaFormat, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE)
@@ -60,7 +63,7 @@ class PCMEncoder
 
             mediaMuxer = MediaMuxer(outputPath, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4)
             totalBytesRead = 0
-            presentationTimeUs = 0.0
+            presentationTimeUs = 0
         } catch (e: IOException) {
             Log.e(TAG, "Exception while initializing PCMEncoder", e)
         }
@@ -77,7 +80,7 @@ class PCMEncoder
 
     private fun handleEndOfStream() {
         val inputBufferIndex = mediaCodec?.dequeueInputBuffer(CODEC_TIMEOUT.toLong())
-        mediaCodec?.queueInputBuffer(inputBufferIndex!!, 0, 0, presentationTimeUs.toLong(), MediaCodec.BUFFER_FLAG_END_OF_STREAM)
+        mediaCodec?.queueInputBuffer(inputBufferIndex!!, 0, 0, presentationTimeUs, MediaCodec.BUFFER_FLAG_END_OF_STREAM)
         writeOutputs()
     }
 
@@ -106,15 +109,15 @@ class PCMEncoder
 
                     val bytesRead = inputStream.read(tempBuffer, 0, buffer.limit())
                     if (bytesRead == -1) {
-                        mediaCodec?.queueInputBuffer(inputBufferIndex, 0, 0, presentationTimeUs.toLong(), 0)
+                        mediaCodec?.queueInputBuffer(inputBufferIndex, 0, 0, presentationTimeUs, 0)
                         hasMoreData = false
                         stop = true
                     } else {
                         totalBytesRead += bytesRead
                         currentBatchRead += bytesRead
                         buffer.put(tempBuffer, 0, bytesRead)
-                        mediaCodec?.queueInputBuffer(inputBufferIndex, 0, bytesRead, presentationTimeUs.toLong(), 0)
-                        presentationTimeUs = (1000000L * (totalBytesRead / 2) / sampleRate).toDouble()
+                        mediaCodec?.queueInputBuffer(inputBufferIndex, 0, bytesRead, presentationTimeUs, 0)
+                        presentationTimeUs = 1000000L * (totalBytesRead / 2) / sampleRate
                     }
                 }
             }

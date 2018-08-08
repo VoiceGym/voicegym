@@ -93,6 +93,7 @@ class MP4Helper {
             }
 
             mapOfSamples.toSortedMap().values.forEach { storage.onBufferReady(it) }
+            storage.stopListening()
             return storage
         }
 

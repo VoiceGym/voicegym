@@ -31,11 +31,11 @@ import de.voicegym.voicegym.recordActivity.fragments.RecordModeControlFragment
 import de.voicegym.voicegym.recordActivity.fragments.RecordModeControlListener
 import de.voicegym.voicegym.recordActivity.fragments.SpectrogramFragment
 import de.voicegym.voicegym.util.RecordBufferListener
+import de.voicegym.voicegym.util.audio.MP4Helper
 import de.voicegym.voicegym.util.audio.PCMPlayer
 import de.voicegym.voicegym.util.audio.PCMPlayerListener
 import de.voicegym.voicegym.util.audio.PCMStorage
 import de.voicegym.voicegym.util.audio.RecordHelper
-import de.voicegym.voicegym.util.audio.SoundFile
 import de.voicegym.voicegym.util.audio.getDoubleArrayFromShortArray
 import de.voicegym.voicegym.util.audio.getVoiceGymFolder
 import de.voicegym.voicegym.util.audio.savePCMInputStreamOnSDCard
@@ -43,6 +43,7 @@ import de.voicegym.voicegym.util.math.FourierHelper
 import kotlinx.android.synthetic.main.fragment_spectrogram.spectrogramView
 import kotlinx.coroutines.experimental.CommonPool
 import kotlinx.coroutines.experimental.launch
+import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
@@ -415,29 +416,23 @@ class RecordActivity : AppCompatActivity(),
 
     private fun loadFromSdCard(fileName: String) {
         Log.i("RecordActivity", "Load from SDCard called")
-        val soundFile = SoundFile.create(fileName, null)
-        if (soundFile != null) {
-            val samplesBuffer = soundFile.samples
-                    ?: throw Error("Error probably while processing Audiofile. Samples null.")
-
-            pcmStorage = PCMStorage(soundFile.sampleRate)
-            instrumentFragment?.startRecording()
-
-            while (samplesBuffer.hasRemaining()) {
-                val samplesArray = ShortArray(settings.samplesPerDatapoint)
-                samplesBuffer.get(samplesArray)
-                pcmStorage?.onBufferReady(samplesArray)
-                inputQueue.add(samplesArray.copyOf())
-            }
-            pcmStorage?.stopListening()
-
-            emptyInputQueueIntoInstrumentFragment()
-            instrumentFragment?.doneRecordingSwitchToPlayback()
- 
-            pcmPlayer = PCMPlayer(soundFile.sampleRate, pcmStorage!!.asShortBuffer(), this)
-            pcmPlayer?.subscribeListener(this)
-
+        pcmStorage = MP4Helper.getPCMStorage(File(fileName))
+        pcmStorage?.rewind()
+        instrumentFragment?.startRecording()
+        val buffer = pcmStorage?.asShortBuffer()
+        while (buffer?.hasRemaining() == true) {
+            val array = ShortArray(settings.samplesPerDatapoint)
+            buffer?.get(array)
+            inputQueue.add(array)
         }
+        // fill input queue from InstrumentFragment
+        emptyInputQueueIntoInstrumentFragment()
+        instrumentFragment?.doneRecordingSwitchToPlayback()
+
+        pcmPlayer = PCMPlayer(pcmStorage!!.sampleRate, pcmStorage!!.asShortBuffer(), this)
+        pcmPlayer?.subscribeListener(this)
+
+
     }
     /*
     The following variables and functions handle TouchEvents during PlaybackMode
