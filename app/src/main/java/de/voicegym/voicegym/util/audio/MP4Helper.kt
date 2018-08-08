@@ -4,6 +4,7 @@ import android.media.MediaCodec
 import android.media.MediaCodec.INFO_OUTPUT_BUFFERS_CHANGED
 import android.media.MediaCodec.INFO_OUTPUT_FORMAT_CHANGED
 import android.media.MediaCodec.INFO_TRY_AGAIN_LATER
+import android.media.MediaCodecInfo
 import android.media.MediaExtractor
 import android.media.MediaFormat
 import android.os.Build
@@ -33,7 +34,7 @@ class MP4Helper {
             var endOfInputFile = false
             val mapOfSamples = HashMap<Long, ShortArray>()
             val bufferInfo = MediaCodec.BufferInfo()
-            var format: MediaFormat? = null
+            var outputFormat: MediaFormat? = null
 
             while (!endOfOutputStream) {
                 var inputBufferFull = false
@@ -75,8 +76,8 @@ class MP4Helper {
 
                     bufferId == INFO_OUTPUT_FORMAT_CHANGED  -> {
                         // new format
-                        format = codec.outputFormat
-                        Log.i("OutputFormat now: ", format.getString(MediaFormat.KEY_MIME))
+                        outputFormat = codec.outputFormat
+                        Log.i("OutputFormat now: ", outputFormat.toString())
                     }
 
                     bufferId == INFO_TRY_AGAIN_LATER        -> {
@@ -92,8 +93,11 @@ class MP4Helper {
                 }
             }
 
-            mapOfSamples.toSortedMap().values.forEach { storage.onBufferReady(it) }
+            for (entry in mapOfSamples.toSortedMap()) {
+                storage.onBufferReady(entry.value)
+            }
             storage.stopListening()
+            storage.reverseForBugfix()
             return storage
         }
 
@@ -112,14 +116,17 @@ class MP4Helper {
             }
 
             val samples = outputBuffer!!.order(ByteOrder.nativeOrder()).asShortBuffer()
+            samples.rewind()
             val numChannels = format.getInteger(MediaFormat.KEY_CHANNEL_COUNT)
             if (audioChannel < 0 || audioChannel >= numChannels) {
                 throw Error("Requested a channel not available in codec.")
             }
             val res = ShortArray(samples.remaining() / numChannels)
+            /*
             for (i in res.indices) {
                 res[i] = samples.get(i * numChannels + audioChannel)
-            }
+            }*/
+            samples.get(res)
             codec.releaseOutputBuffer(bufferId, false)
             return res
 
@@ -146,10 +153,11 @@ class MP4Helper {
             if (mime.startsWith("audio/")) {
                 mediaExtractor.selectTrack(audioChannel);
                 trackFormat = inputFormat
+                Log.i("InputFormat", inputFormat.toString())
             } else {
                 throw Error("Selected channel was no audio track")
             }
-
+            trackFormat.setInteger(MediaFormat.KEY_AAC_PROFILE, MediaCodecInfo.CodecProfileLevel.AACObjectLC)
             val codec = MediaCodec.createDecoderByType(trackFormat.getString(MediaFormat.KEY_MIME))
             codec.configure(trackFormat, null, null, 0)
             return codec
