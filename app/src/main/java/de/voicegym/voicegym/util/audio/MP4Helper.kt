@@ -10,12 +10,16 @@ import android.media.MediaFormat
 import android.os.Build
 import android.util.Log
 import java.io.File
+import java.nio.ByteBuffer
 import java.nio.ByteOrder
 
 
 class MP4Helper {
 
     companion object {
+
+        private var deprecatedOutputBuffers: Array<ByteBuffer>? = null
+
         fun getPCMStorage(inputFile: File): PCMStorage {
             val extractor = MediaExtractor()
             extractor.setDataSource(inputFile.path)
@@ -34,7 +38,8 @@ class MP4Helper {
             var endOfInputFile = false
             val mapOfSamples = HashMap<Long, ShortArray>()
             val bufferInfo = MediaCodec.BufferInfo()
-            var outputFormat: MediaFormat? = null
+            var outputFormat: MediaFormat?
+            deprecatedOutputBuffers = if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) codec.outputBuffers else null
 
             while (!endOfOutputStream) {
                 var inputBufferFull = false
@@ -46,6 +51,7 @@ class MP4Helper {
                                 Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP -> codec.getInputBuffer(indexOfBuffer)
                                 else                                                  -> codec.inputBuffers[indexOfBuffer]
                             }
+
                             val sampleSize = extractor.readSampleData(inputBuffer, 0)
                             val presentationTime = extractor.sampleTime
                             if (sampleSize <= 0 || !extractor.advance()) {
@@ -65,13 +71,14 @@ class MP4Helper {
                 val bufferId = codec.dequeueOutputBuffer(bufferInfo, 60)
                 when {
                     bufferId >= 0                           -> {
-                        val samples = retrieveSamplesForChannelAndQueuedInputBuffer(codec, trackNumber, bufferId)
+                        val samples = retrieveSamplesForChannelAndQueuedInputBuffer(codec, trackNumber, bufferInfo, bufferId)
                         bufferInfo.presentationTimeUs
                         mapOfSamples[bufferInfo.presentationTimeUs] = samples
                     }
 
                     bufferId == INFO_OUTPUT_BUFFERS_CHANGED -> {
                         // can be ignored for api >= 21
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) deprecatedOutputBuffers = codec.outputBuffers
                     }
 
                     bufferId == INFO_OUTPUT_FORMAT_CHANGED  -> {
@@ -90,6 +97,7 @@ class MP4Helper {
                     endOfOutputStream = true
                     codec.stop()
                     codec.release()
+                    //TODO release extractor
                 }
             }
 
@@ -101,13 +109,13 @@ class MP4Helper {
             return storage
         }
 
-        private fun retrieveSamplesForChannelAndQueuedInputBuffer(codec: MediaCodec, audioChannel: Int, bufferId: Int): ShortArray {
+        private fun retrieveSamplesForChannelAndQueuedInputBuffer(codec: MediaCodec, audioChannel: Int, bufferInfo: MediaCodec.BufferInfo, bufferId: Int): ShortArray {
             if (bufferId < 0) {
                 throw Error("need a bufferId")
             }
             val outputBuffer = when {
                 Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP -> codec.getOutputBuffer(bufferId)
-                else                                                  -> codec.outputBuffers[bufferId]
+                else                                                  -> deprecatedOutputBuffers!![bufferId]
             }
 
             val format = when {
@@ -121,12 +129,10 @@ class MP4Helper {
             if (audioChannel < 0 || audioChannel >= numChannels) {
                 throw Error("Requested a channel not available in codec.")
             }
-            val res = ShortArray(samples.remaining() / numChannels)
-            /*
-            for (i in res.indices) {
-                res[i] = samples.get(i * numChannels + audioChannel)
-            }*/
+            if (numChannels != 1) throw Error("So far only supporting 1 channel per Audio file")
+            val res = ShortArray(bufferInfo.size / 2)
             samples.get(res)
+            outputBuffer.clear()
             codec.releaseOutputBuffer(bufferId, false)
             return res
 
@@ -134,7 +140,7 @@ class MP4Helper {
 
 
         private fun findFirstAudioTrack(mediaExtractor: MediaExtractor): Int {
-            var mime: String = ""
+            var mime = ""
             for (i in 0..mediaExtractor.trackCount) {
                 mime = mediaExtractor.getTrackFormat(i).getString(MediaFormat.KEY_MIME)
                 if (mime.startsWith("audio/")) {
@@ -149,9 +155,9 @@ class MP4Helper {
             // select the first audio track
 
             val inputFormat = mediaExtractor.getTrackFormat(audioChannel);
-            val mime = inputFormat.getString(MediaFormat.KEY_MIME);
+            val mime = inputFormat.getString(MediaFormat.KEY_MIME)
             if (mime.startsWith("audio/")) {
-                mediaExtractor.selectTrack(audioChannel);
+                mediaExtractor.selectTrack(audioChannel)
                 trackFormat = inputFormat
                 Log.i("InputFormat", inputFormat.toString())
             } else {
