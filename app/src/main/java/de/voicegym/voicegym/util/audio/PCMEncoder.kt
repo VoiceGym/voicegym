@@ -101,7 +101,7 @@ class PCMEncoder
             var inputBufferIndex = 0
             var currentBatchRead = 0
             while (inputBufferIndex != -1 && hasMoreData && currentBatchRead <= 50 * sampleRate) {
-                inputBufferIndex = mediaCodec!!.dequeueInputBuffer(CODEC_TIMEOUT.toLong())
+                inputBufferIndex = mediaCodec!!.dequeueInputBuffer(CODEC_TIMEOUT)
 
                 if (inputBufferIndex >= 0) {
                     val buffer = codecInputBuffers!![inputBufferIndex]
@@ -155,6 +155,6 @@ class PCMEncoder
     companion object {
         private const val TAG = "PCMEncoder"
         private const val COMPRESSED_AUDIO_FILE_MIME_TYPE = "audio/mp4a-latm"
-        private const val CODEC_TIMEOUT = 5000
+        private const val CODEC_TIMEOUT = 5000L
     }
 }
