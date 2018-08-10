@@ -31,7 +31,7 @@ import de.voicegym.voicegym.recordActivity.fragments.RecordModeControlFragment
 import de.voicegym.voicegym.recordActivity.fragments.RecordModeControlListener
 import de.voicegym.voicegym.recordActivity.fragments.SpectrogramFragment
 import de.voicegym.voicegym.util.RecordBufferListener
-import de.voicegym.voicegym.util.audio.MP4Helper
+import de.voicegym.voicegym.util.audio.MP4Decoder
 import de.voicegym.voicegym.util.audio.PCMPlayer
 import de.voicegym.voicegym.util.audio.PCMPlayerListener
 import de.voicegym.voicegym.util.audio.PCMStorage
@@ -417,7 +417,7 @@ class RecordActivity : AppCompatActivity(),
 
     private fun loadFromSdCard(fileName: String) {
         Log.i("RecordActivity", "Load from SDCard called")
-        pcmStorage = MP4Helper.getPCMStorage(File(fileName))
+        pcmStorage = MP4Decoder.getPCMStorage(File(fileName))
         pcmStorage?.rewind()
         instrumentFragment?.startRecording()
         val buffer = pcmStorage?.asShortBuffer()

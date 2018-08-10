@@ -14,7 +14,7 @@ import java.nio.ByteBuffer
 import java.nio.ByteOrder
 
 
-class MP4Helper {
+class MP4Decoder {
 
     companion object {
 
