@@ -78,6 +78,13 @@ class PCMStorage(val sampleRate: Int) : RecordBufferListener, InputStream() {
         }
     }
 
+    fun reverseForBugfix(){
+        if(sealed){
+            while (inputQueue.isNotEmpty()) usedDeque.addFirst(inputQueue.poll())
+            while(usedDeque.isNotEmpty()) inputQueue.add(usedDeque.poll())
+        }
+    }
+
     fun asShortBuffer(): ShortBuffer {
         if (sealed) {
             val currentPosition = usedDeque.size

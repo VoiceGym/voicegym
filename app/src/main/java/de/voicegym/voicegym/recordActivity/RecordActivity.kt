@@ -5,21 +5,22 @@ import android.content.pm.ActivityInfo
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
 import android.os.Bundle
-import android.os.Handler
 import android.support.v4.app.Fragment
 import android.support.v7.app.AppCompatActivity
 import android.util.Log
 import android.view.Surface
 import android.view.View
+import android.view.ViewTreeObserver.OnGlobalLayoutListener
 import android.view.WindowManager
 import de.voicegym.voicegym.R
 import de.voicegym.voicegym.menu.settings.FourierInstrumentViewSettings
 import de.voicegym.voicegym.menu.settings.SettingsBundle
 import de.voicegym.voicegym.model.AppDatabase
 import de.voicegym.voicegym.model.Recording
+import de.voicegym.voicegym.recordActivity.RecordActivityState.LIVEVIEW
 import de.voicegym.voicegym.recordActivity.RecordActivityState.PLAYBACK
+import de.voicegym.voicegym.recordActivity.RecordActivityState.PLAYBACK_FROM_FILE
 import de.voicegym.voicegym.recordActivity.RecordActivityState.RECORDING
-import de.voicegym.voicegym.recordActivity.RecordActivityState.WAITING
 import de.voicegym.voicegym.recordActivity.TouchPlaybackState.RELEASED
 import de.voicegym.voicegym.recordActivity.TouchPlaybackState.TOUCHED
 import de.voicegym.voicegym.recordActivity.TouchPlaybackState.TOUCHED_WHILE_PLAYING
@@ -30,6 +31,7 @@ import de.voicegym.voicegym.recordActivity.fragments.RecordModeControlFragment
 import de.voicegym.voicegym.recordActivity.fragments.RecordModeControlListener
 import de.voicegym.voicegym.recordActivity.fragments.SpectrogramFragment
 import de.voicegym.voicegym.util.RecordBufferListener
+import de.voicegym.voicegym.util.audio.MP4Helper
 import de.voicegym.voicegym.util.audio.PCMPlayer
 import de.voicegym.voicegym.util.audio.PCMPlayerListener
 import de.voicegym.voicegym.util.audio.PCMStorage
@@ -38,8 +40,10 @@ import de.voicegym.voicegym.util.audio.getDoubleArrayFromShortArray
 import de.voicegym.voicegym.util.audio.getVoiceGymFolder
 import de.voicegym.voicegym.util.audio.savePCMInputStreamOnSDCard
 import de.voicegym.voicegym.util.math.FourierHelper
+import kotlinx.android.synthetic.main.fragment_spectrogram.spectrogramView
 import kotlinx.coroutines.experimental.CommonPool
 import kotlinx.coroutines.experimental.launch
+import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
@@ -66,7 +70,7 @@ class RecordActivity : AppCompatActivity(),
         pcmPlayer = null
         stopListeningAndFreeRessource()
         // Start up
-        recordActivityState = WAITING
+        recordActivityState = LIVEVIEW
         startListening()
         switchToRecordControlFragment()
     }
@@ -95,11 +99,15 @@ class RecordActivity : AppCompatActivity(),
      * PCMPlayer that will play a recorded set of pcmSamples
      */
     private var pcmPlayer: PCMPlayer? = null
-
     /**
      * The RecordActivityState the RecordActivity currently resides in
      */
-    private var recordActivityState: RecordActivityState = WAITING
+    private var recordActivityState: RecordActivityState = LIVEVIEW
+
+    /**
+     * will only be different from null when activity is started with a filename of a stored audio file
+     */
+    private var filenameForPlaybackFromFile: String? = null
 
     /**
      * here we store our currently used Feedbackinstrument for example our SpectrogramFragment
@@ -107,7 +115,7 @@ class RecordActivity : AppCompatActivity(),
     private var instrumentFragment: AbstractInstrumentFragment? = null
 
     /**
-     * RecordModeControlFragment that controls the RecordActivity while being in WAITING or RECORDING MODE
+     * RecordModeControlFragment that controls the RecordActivity while being in LIVEVIEW or RECORDING MODE
      */
     private val recorderControlFragment = RecordModeControlFragment()
 
@@ -132,32 +140,75 @@ class RecordActivity : AppCompatActivity(),
                 settings.samplesPerDatapoint,
                 SettingsBundle.sampleRate)
 
-        // handle fragments
-        switchToRecordControlFragment()
+
+        val recordFileName = if (intent.hasExtra(AUDIO_FILE)) {
+            recordActivityState = PLAYBACK_FROM_FILE
+            intent.getStringExtra(AUDIO_FILE)
+        } else null
+
 
         // initialize the instrumentFragment
         instrumentFragment = supportFragmentManager.findFragmentById(R.id.spectrogramFragment) as SpectrogramFragment
         instrumentFragment?.updateFrequencyArray(fourierHelper.frequencyArray())
         instrumentFragment?.updateInstrumentViewSettings(settings)
 
-        // activate the recordhelper to listen to microphone
-        startListening()
+        when (recordActivityState) {
+            LIVEVIEW           -> {
+                switchToRecordControlFragment()
+                startListening()
+            }
+
+            PLAYBACK_FROM_FILE -> {
+                switchToPlaybackControlFragment()
+                filenameForPlaybackFromFile = recordFileName
+            }
+
+        // deactivate sleep mode
+        }
 
         // deactivate sleep mode
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
 
     }
 
+    /**
+     * Places the RecordControlFragment into the controlFragmentSpace (right screen position)
+     */
+    private fun switchToRecordControlFragment() {
+        supportFragmentManager
+                .beginTransaction()
+                .replace(R.id.controlFragmentSpace, recorderControlFragment)
+                .addToBackStack(null)
+                .commit()
+    }
+
+    /**
+     * Places the PlayBackControlFragment into the controlFragmentSpace (right screen position)
+     */
+    private fun switchToPlaybackControlFragment() {
+        supportFragmentManager
+                .beginTransaction()
+                .replace(R.id.controlFragmentSpace, playbackControlFragment)
+                .addToBackStack(null)
+                .commit()
+    }
+
 
     override fun onBackPressed() {
         when (recordActivityState) {
-            WAITING   -> if (pcmStorage == null) finish()
-            RECORDING -> switchToPlayback()
-            PLAYBACK  -> restart()
+            LIVEVIEW           -> if (pcmStorage == null) finish()
+            RECORDING          -> switchToPlayback()
+            PLAYBACK           -> restart()
+            PLAYBACK_FROM_FILE -> finish()
         }
     }
 
     var wasListeningBeforeStop: Boolean = false
+
+    override fun onPause() {
+        super.onPause()
+        instrumentFragment?.stopRendering()
+    }
 
     override fun onStop() {
         wasListeningBeforeStop = recorder?.shouldRecord ?: false
@@ -166,9 +217,26 @@ class RecordActivity : AppCompatActivity(),
     }
 
     override fun onResume() {
-        if (wasListeningBeforeStop) startListening()
         super.onResume()
+        instrumentFragment?.startRendering()
+        when (recordActivityState) {
+            LIVEVIEW, RECORDING -> {
+                if (wasListeningBeforeStop) startListening()
+            }
+
+
+            PLAYBACK_FROM_FILE  -> {
+                instrumentFragment?.spectrogramView?.viewTreeObserver?.addOnGlobalLayoutListener(object : OnGlobalLayoutListener {
+                    override fun onGlobalLayout() {
+                        instrumentFragment?.spectrogramView?.viewTreeObserver?.removeOnGlobalLayoutListener(this)
+                        loadFromSdCard(filenameForPlaybackFromFile
+                                ?: throw Error("Filename not set while loading from file"))
+                    }
+                })
+            }
+        }
     }
+
 
     override fun onDestroy() {
         this.stopListeningAndFreeRessource()
@@ -255,11 +323,7 @@ class RecordActivity : AppCompatActivity(),
      */
     override fun onBufferReady(data: ShortArray) {
         inputQueue.add(data)
-        // Get a handler that can be used to post something on the main thread
-        Handler(this.mainLooper).post {
-            // execute updateActivity() on the main thread
-            updateActivity()
-        }
+        updateActivity()
     }
 
     /**
@@ -270,30 +334,20 @@ class RecordActivity : AppCompatActivity(),
         val shortArray = inputQueue.poll()
         fourierHelper.fft(getDoubleArrayFromShortArray(1.0, shortArray))
         instrumentFragment?.insertNewAmplitudes(fourierHelper.amplitudeArray())
-    }
-
-
-    /**
-     * Places the RecordControlFragment into the controlFragmentSpace (right screen position)
-     */
-    private fun switchToRecordControlFragment() {
-        supportFragmentManager
-                .beginTransaction()
-                .replace(R.id.controlFragmentSpace, recorderControlFragment)
-                .addToBackStack(null)
-                .commit()
+        instrumentFragment?.invalidateFromBackground()
     }
 
     /**
-     * Places the PlayBackControlFragment into the controlFragmentSpace (right screen position)
+     * this empties the whole input queue and skips invalidating until every array is added to the instrumentFragment
      */
-    private fun switchToPlaybackControlFragment() {
-        supportFragmentManager
-                .beginTransaction()
-                .replace(R.id.controlFragmentSpace, playbackControlFragment)
-                .addToBackStack(null)
-                .commit()
+    private fun emptyInputQueueIntoInstrumentFragment() {
+        while (!inputQueue.isEmpty()) {
+            val shortArray = inputQueue.poll()
+            fourierHelper.fft(getDoubleArrayFromShortArray(1.0, shortArray))
+            instrumentFragment?.insertNewAmplitudes(fourierHelper.amplitudeArray())
+        }
     }
+
 
     fun getInstrumentFragment(): Fragment? = supportFragmentManager.findFragmentById(R.id.spectrogramFragment)
 
@@ -302,7 +356,7 @@ class RecordActivity : AppCompatActivity(),
      */
 
     override fun startRecording() {
-        if (recordActivityState == WAITING) storePCMSamples()
+        if (recordActivityState == LIVEVIEW) storePCMSamples()
     }
 
     override fun finishRecording() {
@@ -310,9 +364,10 @@ class RecordActivity : AppCompatActivity(),
     }
 
     override fun isRecording(): Boolean = when (recordActivityState) {
-        WAITING   -> false
-        RECORDING -> true
-        PLAYBACK  -> false
+        LIVEVIEW           -> false
+        RECORDING          -> true
+        PLAYBACK           -> false
+        PLAYBACK_FROM_FILE -> false
     }
 
 
@@ -338,12 +393,14 @@ class RecordActivity : AppCompatActivity(),
 
     override fun receiveRating(rating: Int) {
         //TODO get rating into datamodel
+
         Log.i("Rated", "Record was rated $rating")
     }
 
     override fun saveToSdCard() {
         launch(CommonPool) {
             pcmStorage?.let {
+                it.reverseForBugfix()
                 it.rewind()
                 savePCMInputStreamOnSDCard(dateString, it, it.sampleRate, 128000)
             }
@@ -358,6 +415,26 @@ class RecordActivity : AppCompatActivity(),
         }
     }
 
+    private fun loadFromSdCard(fileName: String) {
+        Log.i("RecordActivity", "Load from SDCard called")
+        pcmStorage = MP4Helper.getPCMStorage(File(fileName))
+        pcmStorage?.rewind()
+        instrumentFragment?.startRecording()
+        val buffer = pcmStorage?.asShortBuffer()
+        while (buffer?.hasRemaining() == true) {
+            val array = ShortArray(settings.samplesPerDatapoint)
+            buffer?.get(array)
+            inputQueue.add(array)
+        }
+        // fill input queue from InstrumentFragment
+        emptyInputQueueIntoInstrumentFragment()
+        instrumentFragment?.doneRecordingSwitchToPlayback()
+
+        pcmPlayer = PCMPlayer(pcmStorage!!.sampleRate, pcmStorage!!.asShortBuffer(), this)
+        pcmPlayer?.subscribeListener(this)
+
+
+    }
     /*
     The following variables and functions handle TouchEvents during PlaybackMode
      */
@@ -424,5 +501,10 @@ class RecordActivity : AppCompatActivity(),
 
     fun unLockScreenPosition() {
         requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
+    }
+
+
+    companion object {
+        const val AUDIO_FILE = "recordAudioFileName"
     }
 }

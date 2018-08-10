@@ -73,7 +73,6 @@ class RecordingsAdapter(
                     .dropLast(4)
             //            nameView.text = recording.id.toString()
             floatingActionButton2.setOnClickListener {
-                //TODO: FIND A DIFFERENT WAY THAN A COMPANION OBJECT TO CALL THE FRAGMENT
                 listener.onClick(recording.fileName)
             }
         }
