@@ -36,7 +36,6 @@ class MP4Decoder {
             // Output loop
             var endOfOutputStream = false
             var endOfInputFile = false
-            val mapOfSamples = HashMap<Long, ShortArray>()
             val bufferInfo = MediaCodec.BufferInfo()
             var outputFormat: MediaFormat?
             deprecatedOutputBuffers = if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) codec.outputBuffers else null
@@ -71,9 +70,7 @@ class MP4Decoder {
                 val bufferId = codec.dequeueOutputBuffer(bufferInfo, 60)
                 when {
                     bufferId >= 0                           -> {
-                        val samples = retrieveSamplesForChannelAndQueuedInputBuffer(codec, trackNumber, bufferInfo, bufferId)
-                        bufferInfo.presentationTimeUs
-                        mapOfSamples[bufferInfo.presentationTimeUs] = samples
+                        storage.onBufferReady(retrieveSamplesForChannelAndQueuedInputBuffer(codec, trackNumber, bufferInfo, bufferId))
                     }
 
                     bufferId == INFO_OUTPUT_BUFFERS_CHANGED -> {
@@ -101,9 +98,6 @@ class MP4Decoder {
                 }
             }
 
-            for (entry in mapOfSamples.toSortedMap()) {
-                storage.onBufferReady(entry.value)
-            }
             storage.stopListening()
             storage.reverseForBugfix()
             return storage
