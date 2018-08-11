@@ -8,159 +8,212 @@ import android.media.MediaCodecInfo
 import android.media.MediaExtractor
 import android.media.MediaFormat
 import android.os.Build
+import android.os.Process
 import android.util.Log
+import de.voicegym.voicegym.util.DecoderBufferListener
 import java.io.File
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
+import kotlin.concurrent.thread
 
 
-class MP4Decoder {
+class MP4Decoder(val bufferSizeForCallbacks: Int) {
 
-    companion object {
 
-        private var deprecatedOutputBuffers: Array<ByteBuffer>? = null
+    private var outputBufferArray: ShortArray = ShortArray(bufferSizeForCallbacks)
 
-        fun getPCMStorage(inputFile: File): PCMStorage {
-            val extractor = MediaExtractor()
-            extractor.setDataSource(inputFile.path)
-            val trackNumber = findFirstAudioTrack(extractor)
-            if (trackNumber == -1) {
-                throw Error("No audio track in given filename")
+    private var currentOutputBufferPosition: Int = 0
+
+    private fun internalBufferReady(data: ShortArray) {
+
+        if (data.size > bufferSizeForCallbacks) throw Error("Callback buffer must be larger than internal one for this algorithm")
+
+        val lengthToCopy = if (data.size < (outputBufferArray.size - currentOutputBufferPosition)) {
+            // Okay data fits into outputbuffer
+            data.size
+        } else {
+            // Buffer will be filled up by the data
+            outputBufferArray.size - currentOutputBufferPosition
+        }
+
+        if (lengthToCopy != 0) {
+            System.arraycopy(data, 0, outputBufferArray, currentOutputBufferPosition, lengthToCopy)
+        }
+
+        if (lengthToCopy < data.size) {
+            // Internal buffer has been filled, up can be handed out
+            subscribers.forEach { it.onBufferReady(outputBufferArray.copyOf()) }
+            // Copy remaining data into outputbuffer
+            System.arraycopy(data, lengthToCopy, outputBufferArray, 0, data.size - lengthToCopy)
+            currentOutputBufferPosition = data.size - lengthToCopy
+        } else {
+            currentOutputBufferPosition += lengthToCopy
+        }
+
+    }
+
+    private val subscribers = ArrayList<DecoderBufferListener>()
+
+    public fun addBufferListener(listener: DecoderBufferListener) = subscribers.add(listener)
+
+    public fun removeBufferListener(listener: DecoderBufferListener) = subscribers.remove(listener)
+
+    public fun startDecoding(inputFile: File) {
+        if (subscribers.isNotEmpty()) {
+            thread(start = true, priority = Process.THREAD_PRIORITY_AUDIO) {
+                decode(inputFile)
             }
-            val sampleRate = extractor.getTrackFormat(trackNumber).getInteger(MediaFormat.KEY_SAMPLE_RATE)
-            val storage = PCMStorage(sampleRate)
+        } else throw Error("No callback subscribers, doesn't make sense to decode anything")
+    }
 
-            val codec = getMediaDecoderForMediaExtractor(extractor, trackNumber)
-            codec.start()
 
-            // Output loop
-            var endOfOutputStream = false
-            var endOfInputFile = false
-            val bufferInfo = MediaCodec.BufferInfo()
-            var outputFormat: MediaFormat?
-            deprecatedOutputBuffers = if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) codec.outputBuffers else null
+    private var deprecatedOutputBuffers: Array<ByteBuffer>? = null
 
-            while (!endOfOutputStream) {
-                var inputBufferFull = false
-                while (!endOfInputFile && !inputBufferFull) {
-                    val indexOfBuffer = codec.dequeueInputBuffer(1000)
-                    when {
-                        indexOfBuffer >= 0                               -> {
-                            val inputBuffer = when {
-                                Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP -> codec.getInputBuffer(indexOfBuffer)
-                                else                                                  -> codec.inputBuffers[indexOfBuffer]
-                            }
+    private fun decode(inputFile: File) {
+        val extractor = MediaExtractor()
+        extractor.setDataSource(inputFile.path)
+        val trackNumber = findFirstAudioTrack(extractor)
+        if (trackNumber == -1) {
+            throw Error("No audio track in given filename")
+        }
 
-                            val sampleSize = extractor.readSampleData(inputBuffer, 0)
-                            val presentationTime = extractor.sampleTime
-                            if (sampleSize <= 0 || !extractor.advance()) {
-                                endOfInputFile = true
-                            }
-                            codec.queueInputBuffer(indexOfBuffer, 0, if (sampleSize > 0) sampleSize else 0, presentationTime, if (endOfInputFile) MediaCodec.BUFFER_FLAG_END_OF_STREAM else 0)
-                        }
+        val codec = getMediaDecoderForMediaExtractor(extractor, trackNumber)
+        codec.start()
 
-                        indexOfBuffer == MediaCodec.INFO_TRY_AGAIN_LATER -> {
-                            inputBufferFull = true
-                        }
+        // Output loop
+        var endOfOutputStream = false
+        var endOfInputFile = false
+        val bufferInfo = MediaCodec.BufferInfo()
+        var outputFormat: MediaFormat?
+        deprecatedOutputBuffers = if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) codec.outputBuffers else null
 
-                        else                                             -> throw Error("could not retrieve buffer")
-                    }
-                }
-
-                val bufferId = codec.dequeueOutputBuffer(bufferInfo, 60)
+        while (!endOfOutputStream) {
+            var inputBufferFull = false
+            while (!endOfInputFile && !inputBufferFull) {
+                val indexOfBuffer = codec.dequeueInputBuffer(1000)
                 when {
-                    bufferId >= 0                           -> {
-                        storage.onBufferReady(retrieveSamplesForChannelAndQueuedInputBuffer(codec, trackNumber, bufferInfo, bufferId))
+                    indexOfBuffer >= 0                               -> {
+                        val inputBuffer = when {
+                            Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP -> codec.getInputBuffer(indexOfBuffer)
+                            else                                                  -> codec.inputBuffers[indexOfBuffer]
+                        }
+
+                        val sampleSize = extractor.readSampleData(inputBuffer, 0)
+                        val presentationTime = extractor.sampleTime
+                        if (sampleSize <= 0 || !extractor.advance()) {
+                            endOfInputFile = true
+                        }
+                        codec.queueInputBuffer(indexOfBuffer, 0, if (sampleSize > 0) sampleSize else 0, presentationTime, if (endOfInputFile) MediaCodec.BUFFER_FLAG_END_OF_STREAM else 0)
                     }
 
-                    bufferId == INFO_OUTPUT_BUFFERS_CHANGED -> {
-                        // can be ignored for api >= 21
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) deprecatedOutputBuffers = codec.outputBuffers
+                    indexOfBuffer == MediaCodec.INFO_TRY_AGAIN_LATER -> {
+                        inputBufferFull = true
                     }
 
-                    bufferId == INFO_OUTPUT_FORMAT_CHANGED  -> {
-                        // new format
-                        outputFormat = codec.outputFormat
-                        Log.i("OutputFormat now: ", outputFormat.toString())
-                    }
-
-                    bufferId == INFO_TRY_AGAIN_LATER        -> {
-                        // okay not possible right now
-                    }
-
-                    else                                    -> throw Error("Unknown Key")
-                }
-                if (bufferInfo.flags and MediaCodec.BUFFER_FLAG_END_OF_STREAM !== 0) {
-                    endOfOutputStream = true
-                    codec.stop()
-                    codec.release()
-                    //TODO release extractor
+                    else                                             -> throw Error("could not retrieve buffer")
                 }
             }
 
-            storage.stopListening()
-            storage.reverseForBugfix()
-            return storage
-        }
-
-        private fun retrieveSamplesForChannelAndQueuedInputBuffer(codec: MediaCodec, audioChannel: Int, bufferInfo: MediaCodec.BufferInfo, bufferId: Int): ShortArray {
-            if (bufferId < 0) {
-                throw Error("need a bufferId")
-            }
-            val outputBuffer = when {
-                Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP -> codec.getOutputBuffer(bufferId)
-                else                                                  -> deprecatedOutputBuffers!![bufferId]
-            }
-
-            val format = when {
-                Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP -> codec.getOutputFormat(bufferId)
-                else                                                  -> codec.outputFormat
-            }
-
-            val samples = outputBuffer!!.order(ByteOrder.nativeOrder()).asShortBuffer()
-            samples.rewind()
-            val numChannels = format.getInteger(MediaFormat.KEY_CHANNEL_COUNT)
-            if (audioChannel < 0 || audioChannel >= numChannels) {
-                throw Error("Requested a channel not available in codec.")
-            }
-            if (numChannels != 1) throw Error("So far only supporting 1 channel per Audio file")
-            val res = ShortArray(bufferInfo.size / 2)
-            samples.get(res)
-            outputBuffer.clear()
-            codec.releaseOutputBuffer(bufferId, false)
-            return res
-
-        }
-
-
-        private fun findFirstAudioTrack(mediaExtractor: MediaExtractor): Int {
-            var mime = ""
-            for (i in 0..mediaExtractor.trackCount) {
-                mime = mediaExtractor.getTrackFormat(i).getString(MediaFormat.KEY_MIME)
-                if (mime.startsWith("audio/")) {
-                    return i;
+            val bufferId = codec.dequeueOutputBuffer(bufferInfo, 60)
+            when {
+                bufferId >= 0                           -> {
+                    internalBufferReady(retrieveSamplesForChannelAndQueuedInputBuffer(codec, trackNumber, bufferInfo, bufferId))
                 }
+
+                bufferId == INFO_OUTPUT_BUFFERS_CHANGED -> {
+                    // can be ignored for api >= 21
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) deprecatedOutputBuffers = codec.outputBuffers
+                }
+
+                bufferId == INFO_OUTPUT_FORMAT_CHANGED  -> {
+                    // new format
+                    outputFormat = codec.outputFormat
+                    Log.i("OutputFormat now: ", outputFormat.toString())
+                }
+
+                bufferId == INFO_TRY_AGAIN_LATER        -> {
+                    // okay not possible right now
+                }
+
+                else                                    -> throw Error("Unknown Key")
             }
-            return -1;
+            if (bufferInfo.flags and MediaCodec.BUFFER_FLAG_END_OF_STREAM !== 0) {
+                endOfOutputStream = true
+                codec.stop()
+                codec.release()
+                //TODO release extractor
+            }
         }
 
-        private fun getMediaDecoderForMediaExtractor(mediaExtractor: MediaExtractor, audioChannel: Int): MediaCodec {
-            var trackFormat: MediaFormat? = null
-            // select the first audio track
 
-            val inputFormat = mediaExtractor.getTrackFormat(audioChannel);
-            val mime = inputFormat.getString(MediaFormat.KEY_MIME)
+        // overwrite remaining old values with zeroes
+        for (i in currentOutputBufferPosition until outputBufferArray.size) outputBufferArray[i] = 0
+        // tell everyone were done
+        subscribers.forEach {
+            // hand out the last buffer
+            it.onBufferReady(outputBufferArray.copyOf())
+            // finish off
+            it.isDecoded()
+        }
+    }
+
+    private fun retrieveSamplesForChannelAndQueuedInputBuffer(codec: MediaCodec, audioChannel: Int, bufferInfo: MediaCodec.BufferInfo, bufferId: Int): ShortArray {
+        if (bufferId < 0) {
+            throw Error("need a bufferId")
+        }
+        val outputBuffer = when {
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP -> codec.getOutputBuffer(bufferId)
+            else                                                  -> deprecatedOutputBuffers!![bufferId]
+        }
+
+        val format = when {
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP -> codec.getOutputFormat(bufferId)
+            else                                                  -> codec.outputFormat
+        }
+
+        val samples = outputBuffer!!.order(ByteOrder.nativeOrder()).asShortBuffer()
+        samples.rewind()
+        val numChannels = format.getInteger(MediaFormat.KEY_CHANNEL_COUNT)
+        if (audioChannel < 0 || audioChannel >= numChannels) {
+            throw Error("Requested a channel not available in codec.")
+        }
+        if (numChannels != 1) throw Error("So far only supporting 1 channel per Audio file")
+        val res = ShortArray(bufferInfo.size / 2)
+        samples.get(res)
+        outputBuffer.clear()
+        codec.releaseOutputBuffer(bufferId, false)
+        return res
+
+    }
+
+
+    private fun findFirstAudioTrack(mediaExtractor: MediaExtractor): Int {
+        var mime = ""
+        for (i in 0..mediaExtractor.trackCount) {
+            mime = mediaExtractor.getTrackFormat(i).getString(MediaFormat.KEY_MIME)
             if (mime.startsWith("audio/")) {
-                mediaExtractor.selectTrack(audioChannel)
-                trackFormat = inputFormat
-                Log.i("InputFormat", inputFormat.toString())
-            } else {
-                throw Error("Selected channel was no audio track")
+                return i;
             }
-            trackFormat.setInteger(MediaFormat.KEY_AAC_PROFILE, MediaCodecInfo.CodecProfileLevel.AACObjectLC)
-            val codec = MediaCodec.createDecoderByType(trackFormat.getString(MediaFormat.KEY_MIME))
-            codec.configure(trackFormat, null, null, 0)
-            return codec
         }
+        return -1;
+    }
+
+    private fun getMediaDecoderForMediaExtractor(mediaExtractor: MediaExtractor, audioChannel: Int): MediaCodec {
+        var trackFormat: MediaFormat? = null
+        // select the first audio track
+
+        val inputFormat = mediaExtractor.getTrackFormat(audioChannel);
+        val mime = inputFormat.getString(MediaFormat.KEY_MIME)
+        if (mime.startsWith("audio/")) {
+            mediaExtractor.selectTrack(audioChannel)
+            trackFormat = inputFormat
+            Log.i("InputFormat", inputFormat.toString())
+        } else {
+            throw Error("Selected channel was no audio track")
+        }
+        trackFormat.setInteger(MediaFormat.KEY_AAC_PROFILE, MediaCodecInfo.CodecProfileLevel.AACObjectLC)
+        val codec = MediaCodec.createDecoderByType(trackFormat.getString(MediaFormat.KEY_MIME))
+        codec.configure(trackFormat, null, null, 0)
+        return codec
     }
 }

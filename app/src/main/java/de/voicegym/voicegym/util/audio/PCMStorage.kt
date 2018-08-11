@@ -1,5 +1,6 @@
 package de.voicegym.voicegym.util.audio
 
+import de.voicegym.voicegym.util.DecoderBufferListener
 import de.voicegym.voicegym.util.RecordBufferListener
 import java.io.InputStream
 import java.nio.ByteBuffer
@@ -10,7 +11,7 @@ import java.util.concurrent.LinkedBlockingDeque
 
 fun Byte.toPositiveInt() = toInt() and 0xFF
 
-class PCMStorage(val sampleRate: Int) : RecordBufferListener, InputStream() {
+class PCMStorage(val sampleRate: Int) : RecordBufferListener, DecoderBufferListener, InputStream() {
     // TODO refactor class so it uses two deques and can be freely winded forward and back
     override fun read(): Int {
         var ret: Int = -1
@@ -65,6 +66,10 @@ class PCMStorage(val sampleRate: Int) : RecordBufferListener, InputStream() {
 
     override fun canHandleBufferSize(bufferSize: Int): Boolean = true
 
+    override fun isDecoded() {
+        stopListening()
+    }
+
     fun stopListening() {
         if (!sealed) {
             sealed = true
@@ -78,10 +83,10 @@ class PCMStorage(val sampleRate: Int) : RecordBufferListener, InputStream() {
         }
     }
 
-    fun reverseForBugfix(){
-        if(sealed){
+    fun reverseForBugfix() {
+        if (sealed) {
             while (inputQueue.isNotEmpty()) usedDeque.addFirst(inputQueue.poll())
-            while(usedDeque.isNotEmpty()) inputQueue.add(usedDeque.poll())
+            while (usedDeque.isNotEmpty()) inputQueue.add(usedDeque.poll())
         }
     }
 

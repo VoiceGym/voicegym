@@ -5,6 +5,7 @@ import android.content.pm.ActivityInfo
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
 import android.os.Bundle
+import android.os.Handler
 import android.support.v4.app.Fragment
 import android.support.v7.app.AppCompatActivity
 import android.util.Log
@@ -30,6 +31,7 @@ import de.voicegym.voicegym.recordActivity.fragments.PlaybackModeControlListener
 import de.voicegym.voicegym.recordActivity.fragments.RecordModeControlFragment
 import de.voicegym.voicegym.recordActivity.fragments.RecordModeControlListener
 import de.voicegym.voicegym.recordActivity.fragments.SpectrogramFragment
+import de.voicegym.voicegym.util.DecoderBufferListener
 import de.voicegym.voicegym.util.RecordBufferListener
 import de.voicegym.voicegym.util.audio.MP4Decoder
 import de.voicegym.voicegym.util.audio.PCMPlayer
@@ -52,9 +54,11 @@ import java.util.concurrent.ConcurrentLinkedQueue
 
 class RecordActivity : AppCompatActivity(),
         RecordBufferListener,
+        DecoderBufferListener,
         RecordModeControlListener,
         PlaybackModeControlListener,
         PCMPlayerListener {
+
 
     /**
      * reset the activity and start over from the beginning
@@ -163,7 +167,7 @@ class RecordActivity : AppCompatActivity(),
                 filenameForPlaybackFromFile = recordFileName
             }
 
-        // deactivate sleep mode
+            // deactivate sleep mode
         }
 
         // deactivate sleep mode
@@ -417,24 +421,22 @@ class RecordActivity : AppCompatActivity(),
 
     private fun loadFromSdCard(fileName: String) {
         Log.i("RecordActivity", "Load from SDCard called")
-        pcmStorage = MP4Decoder.getPCMStorage(File(fileName))
-        pcmStorage?.rewind()
+        pcmStorage = PCMStorage(SettingsBundle.sampleRate)
         instrumentFragment?.startRecording()
-        val buffer = pcmStorage?.asShortBuffer()
-        while (buffer?.hasRemaining() == true) {
-            val array = ShortArray(settings.samplesPerDatapoint)
-            buffer?.get(array)
-            inputQueue.add(array)
-        }
-        // fill input queue from InstrumentFragment
-        emptyInputQueueIntoInstrumentFragment()
-        instrumentFragment?.doneRecordingSwitchToPlayback()
+        val decoder = MP4Decoder(settings.samplesPerDatapoint)
+        decoder.addBufferListener(pcmStorage!!)
+        decoder.addBufferListener(this)
+        decoder.startDecoding(File(fileName))
+    }
 
+    override fun isDecoded() {
+        pcmStorage?.isDecoded()
         pcmPlayer = PCMPlayer(pcmStorage!!.sampleRate, pcmStorage!!.asShortBuffer(), this)
         pcmPlayer?.subscribeListener(this)
-
-
+        Handler(mainLooper).post { instrumentFragment?.doneRecordingSwitchToPlayback() }
     }
+
+
     /*
     The following variables and functions handle TouchEvents during PlaybackMode
      */
