@@ -59,11 +59,11 @@ class PCMPlayer(val sampleRate: Int, private val buffer: ShortBuffer, val contex
     fun play() {
         if (!playing) {
             playing = true
-            if (currentPosition <= buffer.capacity()) {
+            if (currentPosition <= buffer.capacity() && currentPosition >= 0) {
                 buffer.position(currentPosition)
             } else throw IndexOutOfBoundsException("Cannot seek to position not within range")
 
-            if (currentPosition == buffer.capacity()) {
+            if (currentPosition > 0.99 * buffer.capacity()) {
                 // reset
                 buffer.position(0)
                 currentPosition = 0
