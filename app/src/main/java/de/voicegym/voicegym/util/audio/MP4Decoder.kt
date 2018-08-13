@@ -19,11 +19,20 @@ import kotlin.concurrent.thread
 
 class MP4Decoder(val bufferSizeForCallbacks: Int) {
 
-
+    /**
+     * The buffer array in which the decoded samples are stored before they are handed out to the subscribers
+     */
     private var outputBufferArray: ShortArray = ShortArray(bufferSizeForCallbacks)
 
+    /**
+     * This points to the position in the outputBufferArray where new samples can be written
+     */
     private var currentOutputBufferPosition: Int = 0
 
+    /**
+     * After decoding this function is called to write into the outputBufferArray,
+     * and if the outputBufferArray is full this function hands out copies of it to the subscribers
+     */
     private fun internalBufferReady(data: ShortArray) {
 
         if (data.size > bufferSizeForCallbacks) throw Error("Callback buffer must be larger than internal one for this algorithm")
@@ -52,13 +61,25 @@ class MP4Decoder(val bufferSizeForCallbacks: Int) {
 
     }
 
+    /**
+     * list of the subscribers that are interested in receiving copies of the decoded samples
+     */
     private val subscribers = ArrayList<DecoderBufferListener>()
 
-    public fun addBufferListener(listener: DecoderBufferListener) = subscribers.add(listener)
+    /**
+     * add a new subscriber to our decoder
+     */
+    fun addBufferListener(listener: DecoderBufferListener) = subscribers.add(listener)
 
-    public fun removeBufferListener(listener: DecoderBufferListener) = subscribers.remove(listener)
+    /**
+     * remove a subscriber
+     */
+    fun removeBufferListener(listener: DecoderBufferListener) = subscribers.remove(listener)
 
-    public fun startDecoding(inputFile: File) {
+    /**
+     * starts a decoding thread for the given file if we have any subscribers
+     */
+    fun startDecoding(inputFile: File) {
         if (subscribers.isNotEmpty()) {
             thread(start = true, priority = Process.THREAD_PRIORITY_AUDIO) {
                 decode(inputFile)
@@ -66,7 +87,9 @@ class MP4Decoder(val bufferSizeForCallbacks: Int) {
         } else throw Error("No callback subscribers, doesn't make sense to decode anything")
     }
 
-
+    /**
+     * in case for API levels 19 and 20 this is used to store the outputBufferArrays of the Codec
+     */
     private var deprecatedOutputBuffers: Array<ByteBuffer>? = null
 
     private fun decode(inputFile: File) {
@@ -141,12 +164,14 @@ class MP4Decoder(val bufferSizeForCallbacks: Int) {
                 endOfOutputStream = true
                 codec.stop()
                 codec.release()
-                //TODO release extractor
             }
         }
+        extractor.release()
 
-
-        // overwrite remaining old values with zeroes
+        /**
+         * hand out the remaining samples in the outputBufferArray
+         */
+        // overwrite remaining old values from previous cycles with zeroes
         for (i in currentOutputBufferPosition until outputBufferArray.size) outputBufferArray[i] = 0
         // tell everyone were done
         subscribers.forEach {
@@ -186,7 +211,9 @@ class MP4Decoder(val bufferSizeForCallbacks: Int) {
 
     }
 
-
+    /**
+     * selects the first audio track in a file, returns -1 if there ain't one
+     */
     private fun findFirstAudioTrack(mediaExtractor: MediaExtractor): Int {
         var mime = ""
         for (i in 0..mediaExtractor.trackCount) {
@@ -198,6 +225,9 @@ class MP4Decoder(val bufferSizeForCallbacks: Int) {
         return -1;
     }
 
+    /**
+     * returns a MediaCodec for the given channel, if that channel is an audio channel
+     */
     private fun getMediaDecoderForMediaExtractor(mediaExtractor: MediaExtractor, audioChannel: Int): MediaCodec {
         var trackFormat: MediaFormat? = null
         // select the first audio track
