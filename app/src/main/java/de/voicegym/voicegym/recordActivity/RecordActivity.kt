@@ -228,8 +228,14 @@ class RecordActivity : AppCompatActivity(),
                 if (wasListeningBeforeStop) startListening()
             }
 
+            PLAYBACK            -> {
+                playbackControlFragment.showSaveButton()
+            }
 
             PLAYBACK_FROM_FILE  -> {
+                // saving so far not possible from loaded files
+                playbackControlFragment.hideSaveButton()
+
                 instrumentFragment?.spectrogramView?.viewTreeObserver?.addOnGlobalLayoutListener(object : OnGlobalLayoutListener {
                     override fun onGlobalLayout() {
                         instrumentFragment?.spectrogramView?.viewTreeObserver?.removeOnGlobalLayoutListener(this)

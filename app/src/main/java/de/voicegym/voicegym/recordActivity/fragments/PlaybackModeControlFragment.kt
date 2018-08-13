@@ -24,19 +24,30 @@ class PlaybackModeControlFragment : Fragment() {
         }
     }
 
+    private var playPauseButton: FloatingActionButton? = null
+    private var rateButton: FloatingActionButton? = null
+    private var saveButton: FloatingActionButton? = null
+
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         // Inflate the layout for this fragment
         val view = inflater.inflate(R.layout.fragment_playback_mode_control, container, false)
-        val playPauseButton = view.findViewById<FloatingActionButton>(R.id.playPauseControlButton)
-        val rateButton = view.findViewById<FloatingActionButton>(R.id.rateControlButton)
-        val saveButton = view.findViewById<FloatingActionButton>(R.id.saveControlButton)
+        playPauseButton = view.findViewById<FloatingActionButton>(R.id.playPauseControlButton)
+        rateButton = view.findViewById<FloatingActionButton>(R.id.rateControlButton)
+        saveButton = view.findViewById<FloatingActionButton>(R.id.saveControlButton)
 
-        playPauseButton.setOnClickListener { playbackModeControlListener?.playPause() }
-        rateButton.setOnClickListener { playbackModeControlListener?.openRatingDialog() }
-        saveButton.setOnClickListener { playbackModeControlListener?.saveToSdCard() }
+        playPauseButton?.setOnClickListener { playbackModeControlListener?.playPause() }
+        rateButton?.setOnClickListener { playbackModeControlListener?.openRatingDialog() }
+        saveButton?.setOnClickListener { playbackModeControlListener?.saveToSdCard() }
         return view
     }
 
+    fun hideSaveButton(){
+        saveButton?.hide()
+    }
+
+    fun showSaveButton(){
+        saveButton?.show()
+    }
 }
 
 interface PlaybackModeControlListener {
@@ -79,3 +90,4 @@ interface PlaybackModeControlListener {
      */
     fun playbackSeekTo(relativeMovement: Float)
 }
+
