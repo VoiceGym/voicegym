@@ -316,7 +316,6 @@ class SpectrogramView : SurfaceView, InstrumentViewInterface, Runnable {
     }
 
 
-
     private fun addLeftForBackgroundThread(amplitudes: DoubleArray, immediateDraw: Boolean) {
         if (indexArray.isNotEmpty()) {
             rotateBitmapForBackgroundThread(-pixelPerDatapoint())
@@ -418,6 +417,11 @@ class SpectrogramView : SurfaceView, InstrumentViewInterface, Runnable {
      */
     private var rendering: Boolean = false
 
+    fun isReady(): Boolean {
+        return !renderThreadBusy
+    }
+
+    private var renderThreadBusy = false
     /**
      * Our Render Loop
      */
@@ -434,10 +438,12 @@ class SpectrogramView : SurfaceView, InstrumentViewInterface, Runnable {
                         drawForBackgroundThread()
                         needsRendering = false
                     }
+                    renderThreadBusy = false
                     sleep(10)
                 }
 
                 else                         -> {
+                    renderThreadBusy = true
                     val job = renderQueue.poll()
                     // if the last added things didn't needed to be drawn immediately but we now hit a immediateDrawJob
                     if (needsRendering && job.renderImmediately) {

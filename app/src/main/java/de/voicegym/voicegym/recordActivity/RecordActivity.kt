@@ -59,6 +59,10 @@ class RecordActivity : AppCompatActivity(),
         PlaybackModeControlListener,
         PCMPlayerListener {
 
+    override fun isReady(): Boolean {
+        return instrumentFragment?.spectrogramView?.isReady() ?: false
+    }
+
 
     /**
      * reset the activity and start over from the beginning

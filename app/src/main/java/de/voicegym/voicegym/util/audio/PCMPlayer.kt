@@ -6,8 +6,8 @@ import android.media.AudioFormat
 import android.media.AudioManager
 import android.media.AudioTrack
 import android.os.Build
-import android.util.Log
 import org.jetbrains.anko.runOnUiThread
+import java.lang.Thread.sleep
 import java.nio.ShortBuffer
 import kotlin.concurrent.thread
 
@@ -67,8 +67,13 @@ class PCMPlayer(val sampleRate: Int, private val buffer: ShortBuffer, val contex
                 // reset
                 buffer.position(0)
                 currentPosition = 0
+                informListeners(0)
             }
+
             playerThread = thread {
+                while (listenersNotReady()) {
+                    sleep(100)
+                }
                 player.play()
                 while (playing) {
                     if (buffer.position() + playBuffer.size < buffer.capacity()) {
@@ -129,6 +134,12 @@ class PCMPlayer(val sampleRate: Int, private val buffer: ShortBuffer, val contex
         context.runOnUiThread { listener.isAtPosition(position) }
     }
 
+    private fun listenersNotReady(): Boolean {
+        var readyOrNot = true
+        subscribers.forEach { if (!it.isReady()) readyOrNot = false }
+        return !readyOrNot
+    }
+
 }
 
 
@@ -138,4 +149,9 @@ interface PCMPlayerListener {
      * @param sampleNumber: the sampleNumber currently played
      */
     fun isAtPosition(sampleNumber: Int)
+
+    /**
+     * PCMPlayer shall only play when all subscribers are in a state to receive new positions
+     */
+    fun isReady(): Boolean
 }
