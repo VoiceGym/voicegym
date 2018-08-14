@@ -6,6 +6,7 @@ import android.graphics.Color
 import android.os.Bundle
 import android.support.design.widget.FloatingActionButton
 import android.support.v4.app.Fragment
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -26,16 +27,19 @@ class RecordModeControlFragment : Fragment() {
         }
     }
 
-    var floatingActionButton: FloatingActionButton? = null
+    var recordButton: FloatingActionButton? = null
+    var microphoneButton: FloatingActionButton? = null
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         // Inflate the layout for this fragment
         val view = inflater.inflate(R.layout.fragment_record_mode_control, container, false)
-        floatingActionButton = view.findViewById(R.id.floatingActionButton)
-        floatingActionButton?.let {
-            it.backgroundTintList = ColorStateList.valueOf(Color.GREEN)
+        recordButton = view.findViewById(R.id.recordButton)
+        recordButton?.let {
+            it.backgroundTintList = ColorStateList.valueOf(resources.getColor(android.R.color.holo_red_dark))
             it.setOnClickListener { recordButtonPressed() }
         }
+        microphoneButton = view.findViewById(R.id.microphoneButton)
+        microphoneButton?.setOnClickListener { microPhoneButtonPressed() }
         return view
     }
 
@@ -47,11 +51,28 @@ class RecordModeControlFragment : Fragment() {
 
         recordActivity?.let {
             if (it.isRecording()) {
-                floatingActionButton?.backgroundTintList = ColorStateList.valueOf(Color.RED)
+                recordButton?.backgroundTintList = ColorStateList.valueOf(resources.getColor(android.R.color.holo_red_light))
             } else {
-                floatingActionButton?.backgroundTintList = ColorStateList.valueOf(Color.GREEN)
+                recordButton?.backgroundTintList = ColorStateList.valueOf(resources.getColor(android.R.color.holo_red_dark))
             }
         }
+    }
+
+    private fun microPhoneButtonPressed() {
+        when (recordActivity?.isMicrophoneOn()) {
+            true -> {
+                recordActivity?.pauseMicrophone()
+                microphoneButton?.setImageDrawable(resources.getDrawable(android.R.drawable.ic_btn_speak_now))
+                microphoneButton?.backgroundTintList = ColorStateList.valueOf(resources.getColor(R.color.item_name))
+            }
+
+            false  -> {
+                recordActivity?.resumeMicrophone()
+                microphoneButton?.setImageDrawable(resources.getDrawable(android.R.drawable.presence_audio_busy))
+                microphoneButton?.backgroundTintList = ColorStateList.valueOf(Color.parseColor("#cbcbcb"))
+            }
+        }
+
     }
 
 
@@ -72,4 +93,19 @@ interface RecordModeControlListener {
      * control variable to find out whether the listener is currently recording
      */
     fun isRecording(): Boolean
+
+    /**
+     * pause taking samples from microphone
+     */
+    fun pauseMicrophone()
+
+    /**
+     * resume taking samples from microphone
+     */
+    fun resumeMicrophone()
+
+    /**
+     * check whether activity is listening to microphone or not
+     */
+    fun isMicrophoneOn(): Boolean
 }

@@ -12,6 +12,7 @@ import de.voicegym.voicegym.menu.settings.SettingsBundle.audioFormat
 import de.voicegym.voicegym.menu.settings.SettingsBundle.channelConfig
 import de.voicegym.voicegym.menu.settings.SettingsBundle.sampleRate
 import de.voicegym.voicegym.util.RecordBufferListener
+import java.lang.Thread.sleep
 
 class RecordHelper(private val preferredBufferSize: Int) {
 
@@ -69,6 +70,9 @@ class RecordHelper(private val preferredBufferSize: Int) {
         recordingThread.start()
     }
 
+    var paused = false
+
+
     private fun setup() {
         setThreadPriority(THREAD_PRIORITY_AUDIO)
         Log.i("RecordObject", "Trying to get a hold of the microphone")
@@ -87,10 +91,15 @@ class RecordHelper(private val preferredBufferSize: Int) {
     private fun record() {
         recordObject?.startRecording()
         while (shouldRecord) {
-            // locks the thread while reading from microphone
-            recordObject?.read(audioBuffer, 0, bufferSize)
-            // pass copies on to the listeners
-            listenerList.forEach { it.onBufferReady(audioBuffer.copyOf()) }
+            if (paused) {
+                sleep(100)
+            } else {
+                // locks the thread while reading from microphone
+                recordObject?.read(audioBuffer, 0, bufferSize)
+                // pass copies on to the listeners
+                listenerList.forEach { it.onBufferReady(audioBuffer.copyOf()) }
+
+            }
         }
         recordObject?.stop()
         recordObject?.release()

@@ -59,6 +59,7 @@ class RecordActivity : AppCompatActivity(),
         PlaybackModeControlListener,
         PCMPlayerListener {
 
+
     override fun isReady(): Boolean {
         return instrumentFragment?.spectrogramView?.isReady() ?: false
     }
@@ -272,6 +273,19 @@ class RecordActivity : AppCompatActivity(),
             it.start()
         }
     }
+
+    override fun pauseMicrophone() {
+        recorder?.paused = true
+    }
+
+    override fun resumeMicrophone() {
+        recorder?.paused = false
+    }
+
+    override fun isMicrophoneOn(): Boolean {
+        return !(recorder?.paused ?: true)
+    }
+
 
     /**
      * stops the RecordHelper, releases the Microphone and then deletes the RecordHelper
