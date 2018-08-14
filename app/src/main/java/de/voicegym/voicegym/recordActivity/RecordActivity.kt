@@ -428,7 +428,6 @@ class RecordActivity : AppCompatActivity(),
     override fun saveToSdCard() {
         launch(CommonPool) {
             pcmStorage?.let {
-                it.reverseForBugfix()
                 it.rewind()
                 savePCMInputStreamOnSDCard(dateString, it, it.sampleRate, 128000)
             }

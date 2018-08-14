@@ -36,9 +36,9 @@ class TestPCMStorage {
         storage.stopListening()
         val buffer=storage.asShortBuffer().array()
         for (i in 0 until 3000) {
-            System.out.println(i)
             assertEquals(i, buffer[i].toInt())
         }
+        System.out.print("First test complete, rewinding and testing again")
 
         storage.rewind()
 
