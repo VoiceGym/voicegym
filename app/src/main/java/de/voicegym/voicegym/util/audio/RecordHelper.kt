@@ -51,10 +51,12 @@ class RecordHelper(private val preferredBufferSize: Int) {
     /**
      * Add listeners that shall receive data from the recordThread
      */
+    @Synchronized
     fun subscribeListener(listener: RecordBufferListener) {
         if (listener.canHandleBufferSize(bufferSize)) listenerList.add(listener)
     }
 
+    @Synchronized
     fun unSubscribeListener(listener: RecordBufferListener) {
         if (listenerList.contains(listener)) listenerList.remove(listener)
     }
@@ -87,6 +89,10 @@ class RecordHelper(private val preferredBufferSize: Int) {
         }
     }
 
+    @Synchronized
+    private fun distributeArray(array: ShortArray) {
+        listenerList.forEach { it.onBufferReady(array) }
+    }
 
     private fun record() {
         recordObject?.startRecording()
@@ -97,8 +103,7 @@ class RecordHelper(private val preferredBufferSize: Int) {
                 // locks the thread while reading from microphone
                 recordObject?.read(audioBuffer, 0, bufferSize)
                 // pass copies on to the listeners
-                listenerList.forEach { it.onBufferReady(audioBuffer.copyOf()) }
-
+                distributeArray(audioBuffer.copyOf())
             }
         }
         recordObject?.stop()

@@ -72,7 +72,7 @@ class SpectrogramFragment : AbstractInstrumentFragment() {
     /**
      * this is the callback that receives a new amplitudeArray
      */
-    override fun insertNewAmplitudes(spectrum: DoubleArray) {
+    @Synchronized override fun insertNewAmplitudes(spectrum: DoubleArray) {
         spectrogramView.addRight(spectrum, true)
         if (spectrogramView.spectrogramViewState == RECORDING_DATA) {
             savedSpectra.add(spectrum)
@@ -80,7 +80,7 @@ class SpectrogramFragment : AbstractInstrumentFragment() {
         }
     }
 
-    private fun scrollLeft() {
+    @Synchronized private fun scrollLeft() {
         zeroAmplitudes?.let {
             if (spectrogramView.spectrogramViewState == PLAYBACK) {
                 currentPosition--
@@ -95,7 +95,7 @@ class SpectrogramFragment : AbstractInstrumentFragment() {
         spectrogramView.invalidate()
     }
 
-    private fun scrollRight() {
+    @Synchronized private fun scrollRight() {
         if (spectrogramView.spectrogramViewState == PLAYBACK) {
             if (currentPosition < savedSpectra.size - 1) {
                 spectrogramView.addRight(savedSpectra[++currentPosition], true)
@@ -114,7 +114,7 @@ class SpectrogramFragment : AbstractInstrumentFragment() {
 
     override fun getCurrentSamplePosition(): Int = currentPosition * settings.samplesPerDatapoint
 
-    override fun seekToSamplePosition(samplePosition: Int) {
+    @Synchronized override fun seekToSamplePosition(samplePosition: Int) {
         val position = samplePosition / settings.samplesPerDatapoint
 
         val scrollTo = when {
@@ -129,7 +129,7 @@ class SpectrogramFragment : AbstractInstrumentFragment() {
         }
     }
 
-    override fun resetFragment() {
+    @Synchronized override fun resetFragment() {
         spectrogramView.let {
             it.clearBitmapAndBuffer()
             it.spectrogramViewState = LIVE_DISPLAY
@@ -142,7 +142,7 @@ class SpectrogramFragment : AbstractInstrumentFragment() {
         spectrogramView.spectrogramViewState = RECORDING_DATA
     }
 
-    override fun doneRecordingSwitchToPlayback() {
+    @Synchronized override fun doneRecordingSwitchToPlayback() {
         spectrogramView.spectrogramViewState = InstrumentState.PLAYBACK
         spectrogramView.clearBitmapAndBuffer()
         val left = if (leftBorderPosition() >= 0) currentPosition - settings.displayedDatapoints else 0
@@ -150,7 +150,7 @@ class SpectrogramFragment : AbstractInstrumentFragment() {
         spectrogramView.invalidate()
     }
 
-    override fun cutToMaximumSampleNumber(samples: Int) {
+    @Synchronized override fun cutToMaximumSampleNumber(samples: Int) {
         if (samples < settings.samplesPerDatapoint * savedSpectra.size) {
             val remove = savedSpectra.subList(samples / settings.samplesPerDatapoint, savedSpectra.size - 1)
             savedSpectra.removeAll(remove)
