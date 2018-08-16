@@ -3,7 +3,6 @@ package de.voicegym.voicegym.menu
 import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.net.Uri
 import android.os.Bundle
 import android.support.design.widget.NavigationView
 import android.support.v4.app.ActivityCompat
@@ -33,7 +32,6 @@ class NavigationDrawerActivity : AppCompatActivity(),
         NavigationView.OnNavigationItemSelectedListener,
         RecordingsFragment.OnListFragmentInteractionListener,
         RecordingsFragment.SwitchToPlaybackFragmentListener,
-        InstrumentsFragment.OnFragmentInteractionListener,
         SwitchToRecordingViewListener {
 
 
@@ -51,9 +49,6 @@ class NavigationDrawerActivity : AppCompatActivity(),
         startActivity(intent)
     }
 
-    override fun onFragmentInteraction(uri: Uri) {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-    }
 
     private fun requestPermission() {
 
@@ -114,7 +109,8 @@ class NavigationDrawerActivity : AppCompatActivity(),
         nav_view.setNavigationItemSelectedListener(this)
 
         requestPermission()
-        if (savedInstanceState == null) loadRecordingsFragment()
+        // always load recordingsfragment since, if we are adding more fragments we need a better way to launch the spectrogram
+        loadRecordingsFragment()
     }
 
     override fun onBackPressed() {
@@ -130,7 +126,7 @@ class NavigationDrawerActivity : AppCompatActivity(),
         // Handle navigation view item clicks here.
         when (item.itemId) {
             R.id.nav_instruments -> {
-                loadInstrumentsFragment()
+                switchToRecordingView()
             }
 
             R.id.nav_recordings  -> {
@@ -150,10 +146,6 @@ class NavigationDrawerActivity : AppCompatActivity(),
 
     private fun loadRecordingsFragment() {
         loadFragment(RecordingsFragment(), "RECORDINGS")
-    }
-
-    private fun loadInstrumentsFragment() {
-        loadFragment(InstrumentsFragment(), "INSTRUMENTS")
     }
 
 
