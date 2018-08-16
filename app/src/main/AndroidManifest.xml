@@ -19,7 +19,7 @@
         <activity
             android:name=".menu.NavigationDrawerActivity"
             android:label="@string/title_activity_navigation_drawer"
-            android:theme="@style/Theme.AppCompat.Light.NoActionBar">
+            android:theme="@style/basicVoiceGym">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <action android:name="android.intent.action.VIEW" />
