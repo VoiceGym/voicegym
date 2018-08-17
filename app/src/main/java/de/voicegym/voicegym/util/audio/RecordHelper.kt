@@ -7,7 +7,6 @@ import android.media.AudioRecord.getMinBufferSize
 import android.media.MediaRecorder.AudioSource.MIC
 import android.os.Process.THREAD_PRIORITY_AUDIO
 import android.os.Process.setThreadPriority
-import android.util.Log
 import de.voicegym.voicegym.menu.settings.SettingsBundle.audioFormat
 import de.voicegym.voicegym.menu.settings.SettingsBundle.channelConfig
 import de.voicegym.voicegym.menu.settings.SettingsBundle.sampleRate
@@ -41,10 +40,6 @@ class RecordHelper(private val preferredBufferSize: Int) {
     var shouldRecord: Boolean = true
         private set
 
-    init {
-        Log.e("RecordHelper", "Recordhelper initialized")
-    }
-
     // Functions
     fun hasPreferredSize(): Boolean = bufferSize == preferredBufferSize
 
@@ -62,10 +57,8 @@ class RecordHelper(private val preferredBufferSize: Int) {
     }
 
     private var recordingThread = Thread(Runnable {
-        Log.i("Recordhelper", "Starting Thread")
         setup()
         record()
-        Log.i("Recordhelper", "Thread Done")
     })
 
     fun start() {
@@ -77,9 +70,7 @@ class RecordHelper(private val preferredBufferSize: Int) {
 
     private fun setup() {
         setThreadPriority(THREAD_PRIORITY_AUDIO)
-        Log.i("RecordObject", "Trying to get a hold of the microphone")
         recordObject = AudioRecord(MIC, sampleRate, channelConfig, audioFormat, bufferSize * bytesPerBufferSlot)
-        Log.i("RecordObject", "Got the microphone")
         if (bufferSize == AudioRecord.ERROR || bufferSize == AudioRecord.ERROR_BAD_VALUE) {
             throw RuntimeException("Error while setting up buffer")
         }

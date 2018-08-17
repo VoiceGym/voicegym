@@ -11,7 +11,6 @@ import android.graphics.Typeface
 import android.os.Process.THREAD_PRIORITY_URGENT_DISPLAY
 import android.os.Process.setThreadPriority
 import android.util.AttributeSet
-import android.util.Log
 import android.view.MotionEvent
 import android.view.MotionEvent.ACTION_DOWN
 import android.view.MotionEvent.ACTION_MOVE
@@ -467,7 +466,6 @@ class SpectrogramView : SurfaceView, InstrumentViewInterface, Runnable {
      * If the rendering Thread is not yet running this will start the thread
      */
     fun startRendering() {
-        Log.i("RenderThread", "startRendering() called")
         if (!rendering && renderThread == null) {
             rendering = true
             renderThread = thread(start = true) { this.run() }
@@ -491,7 +489,6 @@ class SpectrogramView : SurfaceView, InstrumentViewInterface, Runnable {
      * This function stops the renderThread and locks the calling thread until renderThread has finished.
      */
     fun stopRendering() {
-        Log.i("RenderThread", "stopRendering() called")
         if (rendering && renderThread != null) {
             rendering = false
             renderThread?.join()

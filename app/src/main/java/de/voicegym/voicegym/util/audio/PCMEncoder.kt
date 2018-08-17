@@ -4,8 +4,6 @@ import android.media.MediaCodec
 import android.media.MediaCodecInfo
 import android.media.MediaFormat
 import android.media.MediaMuxer
-import android.util.Log
-
 import java.io.IOException
 import java.io.InputStream
 import java.nio.ByteBuffer
@@ -44,33 +42,28 @@ class PCMEncoder
         if (outputPath == null) {
             throw IllegalStateException("The output path must be set first!")
         }
-        try {
-            mediaFormat = MediaFormat.createAudioFormat(COMPRESSED_AUDIO_FILE_MIME_TYPE, sampleRate, channelCount)
-            mediaFormat?.setInteger(MediaFormat.KEY_AAC_PROFILE, MediaCodecInfo.CodecProfileLevel.AACObjectLC)
-            mediaFormat?.setInteger(MediaFormat.KEY_BIT_RATE, bitrate)
-            mediaFormat?.setInteger(MediaFormat.KEY_CHANNEL_COUNT, 1)
-            mediaFormat?.setInteger(MediaFormat.KEY_SAMPLE_RATE, sampleRate)
+        mediaFormat = MediaFormat.createAudioFormat(COMPRESSED_AUDIO_FILE_MIME_TYPE, sampleRate, channelCount)
+        mediaFormat?.setInteger(MediaFormat.KEY_AAC_PROFILE, MediaCodecInfo.CodecProfileLevel.AACObjectLC)
+        mediaFormat?.setInteger(MediaFormat.KEY_BIT_RATE, bitrate)
+        mediaFormat?.setInteger(MediaFormat.KEY_CHANNEL_COUNT, 1)
+        mediaFormat?.setInteger(MediaFormat.KEY_SAMPLE_RATE, sampleRate)
 
 
-            mediaCodec = MediaCodec.createEncoderByType(COMPRESSED_AUDIO_FILE_MIME_TYPE)
-            mediaCodec?.configure(mediaFormat, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE)
-            mediaCodec?.start()
+        mediaCodec = MediaCodec.createEncoderByType(COMPRESSED_AUDIO_FILE_MIME_TYPE)
+        mediaCodec?.configure(mediaFormat, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE)
+        mediaCodec?.start()
 
-            codecInputBuffers = mediaCodec?.inputBuffers
-            codecOutputBuffers = mediaCodec?.outputBuffers
+        codecInputBuffers = mediaCodec?.inputBuffers
+        codecOutputBuffers = mediaCodec?.outputBuffers
 
-            bufferInfo = MediaCodec.BufferInfo()
+        bufferInfo = MediaCodec.BufferInfo()
 
-            mediaMuxer = MediaMuxer(outputPath, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4)
-            totalBytesRead = 0
-            presentationTimeUs = 0
-        } catch (e: IOException) {
-            Log.e(TAG, "Exception while initializing PCMEncoder", e)
-        }
+        mediaMuxer = MediaMuxer(outputPath, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4)
+        totalBytesRead = 0
+        presentationTimeUs = 0
     }
 
     fun stop() {
-        Log.d(TAG, "Stopping PCMEncoder")
         handleEndOfStream()
         mediaCodec?.stop()
         mediaCodec?.release()
@@ -92,7 +85,6 @@ class PCMEncoder
      * @throws IOException
      */
     fun encode(inputStream: InputStream, sampleRate: Int) {
-        Log.d(TAG, "Starting encoding of InputStream")
         val tempBuffer = ByteArray(2 * sampleRate)
         var hasMoreData = true
         var stop = false
@@ -126,7 +118,6 @@ class PCMEncoder
         }
 
         inputStream.close()
-        Log.d(TAG, "Finished encoding of InputStream")
     }
 
     private fun writeOutputs() {
@@ -153,7 +144,6 @@ class PCMEncoder
     }
 
     companion object {
-        private const val TAG = "PCMEncoder"
         private const val COMPRESSED_AUDIO_FILE_MIME_TYPE = "audio/mp4a-latm"
         private const val CODEC_TIMEOUT = 5000L
     }

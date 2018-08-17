@@ -6,9 +6,7 @@ import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
 import android.os.Bundle
 import android.os.Handler
-import android.support.v4.app.Fragment
 import android.support.v7.app.AppCompatActivity
-import android.util.Log
 import android.view.Surface
 import android.view.View
 import android.view.ViewTreeObserver.OnGlobalLayoutListener
@@ -409,7 +407,6 @@ class RecordActivity : AppCompatActivity(),
     override fun receiveRating(rating: Int) {
         //TODO get rating into datamodel
 
-        Log.i("Rated", "Record was rated $rating")
     }
 
     override fun saveToSdCard() {
@@ -430,7 +427,6 @@ class RecordActivity : AppCompatActivity(),
     }
 
     private fun loadFromSdCard(fileName: String) {
-        Log.i("RecordActivity", "Load from SDCard called")
         pcmStorage = PCMStorage(SettingsBundle.sampleRate)
         instrumentFragment?.startRecording()
         val decoder = MP4Decoder(settings.samplesPerDatapoint)

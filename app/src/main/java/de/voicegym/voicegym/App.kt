@@ -12,22 +12,23 @@ import kotlinx.coroutines.experimental.launch
 
 class App : Application() {
 
-    private lateinit var db : AppDatabase
+    private lateinit var db: AppDatabase
     override fun onCreate() {
         super.onCreate()
         db = AppDatabase.getInstance(baseContext)
         // TODO: We don't really need this, but it's nice for developement
-        launch (CommonPool) {
+        launch(CommonPool) {
             // we don't have access permission on first start, since permission are required in the first activity
-            if ( isStoragePermissionGranted() ) {
+            if (isStoragePermissionGranted()) {
                 getVoiceGymFolder()?.also {
                     val files = it.listFiles()
-                    files.map {file ->
-                        db.recordingDao().getByFileName(file.path) ?: db.recordingDao().insert(Recording().apply {
-                            fileName = file.path
-                            createdAt = file.lastModified()
-                            updatedAt = file.lastModified()
-                        })
+                    files.map { file ->
+                        db.recordingDao().getByFileName(file.path)
+                                ?: db.recordingDao().insert(Recording().apply {
+                                    fileName = file.path
+                                    createdAt = file.lastModified()
+                                    updatedAt = file.lastModified()
+                                })
                     }
                 }
             }

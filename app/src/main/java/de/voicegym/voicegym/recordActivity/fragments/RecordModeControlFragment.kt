@@ -59,13 +59,13 @@ class RecordModeControlFragment : Fragment() {
 
     private fun microPhoneButtonPressed() {
         when (recordActivity?.isMicrophoneOn()) {
-            true -> {
+            true  -> {
                 recordActivity?.pauseMicrophone()
                 microphoneButton?.setImageDrawable(resources.getDrawable(android.R.drawable.ic_btn_speak_now))
                 microphoneButton?.backgroundTintList = ColorStateList.valueOf(resources.getColor(R.color.item_name))
             }
 
-            false  -> {
+            false -> {
                 recordActivity?.resumeMicrophone()
                 microphoneButton?.setImageDrawable(resources.getDrawable(android.R.drawable.presence_audio_busy))
                 microphoneButton?.backgroundTintList = ColorStateList.valueOf(Color.parseColor("#cbcbcb"))

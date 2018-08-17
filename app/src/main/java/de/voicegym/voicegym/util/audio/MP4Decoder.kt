@@ -9,7 +9,6 @@ import android.media.MediaExtractor
 import android.media.MediaFormat
 import android.os.Build
 import android.os.Process
-import android.util.Log
 import de.voicegym.voicegym.util.DecoderBufferListener
 import java.io.File
 import java.nio.ByteBuffer
@@ -150,8 +149,6 @@ class MP4Decoder(private val bufferSizeForCallbacks: Int) {
 
                 bufferId == INFO_OUTPUT_FORMAT_CHANGED  -> {
                     // new format
-                    outputFormat = codec.outputFormat
-                    Log.i("OutputFormat now: ", outputFormat.toString())
                 }
 
                 bufferId == INFO_TRY_AGAIN_LATER        -> {
@@ -237,7 +234,6 @@ class MP4Decoder(private val bufferSizeForCallbacks: Int) {
         if (mime.startsWith("audio/")) {
             mediaExtractor.selectTrack(audioChannel)
             trackFormat = inputFormat
-            Log.i("InputFormat", inputFormat.toString())
         } else {
             throw Error("Selected channel was no audio track")
         }

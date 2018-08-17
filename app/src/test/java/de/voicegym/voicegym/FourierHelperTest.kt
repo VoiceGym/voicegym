@@ -1,9 +1,8 @@
 package de.voicegym.voicegym
 
-import android.support.annotation.Nullable
 import de.voicegym.voicegym.util.audio.WavFile
-import de.voicegym.voicegym.util.math.FourierHelper
 import de.voicegym.voicegym.util.audio.getDoubleArrayFromShortArray
+import de.voicegym.voicegym.util.math.FourierHelper
 import junit.framework.Assert.assertEquals
 import junit.framework.Assert.assertFalse
 import junit.framework.Assert.assertTrue
