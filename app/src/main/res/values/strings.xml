@@ -32,4 +32,18 @@
     <!-- invisible strings not sure needed why -->
     <string name="navigation_drawer_open" translatable="false">Open navigation drawer</string>
     <string name="navigation_drawer_close" translatable="false">Close navigation drawer</string>
+
+    <string-array name="list_of_binning_values" translatable="false">
+        <item>1</item>
+        <item>2</item>
+        <item>4</item>
+        <item>8</item>
+    </string-array>
+
+    <string-array name="list_of_blockSizes" translatable="false">
+        <item>2048</item>
+        <item>4096</item>
+        <item>8192</item>
+    </string-array>
+
 </resources>

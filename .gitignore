@@ -54,3 +54,5 @@ freeline/
 freeline_project_description.json
 
 .DS_Store
+app/keystore.properties
+app/release/output.json

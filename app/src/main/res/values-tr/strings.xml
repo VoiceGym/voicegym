@@ -12,4 +12,9 @@
     <string name="displayScaleText">Ölçeği göster</string>
     <string name="fourierTransformationSettings">Fourier dönüşümü Ayarlar</string>
     <string name="fftBlocksizeText">FFT blok boyutu</string>
+    <string name="instruments">Spectrogram</string>
+    <string name="permission_alert_recordAudioMicrophone_title">Ses kaydına izin ver</string>
+    <string name="permission_alert_saveReadFiles_title">Dosya erişimine izin ver</string>
+    <string name="permission_alert_recordAudioMicrophone_text">Sesinizi analiz etmek istiyoruz ve bu nedenle mikrofonunuza erişmemiz gerekiyor.</string>
+    <string name="permission_alert_saveReadFiles_text">Ses kayıtlarınızı kaydedip okuyabilmemiz için dosya sisteminize erişmemiz gerekiyor.</string>
 </resources>
