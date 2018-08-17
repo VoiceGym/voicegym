@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="settings">Ayarlar</string>
+    <string name="delete">SILMEK</string>
+    <string name="recordings">Ses kaydıler</string>
+    <string name="fourierSettingsTitleText">Ekran ve Fourier Ayarlar</string>
+    <string name="instrumentViewSettings">Ekran Ayarlar</string>
+    <string name="fromFrequencyText">Frekanstan göster</string>
+    <string name="untilFrequencyText">Frekansa kadar göster</string>
+    <string name="numberOfDisplayedBlocksText">Görüntülenen blok sayısı</string>
+    <string name="logarithmicDisplayText">Logaritmik ekran</string>
+    <string name="displayScaleText">Ölçeği göster</string>
+    <string name="fourierTransformationSettings">Fourier dönüşümü Ayarlar</string>
+    <string name="fftBlocksizeText">FFT blok boyutu</string>
+</resources>
