@@ -1,9 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name" translatable="false">VoiceGym</string>
     <string name="delete">DELETE</string>
     <!-- Menu Strings -->
-
-    <string name="nav_header_subtitle" translatable="false">voicegymmail@gmail.com</string>
 
     <string name="instruments">Spectrogram</string>
     <string name="recordings">Recordings</string>
@@ -21,7 +19,6 @@
 
     <string name="fourierTransformationSettings">Fourier Transformation Settings</string>
     <string name="fftBlocksizeText">FFT Blocksize</string>
-    <string name="fftBinningText" translatable="false">FFT Binning</string>
 
 
     <!-- Strings related to Permission requests -->
@@ -30,6 +27,4 @@
     <string name="permission_alert_saveReadFiles_title">Access Files</string>
     <string name="permission_alert_saveReadFiles_text">We want to open and save your recordings to your device, for that we ne read and write permission to your files.</string>
     <!-- invisible strings not sure needed why -->
-    <string name="navigation_drawer_open" translatable="false">Open navigation drawer</string>
-    <string name="navigation_drawer_close" translatable="false">Close navigation drawer</string>
 </resources>

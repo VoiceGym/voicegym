@@ -76,8 +76,8 @@ class NavigationDrawerActivity : AppCompatActivity(),
             // only show dialog, if permission was denied earlier
             if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.RECORD_AUDIO)) {
                 AlertDialog.Builder(this)
-                        .setTitle(R.string.permission_alert_dialog_title)
-                        .setMessage(R.string.permission_alert_dialog_text)
+                        .setTitle(R.string.permission_alert_recordAudioMicrophone_title)
+                        .setMessage(R.string.permission_alert_recordAudioMicrophone_text)
                         .setPositiveButton(android.R.string.ok) { _, _ ->
                             ActivityCompat.requestPermissions(
                                     this,
