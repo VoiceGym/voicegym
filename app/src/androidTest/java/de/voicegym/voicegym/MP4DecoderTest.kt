@@ -36,9 +36,10 @@ class MP4DecoderTest {
         val out = FileOutputStream(outFile)
         out.write(data)
         out.close()
-
-
-        val obj2 =MP4Decoder.getPCMStorage(outFile)
-        Assert.assertTrue(obj2 is PCMStorage)
+        val decoder=MP4Decoder(4096)
+        val pcmStorage=PCMStorage(44100)
+        // start decoding without error
+        decoder.addBufferListener(pcmStorage)
+        decoder.startDecoding(outFile)
     }
 }

@@ -1,8 +1,8 @@
 package de.voicegym.voicegym.recordings
 
 import android.arch.lifecycle.Observer
-import android.content.Context
 import android.arch.lifecycle.ViewModelProviders
+import android.content.Context
 import android.graphics.Color
 import android.os.Bundle
 import android.support.design.widget.BaseTransientBottomBar
@@ -29,11 +29,10 @@ import java.io.File
 class RecordingsFragment : Fragment(),
         RecyclerItemTouchHelperListener {
 
-    val TAG = "RecordingsFragment"
     private var listener: OnListFragmentInteractionListener? = null
 
     private lateinit var recordingsListViewModel: RecordingListViewModel
-    lateinit var adapter: RecordingsAdapter
+    private lateinit var adapter: RecordingsAdapter
 
     override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int, position: Int) {
         if (viewHolder is RecordingsAdapter.ViewHolder) {
@@ -49,12 +48,12 @@ class RecordingsFragment : Fragment(),
                         undone = true
                     }
                     .addCallback(object : BaseTransientBottomBar.BaseCallback<Snackbar>() {
-                            override fun onDismissed(transientBottomBar: Snackbar?, event: Int) {
-                                if (!undone) {
-                                    File(deletedRecording.fileName).delete()
-                                }
+                        override fun onDismissed(transientBottomBar: Snackbar?, event: Int) {
+                            if (!undone) {
+                                File(deletedRecording.fileName).delete()
                             }
                         }
+                    }
                     )
                     .setActionTextColor(Color.YELLOW)
                     .show()
@@ -106,6 +105,7 @@ class RecordingsFragment : Fragment(),
      * for more information.
      */
     interface OnListFragmentInteractionListener {
+
         // TODO: Update argument type and name
         fun onListFragmentInteraction(item: Recording)
     }

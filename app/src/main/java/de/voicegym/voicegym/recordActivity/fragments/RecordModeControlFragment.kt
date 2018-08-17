@@ -6,7 +6,6 @@ import android.graphics.Color
 import android.os.Bundle
 import android.support.design.widget.FloatingActionButton
 import android.support.v4.app.Fragment
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -34,9 +33,9 @@ class RecordModeControlFragment : Fragment() {
         // Inflate the layout for this fragment
         val view = inflater.inflate(R.layout.fragment_record_mode_control, container, false)
         recordButton = view.findViewById(R.id.recordButton)
-        recordButton?.let {
-            it.backgroundTintList = ColorStateList.valueOf(resources.getColor(android.R.color.holo_red_dark))
-            it.setOnClickListener { recordButtonPressed() }
+        recordButton?.let { button ->
+            button.backgroundTintList = ColorStateList.valueOf(resources.getColor(android.R.color.holo_red_dark))
+            button.setOnClickListener { recordButtonPressed() }
         }
         microphoneButton = view.findViewById(R.id.microphoneButton)
         microphoneButton?.setOnClickListener { microPhoneButtonPressed() }

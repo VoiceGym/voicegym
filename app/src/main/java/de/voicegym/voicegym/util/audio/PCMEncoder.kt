@@ -48,7 +48,7 @@ class PCMEncoder
             mediaFormat = MediaFormat.createAudioFormat(COMPRESSED_AUDIO_FILE_MIME_TYPE, sampleRate, channelCount)
             mediaFormat?.setInteger(MediaFormat.KEY_AAC_PROFILE, MediaCodecInfo.CodecProfileLevel.AACObjectLC)
             mediaFormat?.setInteger(MediaFormat.KEY_BIT_RATE, bitrate)
-            mediaFormat?.setInteger(MediaFormat.KEY_CHANNEL_COUNT, 1);
+            mediaFormat?.setInteger(MediaFormat.KEY_CHANNEL_COUNT, 1)
             mediaFormat?.setInteger(MediaFormat.KEY_SAMPLE_RATE, sampleRate)
 
 
@@ -79,7 +79,7 @@ class PCMEncoder
     }
 
     private fun handleEndOfStream() {
-        val inputBufferIndex = mediaCodec?.dequeueInputBuffer(CODEC_TIMEOUT.toLong())
+        val inputBufferIndex = mediaCodec?.dequeueInputBuffer(CODEC_TIMEOUT)
         mediaCodec?.queueInputBuffer(inputBufferIndex!!, 0, 0, presentationTimeUs, MediaCodec.BUFFER_FLAG_END_OF_STREAM)
         writeOutputs()
     }
@@ -132,7 +132,7 @@ class PCMEncoder
     private fun writeOutputs() {
         var outputBufferIndex = 0
         while (outputBufferIndex != MediaCodec.INFO_TRY_AGAIN_LATER) {
-            outputBufferIndex = mediaCodec!!.dequeueOutputBuffer(bufferInfo!!, CODEC_TIMEOUT.toLong())
+            outputBufferIndex = mediaCodec!!.dequeueOutputBuffer(bufferInfo!!, CODEC_TIMEOUT)
             if (outputBufferIndex >= 0) {
                 val encodedData = codecOutputBuffers!![outputBufferIndex]
                 encodedData.position(bufferInfo!!.offset)

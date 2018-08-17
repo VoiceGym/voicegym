@@ -15,7 +15,7 @@ import kotlinx.android.synthetic.main.fragment_recordings.durationView
 import kotlinx.android.synthetic.main.fragment_recordings.floatingActionButton2
 
 /**
- * [RecyclerView.Adapter] that can display a [DummyItem] and makes a call to the
+ * [RecyclerView.Adapter] that can display a [Recording] and makes a call to the
  * specified [OnListFragmentInteractionListener].
  * TODO: Replace the implementation with code for your data type.
  */
@@ -62,7 +62,7 @@ class RecordingsAdapter(
 
     operator fun get(position: Int): Recording = values[position]
 
-    class ViewHolder(override val containerView: View, val listener: RecordingsFragment.SwitchToPlaybackFragmentListener) : RecyclerView.ViewHolder(containerView), LayoutContainer {
+    class ViewHolder(override val containerView: View, private val listener: RecordingsFragment.SwitchToPlaybackFragmentListener) : RecyclerView.ViewHolder(containerView), LayoutContainer {
 
         fun bindRecording(recording: Recording) {
             durationView.text = "${recording.duration}s"

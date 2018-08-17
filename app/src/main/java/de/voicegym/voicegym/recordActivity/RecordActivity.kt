@@ -212,7 +212,7 @@ class RecordActivity : AppCompatActivity(),
         }
     }
 
-    var wasListeningBeforeStop: Boolean = false
+    private var wasListeningBeforeStop: Boolean = false
 
     override fun onPause() {
         super.onPause()
@@ -366,8 +366,6 @@ class RecordActivity : AppCompatActivity(),
     }
 
 
-    fun getInstrumentFragment(): Fragment? = supportFragmentManager.findFragmentById(R.id.spectrogramFragment)
-
     /*
     The following methods implement the RecordModeControlListener Interface
      */
@@ -425,7 +423,7 @@ class RecordActivity : AppCompatActivity(),
             val size = pcmStorage?.size ?: 0
             val sampleRate = pcmStorage?.sampleRate ?: 41000
             recordingDao.insert(Recording().also {
-                it.fileName = getVoiceGymFolder()?.absolutePath + "/${dateString}.m4a"
+                it.fileName = getVoiceGymFolder()?.absolutePath + "/$dateString.m4a"
                 it.duration = size / sampleRate
             })
         }
@@ -499,7 +497,7 @@ class RecordActivity : AppCompatActivity(),
         }
     }
 
-    fun lockScreenPosition() {
+    private fun lockScreenPosition() {
 
         val rotation = (getSystemService(Context.WINDOW_SERVICE) as WindowManager).defaultDisplay.rotation
         requestedOrientation =
@@ -513,7 +511,7 @@ class RecordActivity : AppCompatActivity(),
 
     }
 
-    fun unLockScreenPosition() {
+    private fun unLockScreenPosition() {
         requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
     }
 

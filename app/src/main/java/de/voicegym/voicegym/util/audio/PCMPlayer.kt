@@ -76,16 +76,18 @@ class PCMPlayer(val sampleRate: Int, private val buffer: ShortBuffer, val contex
                 }
                 player.play()
                 while (playing) {
-                    if (buffer.position() + playBuffer.size < buffer.capacity()) {
-                        buffer.get(playBuffer)
-                        player.write(playBuffer, 0, playBuffer.size)
-                    } else if (buffer.position() < buffer.capacity() - 1) {
-                        playBuffer.fill(0)
-                        buffer.get(playBuffer, 0, buffer.capacity() - buffer.position())
-                        player.write(playBuffer, 0, playBuffer.size)
-                        playing = false
-                    } else {
-                        playing = false
+                    when {
+                        buffer.position() + playBuffer.size < buffer.capacity() -> {
+                            buffer.get(playBuffer)
+                            player.write(playBuffer, 0, playBuffer.size)
+                        }
+                        buffer.position() < buffer.capacity() - 1               -> {
+                            playBuffer.fill(0)
+                            buffer.get(playBuffer, 0, buffer.capacity() - buffer.position())
+                            player.write(playBuffer, 0, playBuffer.size)
+                            playing = false
+                        }
+                        else                                                    -> playing = false
                     }
                     currentPosition = buffer.position()
                     informListeners(currentPosition)
@@ -95,7 +97,7 @@ class PCMPlayer(val sampleRate: Int, private val buffer: ShortBuffer, val contex
     }
 
     fun stop() {
-        playing = false;
+        playing = false
         playerThread?.join()
     }
 

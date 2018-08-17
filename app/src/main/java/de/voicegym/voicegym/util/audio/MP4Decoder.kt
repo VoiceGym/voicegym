@@ -17,7 +17,7 @@ import java.nio.ByteOrder
 import kotlin.concurrent.thread
 
 
-class MP4Decoder(val bufferSizeForCallbacks: Int) {
+class MP4Decoder(private val bufferSizeForCallbacks: Int) {
 
     /**
      * The buffer array in which the decoded samples are stored before they are handed out to the subscribers
@@ -219,10 +219,10 @@ class MP4Decoder(val bufferSizeForCallbacks: Int) {
         for (i in 0..mediaExtractor.trackCount) {
             mime = mediaExtractor.getTrackFormat(i).getString(MediaFormat.KEY_MIME)
             if (mime.startsWith("audio/")) {
-                return i;
+                return i
             }
         }
-        return -1;
+        return -1
     }
 
     /**
@@ -232,7 +232,7 @@ class MP4Decoder(val bufferSizeForCallbacks: Int) {
         var trackFormat: MediaFormat? = null
         // select the first audio track
 
-        val inputFormat = mediaExtractor.getTrackFormat(audioChannel);
+        val inputFormat = mediaExtractor.getTrackFormat(audioChannel)
         val mime = inputFormat.getString(MediaFormat.KEY_MIME)
         if (mime.startsWith("audio/")) {
             mediaExtractor.selectTrack(audioChannel)

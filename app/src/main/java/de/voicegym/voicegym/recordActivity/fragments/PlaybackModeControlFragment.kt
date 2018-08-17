@@ -31,9 +31,9 @@ class PlaybackModeControlFragment : Fragment() {
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         // Inflate the layout for this fragment
         val view = inflater.inflate(R.layout.fragment_playback_mode_control, container, false)
-        playPauseButton = view.findViewById<FloatingActionButton>(R.id.playPauseControlButton)
-        rateButton = view.findViewById<FloatingActionButton>(R.id.rateControlButton)
-        saveButton = view.findViewById<FloatingActionButton>(R.id.saveControlButton)
+        playPauseButton = view.findViewById(R.id.playPauseControlButton)
+        rateButton = view.findViewById(R.id.rateControlButton)
+        saveButton = view.findViewById(R.id.saveControlButton)
 
         playPauseButton?.setOnClickListener { playbackModeControlListener?.playPause() }
         rateButton?.setOnClickListener { playbackModeControlListener?.openRatingDialog() }

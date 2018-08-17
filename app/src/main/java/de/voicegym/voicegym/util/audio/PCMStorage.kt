@@ -29,14 +29,14 @@ class PCMStorage(val sampleRate: Int) : RecordBufferListener, DecoderBufferListe
     }
 
     private fun getNextBuffer(): Boolean {
-        if (inputDeque.isNotEmpty()) {
+        return if (inputDeque.isNotEmpty()) {
             buffer = ByteBuffer.allocate(2 * inputDeque.peekFirst().size).order(ByteOrder.LITTLE_ENDIAN)
             val array = inputDeque.pollFirst()
             usedDeque.addFirst(array)
             buffer?.asShortBuffer()?.put(array)
-            return true
+            true
         } else {
-            return false
+            false
         }
     }
 

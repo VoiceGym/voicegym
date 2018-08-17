@@ -1,5 +1,6 @@
 package de.voicegym.voicegym
 
+import android.support.annotation.Nullable
 import de.voicegym.voicegym.util.audio.WavFile
 import de.voicegym.voicegym.util.math.FourierHelper
 import de.voicegym.voicegym.util.audio.getDoubleArrayFromShortArray
@@ -58,7 +59,7 @@ class FourierHelperTest {
 
     @Rule
     @JvmField
-    val exception = ExpectedException.none()
+    val exception = ExpectedException.none()!!
 
     @Test
     fun fourierHelperInstantiationFails() {
@@ -122,9 +123,9 @@ class FourierHelperTest {
 
     private fun idxOfMax(arr: DoubleArray): Int? {
         val max = arr.max()
-        if (max != null && max != Double.NaN)
-            return arr.indexOf(max)
+        return if (max != null && max != Double.NaN)
+            arr.indexOf(max)
         else
-            return null
+            null
     }
 }
