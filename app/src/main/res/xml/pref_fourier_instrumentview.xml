@@ -1,22 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <PreferenceCategory android:title="Instrument View Settings">
+    <PreferenceCategory android:title="@string/instrumentViewSettings">
 
         <EditTextPreference
-            android:defaultValue="10"
+            android:defaultValue="50"
             android:inputType="number"
             android:key="from_frequency"
             android:selectAllOnFocus="true"
             android:singleLine="true"
-            android:title="from Frequency" />
+            android:title="@string/fromFrequencyText" />
+
         <EditTextPreference
-            android:defaultValue="1000"
+            android:defaultValue="8000"
             android:inputType="number"
             android:key="till_frequency"
             android:selectAllOnFocus="true"
             android:singleLine="true"
-            android:title="until Frequency" />
+            android:title="@string/untilFrequencyText" />
 
         <EditTextPreference
             android:defaultValue="100"
@@ -24,32 +25,32 @@
             android:key="display_sample_numbers"
             android:selectAllOnFocus="true"
             android:singleLine="true"
-            android:title="Number of Displayed Blocks" />
+            android:title="@string/numberOfDisplayedBlocksText" />
 
         <CheckBoxPreference
-            android:defaultValue="false"
+            android:defaultValue="true"
             android:key="display_logarithmic"
-            android:title="Logarithmic Display" />
+            android:title="@string/logarithmicDisplayText" />
 
         <CheckBoxPreference
-            android:defaultValue="false"
+            android:defaultValue="true"
             android:key="display_scale"
-            android:title="Display a Scale" />
+            android:title="@string/displayScaleText" />
     </PreferenceCategory>
 
-    <PreferenceCategory android:title="Fourier Transformation Settings">
+    <PreferenceCategory android:title="@string/fourierTransformationSettings">
         <ListPreference
             android:defaultValue="4096"
             android:entries="@array/list_of_blockSizes"
             android:entryValues="@array/list_of_blockSizes"
             android:key="fft_blocksize"
-            android:title="FFT Blocksize" />
+            android:title="@string/fftBlocksizeText" />
 
         <ListPreference
             android:defaultValue="2"
             android:entries="@array/list_of_binning_values"
             android:entryValues="@array/list_of_binning_values"
             android:key="fft_binning"
-            android:title="FFT Binning" />
+            android:title="@string/fftBinningText" />
     </PreferenceCategory>
 </PreferenceScreen>

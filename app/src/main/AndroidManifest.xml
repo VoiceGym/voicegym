@@ -30,7 +30,6 @@
         <activity
             android:name=".recordActivity.RecordActivity"
             android:configChanges="keyboardHidden"
-            android:label="@string/title_activity_record"
             android:theme="@style/FullscreenNoActionbar" />
         <activity
             android:name=".menu.settings.SettingsActivity"
