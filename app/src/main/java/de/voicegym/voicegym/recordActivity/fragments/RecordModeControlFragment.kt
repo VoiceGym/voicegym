@@ -10,6 +10,8 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import de.voicegym.voicegym.R
+import org.jetbrains.anko.runOnUiThread
+import kotlin.concurrent.thread
 
 
 class RecordModeControlFragment : Fragment() {
@@ -34,7 +36,7 @@ class RecordModeControlFragment : Fragment() {
         val view = inflater.inflate(R.layout.fragment_record_mode_control, container, false)
         recordButton = view.findViewById(R.id.recordButton)
         recordButton?.let { button ->
-            button.backgroundTintList = ColorStateList.valueOf(resources.getColor(android.R.color.holo_red_dark))
+            button.backgroundTintList = ColorStateList.valueOf(resources.getColor(android.R.color.black))
             button.setOnClickListener { recordButtonPressed() }
         }
         microphoneButton = view.findViewById(R.id.microphoneButton)
@@ -50,9 +52,10 @@ class RecordModeControlFragment : Fragment() {
 
         recordActivity?.let {
             if (it.isRecording()) {
-                recordButton?.backgroundTintList = ColorStateList.valueOf(resources.getColor(android.R.color.holo_red_light))
+                blink()
             } else {
-                recordButton?.backgroundTintList = ColorStateList.valueOf(resources.getColor(android.R.color.holo_red_dark))
+                stopBlinking()
+                recordButton?.backgroundTintList = ColorStateList.valueOf(resources.getColor(android.R.color.black))
             }
         }
     }
@@ -67,13 +70,46 @@ class RecordModeControlFragment : Fragment() {
 
             false -> {
                 recordActivity?.resumeMicrophone()
-                microphoneButton?.setImageDrawable(resources.getDrawable(android.R.drawable.presence_audio_busy))
+                microphoneButton?.setImageDrawable(resources.getDrawable(android.R.drawable.ic_btn_speak_now))
                 microphoneButton?.backgroundTintList = ColorStateList.valueOf(Color.parseColor("#cbcbcb"))
             }
         }
 
     }
 
+
+    private var blinkRecording = false
+    private var blinkingThread: Thread? = null
+    private fun blink() {
+        blinkRecording = true
+        blinkingThread = thread {
+            var switch = true
+            while (blinkRecording) {
+                when (switch) {
+                    true  -> {
+                        switch = false
+                        context?.runOnUiThread {
+                            recordButton?.backgroundTintList = ColorStateList.valueOf(Color.parseColor("#df7777"))
+                        }
+                    }
+
+                    false -> {
+                        switch = true
+                        context?.runOnUiThread {
+                            recordButton?.backgroundTintList = ColorStateList.valueOf(Color.parseColor("#000000"))
+                        }
+
+                    }
+                }
+                Thread.sleep(750)
+            }
+        }
+    }
+
+    private fun stopBlinking() {
+        blinkRecording = false
+        blinkingThread?.join()
+    }
 
 }
 
