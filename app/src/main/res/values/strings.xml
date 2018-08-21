@@ -22,7 +22,9 @@
     <string name="fourierTransformationSettings">Fourier Transformation Settings</string>
     <string name="fftBlocksizeText">FFT Blocksize</string>
     <string name="fftBinningText" translatable="false">FFT Binning</string>
-
+    <!-- Strings related to the recordings view -->
+    <string name="recordedText">Recorded</string>
+    <string name="durationText">Duration</string>
 
     <!-- Strings related to Permission requests -->
     <string name="permission_alert_recordAudioMicrophone_title">Record Audio</string>

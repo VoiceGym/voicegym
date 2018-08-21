@@ -17,4 +17,6 @@
     <string name="permission_alert_saveReadFiles_title">Zugriff auf Dateisystem</string>
     <string name="permission_alert_saveReadFiles_text">Wir möchten deine Aufnahmen speichern und lesen können, brauchen dazu den Zugriff auf dein Dateisystem</string>
     <string name="permission_alert_recordAudioMicrophone_text">Wir möchten deine Stimme analysieren, und brauchen dazu Zugriff auf dein Mikrofon.</string>
+    <string name="recordedText">Aufgenommen</string>
+    <string name="durationText">Dauer</string>
 </resources>

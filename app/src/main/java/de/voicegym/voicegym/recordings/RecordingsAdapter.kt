@@ -15,7 +15,6 @@ import kotlinx.android.synthetic.main.fragment_recordings.createdView
 import kotlinx.android.synthetic.main.fragment_recordings.durationView
 import kotlinx.android.synthetic.main.fragment_recordings.floatingActionButton2
 import java.text.SimpleDateFormat
-import java.time.format.DateTimeFormatter
 
 /**
  * [RecyclerView.Adapter] that can display a [Recording] and makes a call to the
@@ -70,16 +69,21 @@ class RecordingsAdapter(
             private val context: Context, override val containerView: View, private val listener: RecordingsFragment.SwitchToPlaybackFragmentListener) : RecyclerView.ViewHolder(containerView), LayoutContainer {
 
         fun bindRecording(recording: Recording) {
-            durationView.text = "${recording.duration}s"
+
+            val durationText = context.resources.getString(R.string.durationText)
+
+            durationView.text = durationText + " ${recording.duration}s"
             val dateString = recording.fileName
                     .split("/")
                     .last()
                     .replace("_", " ")
                     .dropLast(4)
+
+            val recordedText = context.resources.getString(R.string.recordedText)
             val date = SimpleDateFormat("yyyy-MM-dd'T'HH-mm-ss").parse(dateString)
             val dateFormat = android.text.format.DateFormat.getDateFormat(context)
-            val timeFormat=android.text.format.DateFormat.getTimeFormat(context)
-            createdView.text = dateFormat.format(date) + " - " + timeFormat.format(date)
+            val timeFormat = android.text.format.DateFormat.getTimeFormat(context)
+            createdView.text = recordedText + " " + dateFormat.format(date) + " - " + timeFormat.format(date)
             //            nameView.text = recording.id.toString()
             floatingActionButton2.setOnClickListener {
                 listener.onClick(recording.fileName)
