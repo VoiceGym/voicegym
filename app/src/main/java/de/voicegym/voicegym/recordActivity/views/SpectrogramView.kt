@@ -39,7 +39,8 @@ class SpectrogramView : SurfaceView, InstrumentViewInterface, Runnable {
     /**
      * Which color to pick for the decorations
      */
-    private var decorationColor = Color.GRAY
+    private var decorationColor = resources.getColor(R.color.colorPrimaryText)
+
 
     /**
      * The thickness of drawn lines

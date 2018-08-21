@@ -18,7 +18,7 @@
         android:focusable="true"
         android:scaleType="center"
         app:srcCompat="@drawable/ic_record_off"
-        app:backgroundTint="@android:color/black"
+        app:backgroundTint="@color/colorPrimaryDark"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -35,7 +35,7 @@
         android:layout_marginTop="1dp"
         android:clickable="true"
         android:src="@android:drawable/ic_btn_speak_now"
-        app:backgroundTint="#cbcbcb"
+        app:backgroundTint="@color/colorIconText"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent" />

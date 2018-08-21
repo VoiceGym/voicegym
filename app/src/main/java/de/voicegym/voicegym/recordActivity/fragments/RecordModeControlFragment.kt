@@ -65,13 +65,13 @@ class RecordModeControlFragment : Fragment() {
             true  -> {
                 recordActivity?.pauseMicrophone()
                 microphoneButton?.setImageDrawable(resources.getDrawable(android.R.drawable.ic_btn_speak_now))
-                microphoneButton?.backgroundTintList = ColorStateList.valueOf(resources.getColor(R.color.item_name))
+                microphoneButton?.backgroundTintList = ColorStateList.valueOf(resources.getColor(R.color.colorPrimaryDark))
             }
 
             false -> {
                 recordActivity?.resumeMicrophone()
                 microphoneButton?.setImageDrawable(resources.getDrawable(android.R.drawable.ic_btn_speak_now))
-                microphoneButton?.backgroundTintList = ColorStateList.valueOf(Color.parseColor("#cbcbcb"))
+                microphoneButton?.backgroundTintList =  ColorStateList.valueOf(resources.getColor(R.color.colorIconText))
             }
         }
 
@@ -96,7 +96,7 @@ class RecordModeControlFragment : Fragment() {
                     false -> {
                         switch = true
                         context?.runOnUiThread {
-                            recordButton?.backgroundTintList = ColorStateList.valueOf(Color.parseColor("#000000"))
+                            recordButton?.backgroundTintList = ColorStateList.valueOf(resources.getColor(R.color.colorPrimaryDark))
                         }
 
                     }
