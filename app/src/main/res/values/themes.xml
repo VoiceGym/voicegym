@@ -8,11 +8,21 @@
         <item name="colorPrimary">@color/colorPrimary</item>
         <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
         <item name="colorAccent">@color/colorAccent</item>
+        <item name="android:textColor">@color/colorPrimaryText</item>
+        <item name="dividerHorizontal">@color/colorDivider</item>
+        <item name="actionBarDivider">@color/colorDivider</item>
+        <item name="dividerVertical">@color/colorDivider</item>
     </style>
 
 
     <style name="basicVoiceGym" parent="@style/Theme.AppCompat.Light.NoActionBar">
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
+        <item name="colorPrimary">@color/colorPrimary</item>
+        <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
+        <item name="colorAccent">@color/colorAccent</item>
+        <item name="dividerHorizontal">@color/colorDivider</item>
+        <item name="actionBarDivider">@color/colorDivider</item>
+        <item name="dividerVertical">@color/colorDivider</item>
     </style>
 </resources>
