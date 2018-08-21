@@ -1,6 +1,7 @@
 package de.voicegym.voicegym.recordings
 
 
+import android.content.Context
 import android.support.v7.widget.RecyclerView
 import android.view.LayoutInflater
 import android.view.View
@@ -13,6 +14,8 @@ import kotlinx.android.extensions.LayoutContainer
 import kotlinx.android.synthetic.main.fragment_recordings.createdView
 import kotlinx.android.synthetic.main.fragment_recordings.durationView
 import kotlinx.android.synthetic.main.fragment_recordings.floatingActionButton2
+import java.text.SimpleDateFormat
+import java.time.format.DateTimeFormatter
 
 /**
  * [RecyclerView.Adapter] that can display a [Recording] and makes a call to the
@@ -20,6 +23,7 @@ import kotlinx.android.synthetic.main.fragment_recordings.floatingActionButton2
  * TODO: Replace the implementation with code for your data type.
  */
 class RecordingsAdapter(
+        private val context: Context,
         private var values: List<Recording>,
         private val listener: OnListFragmentInteractionListener?,
         private val switchToPlaybackFragmentListener: RecordingsFragment.SwitchToPlaybackFragmentListener)
@@ -40,7 +44,7 @@ class RecordingsAdapter(
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         val view = LayoutInflater.from(parent.context)
                 .inflate(R.layout.fragment_recordings, parent, false)
-        return ViewHolder(view, switchToPlaybackFragmentListener)
+        return ViewHolder(context, view, switchToPlaybackFragmentListener)
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
@@ -62,15 +66,20 @@ class RecordingsAdapter(
 
     operator fun get(position: Int): Recording = values[position]
 
-    class ViewHolder(override val containerView: View, private val listener: RecordingsFragment.SwitchToPlaybackFragmentListener) : RecyclerView.ViewHolder(containerView), LayoutContainer {
+    class ViewHolder(
+            private val context: Context, override val containerView: View, private val listener: RecordingsFragment.SwitchToPlaybackFragmentListener) : RecyclerView.ViewHolder(containerView), LayoutContainer {
 
         fun bindRecording(recording: Recording) {
             durationView.text = "${recording.duration}s"
-            createdView.text = recording.fileName
+            val dateString = recording.fileName
                     .split("/")
                     .last()
                     .replace("_", " ")
                     .dropLast(4)
+            val date = SimpleDateFormat("yyyy-MM-dd'T'HH-mm-ss").parse(dateString)
+            val dateFormat = android.text.format.DateFormat.getDateFormat(context)
+            val timeFormat=android.text.format.DateFormat.getTimeFormat(context)
+            createdView.text = dateFormat.format(date) + " - " + timeFormat.format(date)
             //            nameView.text = recording.id.toString()
             floatingActionButton2.setOnClickListener {
                 listener.onClick(recording.fileName)
