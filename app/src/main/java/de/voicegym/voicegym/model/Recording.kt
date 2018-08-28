@@ -22,14 +22,17 @@ data class Recording(
         @ColumnInfo(name = "created_at")
         var createdAt: Long,
         @ColumnInfo(name = "updated_at")
-        var updatedAt: Long) {
+        var updatedAt: Long,
+        @ColumnInfo(name = "rating")
+        var rating: Int) {
 
     constructor() : this(
             null,
             "",
             0,
             Calendar.getInstance().timeInMillis,
-            Calendar.getInstance().timeInMillis)
+            Calendar.getInstance().timeInMillis,
+            0)
 }
 
 @Dao

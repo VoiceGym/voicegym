@@ -41,6 +41,7 @@ class DatabaseTest {
                 "VoiceGym/abc.m4a",
                 1527594386,
                 0,
+                0,
                 0
         )
         // When inserting a new user in the data source
