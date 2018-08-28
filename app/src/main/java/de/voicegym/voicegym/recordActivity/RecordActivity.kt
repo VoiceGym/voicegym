@@ -402,8 +402,28 @@ class RecordActivity : AppCompatActivity(),
         ratingDialog.show()
     }
 
+    private var rating: Int? = null
+
     override fun receiveRating(rating: Int) {
-        //TODO get rating into datamodel
+        when (recordActivityState) {
+            PLAYBACK           -> {
+                this.rating = rating
+            }
+
+            PLAYBACK_FROM_FILE -> {
+                if (filenameForPlaybackFromFile != null) {
+                    launch(CommonPool) {
+                        val recordingDao = AppDatabase.getInstance().recordingDao()
+                        val recording = recordingDao.getByFileName(filenameForPlaybackFromFile!!)
+                        recording?.let {
+                            it.rating = rating
+                            recordingDao.insert(it)
+                        } ?: throw Error("Filename was not in database")
+                    }
+                }
+            }
+        }
+
 
     }
 
@@ -420,6 +440,7 @@ class RecordActivity : AppCompatActivity(),
             recordingDao.insert(Recording().also {
                 it.fileName = getVoiceGymFolder()?.absolutePath + "/$dateString.m4a"
                 it.duration = size / sampleRate
+                it.rating = rating ?: 0
             })
         }
     }

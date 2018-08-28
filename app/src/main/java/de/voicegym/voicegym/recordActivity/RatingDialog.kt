@@ -53,7 +53,7 @@ class RatingDialog : Dialog {
         }
         Handler().postDelayed({
             hide()
-            playbackModeControlListener?.receiveRating(idx)
+            playbackModeControlListener?.receiveRating(stars.size - idx)
         }, 200)
     }
 
