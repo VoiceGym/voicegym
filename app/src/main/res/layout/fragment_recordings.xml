@@ -47,8 +47,8 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginBottom="8dp"
-            app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
             tools:layout_editor_absoluteX="8dp"
             tools:text="@sample/recordings.json/data/name" />
 
@@ -74,17 +74,37 @@
             app:layout_constraintTop_toTopOf="parent"
             tools:text="@sample/recordings.json/data/created" />
 
-        <TextView
-            android:id="@+id/ratingView"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+        <ImageView
+            android:id="@+id/star1"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
             android:layout_marginBottom="8dp"
-            android:layout_marginStart="8dp"
             android:layout_marginTop="8dp"
-            android:text=""
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintStart_toEndOf="@+id/durationView"
-            app:layout_constraintTop_toBottomOf="@+id/createdView" />
+            app:layout_constraintEnd_toStartOf="@id/star2"
+            app:layout_constraintTop_toTopOf="parent" />
+
+
+        <ImageView
+            android:id="@+id/star2"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:layout_marginBottom="8dp"
+            android:layout_marginTop="8dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="@id/star3"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <ImageView
+            android:id="@+id/star3"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:layout_marginBottom="8dp"
+            android:layout_marginEnd="8dp"
+            android:layout_marginTop="8dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="@id/floatingActionButton2"
+            app:layout_constraintTop_toTopOf="parent" />
 
         <android.support.design.widget.FloatingActionButton
             android:id="@+id/floatingActionButton2"

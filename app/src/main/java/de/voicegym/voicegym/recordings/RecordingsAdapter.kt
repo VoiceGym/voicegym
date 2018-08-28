@@ -14,7 +14,9 @@ import kotlinx.android.extensions.LayoutContainer
 import kotlinx.android.synthetic.main.fragment_recordings.createdView
 import kotlinx.android.synthetic.main.fragment_recordings.durationView
 import kotlinx.android.synthetic.main.fragment_recordings.floatingActionButton2
-import kotlinx.android.synthetic.main.fragment_recordings.ratingView
+import kotlinx.android.synthetic.main.fragment_recordings.star1
+import kotlinx.android.synthetic.main.fragment_recordings.star2
+import kotlinx.android.synthetic.main.fragment_recordings.star3
 import java.text.SimpleDateFormat
 
 /**
@@ -89,7 +91,10 @@ class RecordingsAdapter(
             floatingActionButton2.setOnClickListener {
                 listener.onClick(recording.fileName)
             }
-            ratingView.text= recording.rating.toString()
+
+            if (recording.rating >= 1) star1.setImageResource(R.drawable.ic_star_on)
+            if (recording.rating >= 2) star2.setImageResource(R.drawable.ic_star_on)
+            if (recording.rating >= 3) star3.setImageResource(R.drawable.ic_star_on)
         }
     }
 }
