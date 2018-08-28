@@ -74,6 +74,18 @@
             app:layout_constraintTop_toTopOf="parent"
             tools:text="@sample/recordings.json/data/created" />
 
+        <TextView
+            android:id="@+id/ratingView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp"
+            android:layout_marginStart="8dp"
+            android:layout_marginTop="8dp"
+            android:text=""
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toEndOf="@+id/durationView"
+            app:layout_constraintTop_toBottomOf="@+id/createdView" />
+
         <android.support.design.widget.FloatingActionButton
             android:id="@+id/floatingActionButton2"
             android:layout_width="wrap_content"
@@ -85,6 +97,8 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent"
             app:srcCompat="@android:drawable/ic_media_play" />
+
+
     </android.support.constraint.ConstraintLayout>
 
 
