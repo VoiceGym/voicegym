@@ -11,8 +11,8 @@
         android:layout_marginEnd="8dp"
         android:layout_marginStart="8dp"
         android:layout_marginTop="8dp"
-        android:textColor="#FFF"
-        android:text="How do you like what you did?"
+        android:text="@string/rateRecordString"
+        android:textColor="@color/colorPrimaryText"
         android:textSize="21sp"
         app:layout_constraintBottom_toTopOf="@id/rate2"
         app:layout_constraintEnd_toEndOf="parent"
@@ -21,37 +21,15 @@
 
 
     <ImageView
-        android:id="@+id/rate4"
-        android:layout_width="60dp"
-        android:layout_height="60dp"
-        android:layout_marginTop="12dp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toStartOf="@id/rate3"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/message"
-        app:srcCompat="@android:drawable/star_big_off" />
-
-    <ImageView
-        android:id="@+id/rate3"
-        android:layout_width="60dp"
-        android:layout_height="60dp"
-        android:layout_marginTop="12dp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toStartOf="@id/rate2"
-        app:layout_constraintStart_toEndOf="@id/rate4"
-        app:layout_constraintTop_toBottomOf="@id/message"
-        app:srcCompat="@android:drawable/star_big_off" />
-
-    <ImageView
-        android:id="@+id/rate2"
+        android:id="@+id/rate0"
         android:layout_width="60dp"
         android:layout_height="60dp"
         android:layout_marginTop="12dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toStartOf="@id/rate1"
-        app:layout_constraintStart_toEndOf="@id/rate3"
+        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/message"
-        app:srcCompat="@android:drawable/star_big_off" />
+        app:srcCompat="@drawable/ic_cancel_off" />
 
     <ImageView
         android:id="@+id/rate1"
@@ -59,10 +37,32 @@
         android:layout_height="60dp"
         android:layout_marginTop="12dp"
         app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toStartOf="@id/rate2"
+        app:layout_constraintStart_toEndOf="@id/rate0"
+        app:layout_constraintTop_toBottomOf="@id/message"
+        app:srcCompat="@drawable/ic_star_off" />
+
+    <ImageView
+        android:id="@+id/rate2"
+        android:layout_width="60dp"
+        android:layout_height="60dp"
+        android:layout_marginTop="12dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toStartOf="@id/rate3"
+        app:layout_constraintStart_toEndOf="@id/rate1"
+        app:layout_constraintTop_toBottomOf="@id/message"
+        app:srcCompat="@drawable/ic_star_off" />
+
+    <ImageView
+        android:id="@+id/rate3"
+        android:layout_width="60dp"
+        android:layout_height="60dp"
+        android:layout_marginTop="12dp"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toEndOf="@id/rate2"
         app:layout_constraintTop_toBottomOf="@id/message"
-        app:srcCompat="@android:drawable/star_big_off" />
+        app:srcCompat="@drawable/ic_star_off" />
 
 
 </android.support.constraint.ConstraintLayout>

@@ -19,4 +19,5 @@
     <string name="permission_alert_saveReadFiles_text">Nous souhaitons ouvrir et enregistrer vos enregistrements vocaux sur votre appareil, pour cela, nous ne lisons et n\'écrivons aucune autorisation sur vos fichiers.</string>
     <string name="durationText">Durée</string>
     <string name="recordedText">Enregistré</string>
+    <string name="rateRecordString">Évaluer avec étoiles</string>
 </resources>

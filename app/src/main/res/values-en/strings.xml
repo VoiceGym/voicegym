@@ -28,5 +28,6 @@
     <string name="permission_alert_saveReadFiles_text">We want to open and save your recordings to your device, for that we ne read and write permission to your files.</string>
     <string name="recordedText">Recorded</string>
     <string name="durationText">Duration</string>
+    <string name="rateRecordString">Rate with Stars!</string>
     <!-- invisible strings not sure needed why -->
 </resources>

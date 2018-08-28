@@ -19,4 +19,5 @@
     <string name="permission_alert_saveReadFiles_text">Ses kayıtlarınızı kaydedip okuyabilmemiz için dosya sisteminize erişmemiz gerekiyor.</string>
     <string name="durationText">Süre</string>
     <string name="recordedText">Kaydedilmiş</string>
+    <string name="rateRecordString">Bunu yıldızlarla değerlendirin</string>
 </resources>

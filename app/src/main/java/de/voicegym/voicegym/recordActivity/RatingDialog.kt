@@ -27,11 +27,16 @@ class RatingDialog : Dialog {
         requestWindowFeature(Window.FEATURE_NO_TITLE)
         setContentView(R.layout.rating_dialog)
         // get views from layout
-        val star4 = findViewById<ImageView>(R.id.rate4)
-        val star3 = findViewById<ImageView>(R.id.rate3)
-        val star2 = findViewById<ImageView>(R.id.rate2)
+        val rate0 = findViewById<ImageView>(R.id.rate0)
+        rate0.setOnClickListener {
+            rate0.setImageResource(R.drawable.ic_cancel_on)
+            sendRating(0, 200)
+        }
+
         val star1 = findViewById<ImageView>(R.id.rate1)
-        stars = listOf(star1, star2, star3, star4)
+        val star2 = findViewById<ImageView>(R.id.rate2)
+        val star3 = findViewById<ImageView>(R.id.rate3)
+        stars = listOf(star1, star2, star3)
         // set all the OnClickListeners of the Views
         stars.forEachIndexed { idx, view ->
             view.setOnClickListener {
@@ -45,16 +50,20 @@ class RatingDialog : Dialog {
      */
     private fun selectRating(idx: Int) {
         for (i in 0 until stars.size) {
-            if (i < idx) {
+            if (i > idx) {
                 setStar(i, false)
             } else {
                 setStar(i, true)
             }
         }
+        sendRating(idx + 1, 200)
+    }
+
+    private fun sendRating(rating: Int, delayMillis: Long) {
         Handler().postDelayed({
             hide()
-            playbackModeControlListener?.receiveRating(stars.size - idx)
-        }, 200)
+            playbackModeControlListener?.receiveRating(rating)
+        }, delayMillis)
     }
 
     /**
@@ -63,9 +72,9 @@ class RatingDialog : Dialog {
     private fun setStar(idx: Int, on: Boolean) {
         val star = stars[idx]
         if (on) {
-            star.setImageResource(R.drawable.star_big_on)
+            star.setImageResource(R.drawable.ic_star_on)
         } else {
-            star.setImageResource(R.drawable.star_big_off)
+            star.setImageResource(R.drawable.ic_star_off)
         }
     }
 

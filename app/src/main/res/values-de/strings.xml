@@ -19,4 +19,5 @@
     <string name="permission_alert_recordAudioMicrophone_text">Wir möchten deine Stimme analysieren, und brauchen dazu Zugriff auf dein Mikrofon.</string>
     <string name="recordedText">Aufgenommen</string>
     <string name="durationText">Dauer</string>
+    <string name="rateRecordString">Bewerte mit Sternen!</string>
 </resources>

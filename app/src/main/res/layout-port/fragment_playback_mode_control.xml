@@ -15,7 +15,7 @@
         android:layout_marginTop="1dp"
         android:clickable="true"
         android:scaleType="center"
-        android:src="@android:drawable/btn_star_big_on"
+        android:src="@drawable/star_on"
         app:backgroundTint="@color/colorPrimaryLight"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
