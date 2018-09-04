@@ -40,6 +40,7 @@ class RecordModeControlFragment : Fragment() {
             button.setOnClickListener { recordButtonPressed() }
         }
         microphoneButton = view.findViewById(R.id.microphoneButton)
+        microphoneButton?.setImageResource(R.drawable.ic_mic_off)
         microphoneButton?.setOnClickListener { microPhoneButtonPressed() }
         return view
     }
@@ -64,13 +65,11 @@ class RecordModeControlFragment : Fragment() {
         when (recordActivity?.isMicrophoneOn()) {
             true  -> {
                 recordActivity?.pauseMicrophone()
-                microphoneButton?.setImageDrawable(resources.getDrawable(android.R.drawable.ic_btn_speak_now))
                 microphoneButton?.backgroundTintList = ColorStateList.valueOf(resources.getColor(R.color.colorPrimaryDark))
             }
 
             false -> {
                 recordActivity?.resumeMicrophone()
-                microphoneButton?.setImageDrawable(resources.getDrawable(android.R.drawable.ic_btn_speak_now))
                 microphoneButton?.backgroundTintList =  ColorStateList.valueOf(resources.getColor(R.color.colorIconText))
             }
         }
