@@ -33,7 +33,10 @@ class PlaybackModeControlFragment : Fragment() {
         playPauseButton = view.findViewById(R.id.playPauseControlButton)
         saveButton = view.findViewById(R.id.saveControlButton)
         playPauseButton?.setOnClickListener { playbackModeControlListener?.playPause() }
-        saveButton?.setOnClickListener { playbackModeControlListener?.saveToSdCard() }
+        saveButton?.setOnClickListener {
+            playbackModeControlListener?.saveToSdCard()
+            hideSaveButton()
+        }
         return view
     }
 
