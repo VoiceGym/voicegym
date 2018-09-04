@@ -7,22 +7,6 @@
     tools:context=".recordActivity.fragments.PlaybackModeControlFragment">
 
     <android.support.design.widget.FloatingActionButton
-        android:id="@+id/rateControlButton"
-        android:layout_width="50dp"
-        android:layout_height="50dp"
-        android:layout_marginBottom="1dp"
-        android:layout_marginRight="1dp"
-        android:layout_marginTop="1dp"
-        android:clickable="true"
-        android:scaleType="center"
-        android:src="@drawable/star_on"
-        app:backgroundTint="@color/colorPrimaryLight"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toEndOf="@id/playPauseControlButton"
-        app:layout_constraintTop_toTopOf="parent" />
-
-    <android.support.design.widget.FloatingActionButton
         android:id="@+id/playPauseControlButton"
         android:layout_width="50dp"
         android:layout_height="50dp"
@@ -33,7 +17,7 @@
         android:focusable="true"
         app:backgroundTint="@color/colorPrimaryLight"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toStartOf="@id/rateControlButton"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toEndOf="@id/saveControlButton"
         app:layout_constraintTop_toTopOf="parent"
         app:srcCompat="@android:drawable/ic_media_play" />

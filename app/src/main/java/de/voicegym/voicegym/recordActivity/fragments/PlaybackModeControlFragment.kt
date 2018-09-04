@@ -25,42 +25,28 @@ class PlaybackModeControlFragment : Fragment() {
     }
 
     private var playPauseButton: FloatingActionButton? = null
-    private var rateButton: FloatingActionButton? = null
     private var saveButton: FloatingActionButton? = null
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         // Inflate the layout for this fragment
         val view = inflater.inflate(R.layout.fragment_playback_mode_control, container, false)
         playPauseButton = view.findViewById(R.id.playPauseControlButton)
-        rateButton = view.findViewById(R.id.rateControlButton)
         saveButton = view.findViewById(R.id.saveControlButton)
-
         playPauseButton?.setOnClickListener { playbackModeControlListener?.playPause() }
-        rateButton?.setOnClickListener { playbackModeControlListener?.openRatingDialog() }
         saveButton?.setOnClickListener { playbackModeControlListener?.saveToSdCard() }
         return view
     }
 
-    fun hideSaveButton(){
+    fun hideSaveButton() {
         saveButton?.hide()
     }
 
-    fun showSaveButton(){
+    fun showSaveButton() {
         saveButton?.show()
     }
 }
 
 interface PlaybackModeControlListener {
-
-    /**
-     * rate button was pressed
-     */
-    fun openRatingDialog()
-
-    /**
-     * rating dialog has a value for us
-     */
-    fun receiveRating(rating: Int)
 
     /**
      * play or pause button was pressed

@@ -395,37 +395,6 @@ class RecordActivity : AppCompatActivity(),
         }
     }
 
-    override fun openRatingDialog() {
-        val ratingDialog = RatingDialog(this)
-        ratingDialog.window.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
-        ratingDialog.playbackModeControlListener = this
-        ratingDialog.show()
-    }
-
-    private var rating: Int? = null
-
-    override fun receiveRating(rating: Int) {
-        when (recordActivityState) {
-            PLAYBACK           -> {
-                this.rating = rating
-            }
-
-            PLAYBACK_FROM_FILE -> {
-                if (filenameForPlaybackFromFile != null) {
-                    launch(CommonPool) {
-                        val recordingDao = AppDatabase.getInstance().recordingDao()
-                        val recording = recordingDao.getByFileName(filenameForPlaybackFromFile!!)
-                        recording?.let {
-                            it.rating = rating
-                            recordingDao.insert(it)
-                        } ?: throw Error("Filename was not in database")
-                    }
-                }
-            }
-        }
-
-
-    }
 
     override fun saveToSdCard() {
         launch(CommonPool) {
@@ -440,7 +409,6 @@ class RecordActivity : AppCompatActivity(),
             recordingDao.insert(Recording().also {
                 it.fileName = getVoiceGymFolder()?.absolutePath + "/$dateString.m4a"
                 it.duration = size / sampleRate
-                it.rating = rating ?: 0
             })
         }
     }
@@ -533,5 +501,17 @@ class RecordActivity : AppCompatActivity(),
 
     companion object {
         const val AUDIO_FILE = "recordAudioFileName"
+
+
+        fun setRatingOfFile(filename: String, rating: Int) {
+            launch(CommonPool) {
+                val recordingDao = AppDatabase.getInstance().recordingDao()
+                val recording = recordingDao.getByFileName(filename)
+                recording?.let {
+                    it.rating = rating
+                    recordingDao.insert(it)
+                } ?: throw Error("Filename not in database")
+            }
+        }
     }
 }

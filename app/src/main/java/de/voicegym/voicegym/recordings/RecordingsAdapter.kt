@@ -7,8 +7,10 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.View.OnClickListener
 import android.view.ViewGroup
+import android.widget.ImageView
 import de.voicegym.voicegym.R
 import de.voicegym.voicegym.model.Recording
+import de.voicegym.voicegym.recordActivity.RecordActivity
 import de.voicegym.voicegym.recordings.RecordingsFragment.OnListFragmentInteractionListener
 import kotlinx.android.extensions.LayoutContainer
 import kotlinx.android.synthetic.main.fragment_recordings.createdView
@@ -92,9 +94,30 @@ class RecordingsAdapter(
                 listener.onClick(recording.fileName)
             }
 
-            if (recording.rating >= 1) star1.setImageResource(R.drawable.ic_star_on)
-            if (recording.rating >= 2) star2.setImageResource(R.drawable.ic_star_on)
-            if (recording.rating >= 3) star3.setImageResource(R.drawable.ic_star_on)
+            setStar(star1, recording.rating >= 1)
+            setStarCallbackActions(star1, recording.fileName, recording.rating, 1)
+            setStar(star2, recording.rating >= 2)
+            setStarCallbackActions(star2, recording.fileName, recording.rating, 2)
+            setStar(star3, recording.rating >= 3)
+            setStarCallbackActions(star3, recording.fileName, recording.rating, 3)
+        }
+
+        private fun setStar(star: ImageView, active: Boolean) {
+            when (active) {
+                true  -> star.setImageResource(R.drawable.ic_star_on)
+                false -> star.setImageResource(R.drawable.ic_star_off_bright_background)
+            }
+        }
+
+        private fun setStarCallbackActions(star: ImageView, filename: String, currentRating: Int, targetRating: Int) {
+            star.setOnClickListener {
+                RecordActivity.setRatingOfFile(filename, when {
+                    targetRating > currentRating  -> targetRating
+                    currentRating == targetRating -> targetRating - 1
+                    else                          -> targetRating
+                })
+            }
+
         }
     }
 }
