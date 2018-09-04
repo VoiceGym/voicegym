@@ -3,7 +3,6 @@ package de.voicegym.voicegym.recordActivity
 import android.content.Context
 import android.content.pm.ActivityInfo
 import android.graphics.Color
-import android.graphics.drawable.ColorDrawable
 import android.os.Bundle
 import android.os.Handler
 import android.support.v7.app.AppCompatActivity
@@ -509,6 +508,17 @@ class RecordActivity : AppCompatActivity(),
                 val recording = recordingDao.getByFileName(filename)
                 recording?.let {
                     it.rating = rating
+                    recordingDao.insert(it)
+                } ?: throw Error("Filename not in database")
+            }
+        }
+
+        fun setNameOfFile(fileName: String, name: String) {
+            launch(CommonPool) {
+                val recordingDao = AppDatabase.getInstance().recordingDao()
+                val recording = recordingDao.getByFileName(fileName)
+                recording?.let {
+                    recording.title = name
                     recordingDao.insert(it)
                 } ?: throw Error("Filename not in database")
             }

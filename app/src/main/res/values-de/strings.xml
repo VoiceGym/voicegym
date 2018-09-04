@@ -20,4 +20,6 @@
     <string name="recordedText">Aufgenommen</string>
     <string name="durationText">Dauer</string>
     <string name="rateRecordString">Bewerte mit Sternen!</string>
+    <string name="inputDialog_enter_text_here">Text eingeben..</string>
+    <string name="inputDialog_title">Titel</string>
 </resources>

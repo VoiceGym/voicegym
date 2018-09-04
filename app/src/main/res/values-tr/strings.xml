@@ -20,4 +20,6 @@
     <string name="durationText">Süre</string>
     <string name="recordedText">Kaydedilmiş</string>
     <string name="rateRecordString">Bunu yıldızlarla değerlendirin</string>
+    <string name="inputDialog_enter_text_here">Buraya metin giriniz</string>
+    <string name="inputDialog_title">Başlık</string>
 </resources>

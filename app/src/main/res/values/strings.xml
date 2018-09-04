@@ -35,6 +35,8 @@
     <string name="navigation_drawer_open" translatable="false">Open navigation drawer</string>
     <string name="navigation_drawer_close" translatable="false">Close navigation drawer</string>
     <string name="rateRecordString">Rate your record!</string>
+    <string name="inputDialog_enter_text_here">Enter text here..</string>
+    <string name="inputDialog_title">Title</string>
 
     <string-array name="list_of_binning_values" translatable="false">
         <item>1</item>

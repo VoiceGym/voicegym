@@ -9,13 +9,16 @@ import android.view.View.OnClickListener
 import android.view.ViewGroup
 import android.widget.ImageView
 import de.voicegym.voicegym.R
+import de.voicegym.voicegym.menu.NavigationDrawerActivity
 import de.voicegym.voicegym.model.Recording
 import de.voicegym.voicegym.recordActivity.RecordActivity
 import de.voicegym.voicegym.recordings.RecordingsFragment.OnListFragmentInteractionListener
+import de.voicegym.voicegym.util.ISetTextable
 import kotlinx.android.extensions.LayoutContainer
 import kotlinx.android.synthetic.main.fragment_recordings.createdView
 import kotlinx.android.synthetic.main.fragment_recordings.durationView
 import kotlinx.android.synthetic.main.fragment_recordings.floatingActionButton2
+import kotlinx.android.synthetic.main.fragment_recordings.nameView
 import kotlinx.android.synthetic.main.fragment_recordings.star1
 import kotlinx.android.synthetic.main.fragment_recordings.star2
 import kotlinx.android.synthetic.main.fragment_recordings.star3
@@ -75,21 +78,34 @@ class RecordingsAdapter(
 
         fun bindRecording(recording: Recording) {
 
-            val durationText = context.resources.getString(R.string.durationText)
 
-            durationView.text = durationText + " ${recording.duration}s"
+            durationView.text = " ${recording.duration}sec"
             val dateString = recording.fileName
                     .split("/")
                     .last()
                     .replace("_", " ")
                     .dropLast(4)
 
-            val recordedText = context.resources.getString(R.string.recordedText)
+
             val date = SimpleDateFormat("yyyy-MM-dd'T'HH-mm-ss").parse(dateString)
             val dateFormat = android.text.format.DateFormat.getDateFormat(context)
             val timeFormat = android.text.format.DateFormat.getTimeFormat(context)
-            createdView.text = recordedText + " " + dateFormat.format(date) + " - " + timeFormat.format(date)
-            //            nameView.text = recording.id.toString()
+            createdView.text = dateFormat.format(date) + " - " + timeFormat.format(date)
+            nameView.text = when {
+                recording.title == null -> dateString
+                recording.title == ""   -> dateString
+                else                    -> recording.title
+            }
+
+            nameView.setOnClickListener {
+                val callback = object : ISetTextable {
+                    override fun setText(text: String) {
+                        RecordActivity.setNameOfFile(recording.fileName, text)
+                    }
+
+                }
+                (context as NavigationDrawerActivity).showInputDialog(nameView.text.toString(), callback)
+            }
             floatingActionButton2.setOnClickListener {
                 listener.onClick(recording.fileName)
             }

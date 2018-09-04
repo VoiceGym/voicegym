@@ -13,19 +13,23 @@ import android.support.v4.view.GravityCompat
 import android.support.v7.app.ActionBarDrawerToggle
 import android.support.v7.app.AlertDialog
 import android.support.v7.app.AppCompatActivity
+import android.view.LayoutInflater
 import android.view.MenuItem
 import android.view.View
+import android.widget.EditText
 import android.widget.Toast
 import de.voicegym.voicegym.R
 import de.voicegym.voicegym.menu.settings.SettingsActivity
 import de.voicegym.voicegym.model.Recording
 import de.voicegym.voicegym.recordActivity.RecordActivity
 import de.voicegym.voicegym.recordings.RecordingsFragment
+import de.voicegym.voicegym.util.ISetTextable
 import de.voicegym.voicegym.util.SwitchToRecordingViewListener
 import kotlinx.android.synthetic.main.activity_navigation_drawer.drawer_layout
 import kotlinx.android.synthetic.main.activity_navigation_drawer.nav_view
 import kotlinx.android.synthetic.main.app_bar_navigation_drawer.toolbar
 import org.jetbrains.anko.contentView
+
 
 class NavigationDrawerActivity : AppCompatActivity(),
         NavigationView.OnNavigationItemSelectedListener,
@@ -166,6 +170,27 @@ class NavigationDrawerActivity : AppCompatActivity(),
             }
         }
     }
+
+    fun showInputDialog(initialText: String, listener: ISetTextable) {
+        // get prompts.xml view
+        val layoutInflater = LayoutInflater.from(this)
+        val promptView = layoutInflater.inflate(R.layout.input_dialog, null)
+        val alertDialogBuilder = AlertDialog.Builder(this)
+        alertDialogBuilder.setView(promptView)
+
+        val editText = promptView.findViewById(R.id.inputDialog_editText) as EditText
+        editText.setText(initialText)
+        // setup a dialog window
+        alertDialogBuilder.setCancelable(false)
+                .setPositiveButton("OK") { _, _ -> listener.setText(editText.text.toString()) }
+                .setNegativeButton("Cancel"
+                ) { dialog, id -> dialog.cancel() }
+
+        // create an alert dialog
+        val alert = alertDialogBuilder.create()
+        alert.show()
+    }
+
 
     companion object {
         const val REQUEST_PERMISSIONS = 100

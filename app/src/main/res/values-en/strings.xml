@@ -29,5 +29,7 @@
     <string name="recordedText">Recorded</string>
     <string name="durationText">Duration</string>
     <string name="rateRecordString">Rate with Stars!</string>
+    <string name="inputDialog_enter_text_here">Enter text here..</string>
+    <string name="inputDialog_title">Title</string>
     <!-- invisible strings not sure needed why -->
 </resources>

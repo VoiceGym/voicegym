@@ -20,4 +20,6 @@
     <string name="durationText">Durée</string>
     <string name="recordedText">Enregistré</string>
     <string name="rateRecordString">Évaluer avec étoiles</string>
+    <string name="inputDialog_title">Titre</string>
+    <string name="inputDialog_enter_text_here">Entrez le texte..</string>
 </resources>
