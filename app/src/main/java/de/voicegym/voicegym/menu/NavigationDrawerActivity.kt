@@ -20,7 +20,6 @@ import android.widget.EditText
 import android.widget.Toast
 import de.voicegym.voicegym.R
 import de.voicegym.voicegym.menu.settings.SettingsActivity
-import de.voicegym.voicegym.model.Recording
 import de.voicegym.voicegym.recordActivity.RecordActivity
 import de.voicegym.voicegym.recordings.ListRecordingsFragment
 import de.voicegym.voicegym.recordings.RecordingLibraryFragment
@@ -34,9 +33,9 @@ import org.jetbrains.anko.contentView
 
 class NavigationDrawerActivity : AppCompatActivity(),
         NavigationView.OnNavigationItemSelectedListener,
-        ListRecordingsFragment.OnListFragmentInteractionListener,
-        ListRecordingsFragment.SwitchToPlaybackFragmentListener,
+        ListRecordingsFragment.ListInteractionListener,
         SwitchToRecordingViewListener {
+
 
 
     override fun switchToRecordingView() {
@@ -152,12 +151,11 @@ class NavigationDrawerActivity : AppCompatActivity(),
         loadFragment(RecordingLibraryFragment(), "RECORDINGS")
     }
 
-
-    override fun onListFragmentInteraction(item: Recording) {
-        //TODO what does this function do can this go?
+    override fun startSpectrogram() {
+        switchToRecordingView()
     }
 
-    override fun onClick(fileName: String) {
+    override fun openAudioFileInPlaybackMode(fileName: String) {
         switchToRecordingView(fileName)
     }
 

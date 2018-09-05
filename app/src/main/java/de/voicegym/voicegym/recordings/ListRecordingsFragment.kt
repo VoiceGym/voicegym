@@ -17,7 +17,6 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import de.voicegym.voicegym.R
-import de.voicegym.voicegym.model.Recording
 import de.voicegym.voicegym.model.RecordingListViewModel
 import java.io.File
 
@@ -29,7 +28,7 @@ import java.io.File
 class ListRecordingsFragment : Fragment(),
         RecyclerItemTouchHelperListener {
 
-    private var listener: OnListFragmentInteractionListener? = null
+    private var listener: ListInteractionListener? = null
 
     private lateinit var recordingsListViewModel: RecordingListViewModel
     private lateinit var adapter: RecordingsAdapter
@@ -62,7 +61,7 @@ class ListRecordingsFragment : Fragment(),
 
     override fun onAttach(context: Context) {
         super.onAttach(context)
-        if (context is OnListFragmentInteractionListener) {
+        if (context is ListInteractionListener) {
             listener = context
         } else {
             throw RuntimeException(context.toString() + " must implement OnListFragmentInteractionListener")
@@ -76,7 +75,7 @@ class ListRecordingsFragment : Fragment(),
         view.layoutManager = LinearLayoutManager(context)
         view.addItemDecoration(DividerItemDecoration(context, DividerItemDecoration.VERTICAL))
         view.itemAnimator = DefaultItemAnimator()
-        adapter = RecordingsAdapter(this!!.context!!, emptyList(), listener, listener as SwitchToPlaybackFragmentListener)
+        adapter = RecordingsAdapter(this!!.context!!, emptyList(), listener!!)
         view.adapter = adapter
         val itemTouchHelperCallback = RecyclerItemTouchHelper(0, ItemTouchHelper.LEFT, this)
         ItemTouchHelper(itemTouchHelperCallback).attachToRecyclerView(view)
@@ -93,24 +92,10 @@ class ListRecordingsFragment : Fragment(),
         listener = null
     }
 
-    /**
-     * This interface must be implemented by activities that contain this
-     * fragment to allow an interaction in this fragment to be communicated
-     * to the activity and potentially other fragments contained in that
-     * activity.
-     *
-     *
-     * See the Android Training lesson
-     * [Communicating with Other Fragments](http://developer.android.com/training/basics/fragments/communicating.html)
-     * for more information.
-     */
-    interface OnListFragmentInteractionListener {
 
-        // TODO: Update argument type and name
-        fun onListFragmentInteraction(item: Recording)
-    }
+    interface ListInteractionListener {
+        fun openAudioFileInPlaybackMode(fileName: String)
 
-    interface SwitchToPlaybackFragmentListener {
-        fun onClick(fileName: String)
+        fun startSpectrogram()
     }
 }

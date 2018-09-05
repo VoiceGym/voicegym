@@ -5,20 +5,18 @@ import android.content.Context
 import android.support.v7.widget.RecyclerView
 import android.view.LayoutInflater
 import android.view.View
-import android.view.View.OnClickListener
 import android.view.ViewGroup
 import android.widget.ImageView
 import de.voicegym.voicegym.R
 import de.voicegym.voicegym.menu.NavigationDrawerActivity
 import de.voicegym.voicegym.model.Recording
 import de.voicegym.voicegym.recordActivity.RecordActivity
-import de.voicegym.voicegym.recordings.ListRecordingsFragment.OnListFragmentInteractionListener
 import de.voicegym.voicegym.util.ISetTextable
 import kotlinx.android.extensions.LayoutContainer
 import kotlinx.android.synthetic.main.fragment_recordings.createdView
 import kotlinx.android.synthetic.main.fragment_recordings.durationView
-import kotlinx.android.synthetic.main.fragment_recordings.floatingActionButton2
 import kotlinx.android.synthetic.main.fragment_recordings.nameView
+import kotlinx.android.synthetic.main.fragment_recordings.playAudioFileButton
 import kotlinx.android.synthetic.main.fragment_recordings.star1
 import kotlinx.android.synthetic.main.fragment_recordings.star2
 import kotlinx.android.synthetic.main.fragment_recordings.star3
@@ -32,26 +30,14 @@ import java.text.SimpleDateFormat
 class RecordingsAdapter(
         private val context: Context,
         private var values: List<Recording>,
-        private val listener: OnListFragmentInteractionListener?,
-        private val switchToPlaybackFragmentListener: ListRecordingsFragment.SwitchToPlaybackFragmentListener)
+        private val listInteractionListener: ListRecordingsFragment.ListInteractionListener)
     : RecyclerView.Adapter<RecordingsAdapter.ViewHolder>() {
 
-
-    private val mOnClickListener: OnClickListener
-
-    init {
-        mOnClickListener = OnClickListener { v ->
-            val item = v.tag as Recording
-            // Notify the active callbacks interface (the activity, if the fragment is attached to
-            // one) that an item has been selected.
-            listener?.onListFragmentInteraction(item)
-        }
-    }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         val view = LayoutInflater.from(parent.context)
                 .inflate(R.layout.fragment_recordings, parent, false)
-        return ViewHolder(context, view, switchToPlaybackFragmentListener)
+        return ViewHolder(context, view, listInteractionListener)
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
@@ -60,7 +46,6 @@ class RecordingsAdapter(
 
         with(holder.containerView) {
             tag = item
-            setOnClickListener(mOnClickListener)
         }
     }
 
@@ -74,7 +59,7 @@ class RecordingsAdapter(
     operator fun get(position: Int): Recording = values[position]
 
     class ViewHolder(
-            private val context: Context, override val containerView: View, private val listener: ListRecordingsFragment.SwitchToPlaybackFragmentListener) : RecyclerView.ViewHolder(containerView), LayoutContainer {
+            private val context: Context, override val containerView: View, private val listener: ListRecordingsFragment.ListInteractionListener) : RecyclerView.ViewHolder(containerView), LayoutContainer {
 
         fun bindRecording(recording: Recording) {
 
@@ -106,8 +91,8 @@ class RecordingsAdapter(
                 }
                 (context as NavigationDrawerActivity).showInputDialog(nameView.text.toString(), callback)
             }
-            floatingActionButton2.setOnClickListener {
-                listener.onClick(recording.fileName)
+            playAudioFileButton.setOnClickListener {
+                listener.openAudioFileInPlaybackMode(recording.fileName)
             }
 
             setStar(star1, recording.rating >= 1)

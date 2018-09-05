@@ -105,11 +105,11 @@
             android:layout_marginEnd="20dp"
             android:layout_marginTop="8dp"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toStartOf="@id/floatingActionButton2"
+            app:layout_constraintEnd_toStartOf="@id/playAudioFileButton"
             app:layout_constraintTop_toTopOf="parent" />
 
         <android.support.design.widget.FloatingActionButton
-            android:id="@+id/floatingActionButton2"
+            android:id="@+id/playAudioFileButton"
             android:layout_width="wrap_content"
             android:layout_height="36dp"
             android:layout_marginEnd="16dp"
