@@ -12,14 +12,14 @@
         android:layout_height="50dp"
         android:layout_marginLeft="8dp"
         android:layout_marginRight="8dp"
-        android:scaleType="center"
         android:clickable="true"
         android:focusable="true"
+        android:scaleType="center"
         app:backgroundTint="@color/colorPrimaryLight"
-        app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toTopOf="@+id/saveControlButton"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
         app:srcCompat="@android:drawable/ic_media_play" />
 
     <android.support.design.widget.FloatingActionButton
@@ -29,14 +29,30 @@
         android:layout_marginBottom="1dp"
         android:layout_marginLeft="1dp"
         android:layout_marginRight="1dp"
-        android:scaleType="center"
         android:clickable="true"
+        android:scaleType="center"
         android:src="@android:drawable/ic_menu_save"
+        app:backgroundTint="@color/colorPrimaryLight"
+        app:layout_constraintBottom_toBottomOf="@id/playbackModeControl_backButton"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/playPauseControlButton" />
+
+
+    <android.support.design.widget.FloatingActionButton
+        android:id="@+id/playbackModeControl_backButton"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:layout_marginBottom="1dp"
+        android:layout_marginLeft="1dp"
+        android:layout_marginRight="1dp"
+        android:clickable="true"
+        android:scaleType="center"
         app:backgroundTint="@color/colorPrimaryLight"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/playPauseControlButton" />
+        app:layout_constraintTop_toBottomOf="@+id/saveControlButton" />
 
 
 </android.support.constraint.ConstraintLayout>

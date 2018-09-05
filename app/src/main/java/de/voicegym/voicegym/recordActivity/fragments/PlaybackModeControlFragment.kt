@@ -4,6 +4,7 @@ import android.content.Context
 import android.os.Bundle
 import android.support.design.widget.FloatingActionButton
 import android.support.v4.app.Fragment
+import android.view.KeyEvent
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -26,18 +27,44 @@ class PlaybackModeControlFragment : Fragment() {
 
     private var playPauseButton: FloatingActionButton? = null
     private var saveButton: FloatingActionButton? = null
+    private var backButton: FloatingActionButton? = null
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         // Inflate the layout for this fragment
         val view = inflater.inflate(R.layout.fragment_playback_mode_control, container, false)
+
+        // PlayPauseButton
         playPauseButton = view.findViewById(R.id.playPauseControlButton)
+        playPauseButton?.setOnClickListener {
+            playbackModeControlListener?.playPause()
+        }
+
+        // SaveButton
         saveButton = view.findViewById(R.id.saveControlButton)
-        playPauseButton?.setOnClickListener { playbackModeControlListener?.playPause() }
         saveButton?.setOnClickListener {
             playbackModeControlListener?.saveToSdCard()
             hideSaveButton()
         }
+
+        //BackButton
+        backButton = view.findViewById(R.id.playbackModeControl_backButton)
+        backButton?.setImageResource(R.drawable.arrow_left_white)
+        backButton?.setOnClickListener {
+            activity?.dispatchKeyEvent(KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_BACK))
+            activity?.dispatchKeyEvent(KeyEvent(KeyEvent.ACTION_UP, KeyEvent.KEYCODE_BACK))
+        }
+
+
+
         return view
+    }
+
+    fun hideBackButton() {
+        backButton?.hide()
+    }
+
+    fun showBackButton() {
+        backButton?.show()
     }
 
     fun hideSaveButton() {
