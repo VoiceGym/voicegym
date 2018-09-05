@@ -12,7 +12,7 @@ import de.voicegym.voicegym.R
 import de.voicegym.voicegym.menu.NavigationDrawerActivity
 import de.voicegym.voicegym.model.Recording
 import de.voicegym.voicegym.recordActivity.RecordActivity
-import de.voicegym.voicegym.recordings.RecordingsFragment.OnListFragmentInteractionListener
+import de.voicegym.voicegym.recordings.ListRecordingsFragment.OnListFragmentInteractionListener
 import de.voicegym.voicegym.util.ISetTextable
 import kotlinx.android.extensions.LayoutContainer
 import kotlinx.android.synthetic.main.fragment_recordings.createdView
@@ -33,7 +33,7 @@ class RecordingsAdapter(
         private val context: Context,
         private var values: List<Recording>,
         private val listener: OnListFragmentInteractionListener?,
-        private val switchToPlaybackFragmentListener: RecordingsFragment.SwitchToPlaybackFragmentListener)
+        private val switchToPlaybackFragmentListener: ListRecordingsFragment.SwitchToPlaybackFragmentListener)
     : RecyclerView.Adapter<RecordingsAdapter.ViewHolder>() {
 
 
@@ -74,7 +74,7 @@ class RecordingsAdapter(
     operator fun get(position: Int): Recording = values[position]
 
     class ViewHolder(
-            private val context: Context, override val containerView: View, private val listener: RecordingsFragment.SwitchToPlaybackFragmentListener) : RecyclerView.ViewHolder(containerView), LayoutContainer {
+            private val context: Context, override val containerView: View, private val listener: ListRecordingsFragment.SwitchToPlaybackFragmentListener) : RecyclerView.ViewHolder(containerView), LayoutContainer {
 
         fun bindRecording(recording: Recording) {
 

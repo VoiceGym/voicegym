@@ -24,9 +24,9 @@ import java.io.File
 /**
  * A fragment representing a list of Items.
  * Activities containing this fragment MUST implement the
- * [RecordingsFragment.OnListFragmentInteractionListener] interface.
+ * [ListRecordingsFragment.OnListFragmentInteractionListener] interface.
  */
-class RecordingsFragment : Fragment(),
+class ListRecordingsFragment : Fragment(),
         RecyclerItemTouchHelperListener {
 
     private var listener: OnListFragmentInteractionListener? = null

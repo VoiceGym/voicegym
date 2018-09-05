@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.design.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".recordings.RecordingLibraryFragment">
+
+    <!-- Main layout for fragment placing -->
+    <FrameLayout
+        android:id="@+id/recordingLibrary_listContainer"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior">
+    </FrameLayout>
+
+
+    <android.support.design.widget.FloatingActionButton
+        android:id="@+id/recordingLibrary_startSpectrogram"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:src="@android:drawable/ic_btn_speak_now"
+        android:layout_gravity="bottom|left"
+        android:layout_marginBottom="@dimen/fab_margin_bottom"
+        android:layout_marginLeft="@dimen/fab_margin_left"
+        android:backgroundTint="@color/colorPrimaryLight"
+        app:borderWidth = "0dp" />
+
+</android.support.design.widget.CoordinatorLayout>

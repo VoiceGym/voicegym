@@ -22,7 +22,8 @@ import de.voicegym.voicegym.R
 import de.voicegym.voicegym.menu.settings.SettingsActivity
 import de.voicegym.voicegym.model.Recording
 import de.voicegym.voicegym.recordActivity.RecordActivity
-import de.voicegym.voicegym.recordings.RecordingsFragment
+import de.voicegym.voicegym.recordings.ListRecordingsFragment
+import de.voicegym.voicegym.recordings.RecordingLibraryFragment
 import de.voicegym.voicegym.util.ISetTextable
 import de.voicegym.voicegym.util.SwitchToRecordingViewListener
 import kotlinx.android.synthetic.main.activity_navigation_drawer.drawer_layout
@@ -33,8 +34,8 @@ import org.jetbrains.anko.contentView
 
 class NavigationDrawerActivity : AppCompatActivity(),
         NavigationView.OnNavigationItemSelectedListener,
-        RecordingsFragment.OnListFragmentInteractionListener,
-        RecordingsFragment.SwitchToPlaybackFragmentListener,
+        ListRecordingsFragment.OnListFragmentInteractionListener,
+        ListRecordingsFragment.SwitchToPlaybackFragmentListener,
         SwitchToRecordingViewListener {
 
 
@@ -148,7 +149,7 @@ class NavigationDrawerActivity : AppCompatActivity(),
 
 
     private fun loadRecordingsFragment() {
-        loadFragment(RecordingsFragment(), "RECORDINGS")
+        loadFragment(RecordingLibraryFragment(), "RECORDINGS")
     }
 
 

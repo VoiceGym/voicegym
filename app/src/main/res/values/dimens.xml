@@ -6,4 +6,6 @@
     <dimen name="nav_header_vertical_spacing">8dp</dimen>
     <dimen name="nav_header_height">176dp</dimen>
     <dimen name="ic_delete">30dp</dimen>
+    <dimen name="fab_margin_bottom">30dp</dimen>
+    <dimen name="fab_margin_left">30dp</dimen>
 </resources>
