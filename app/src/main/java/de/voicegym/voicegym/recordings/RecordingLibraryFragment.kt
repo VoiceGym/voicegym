@@ -27,6 +27,7 @@ class RecordingLibraryFragment : Fragment() {
 
         val view = inflater.inflate(R.layout.fragment_recording_library, container, false)
         openSpectrogramButton = view.findViewById(R.id.recordingLibrary_startSpectrogram)
+        openSpectrogramButton?.setImageResource(R.drawable.ic_mic_white)
         openSpectrogramButton?.setOnClickListener {
             if (activity is ListRecordingsFragment.ListInteractionListener) {
                 (activity as ListRecordingsFragment.ListInteractionListener).startSpectrogram()
