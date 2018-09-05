@@ -203,7 +203,11 @@ class RecordActivity : AppCompatActivity(),
             LIVEVIEW           -> if (pcmStorage == null) finish()
             RECORDING          -> switchToPlayback()
             PLAYBACK           -> restart()
-            PLAYBACK_FROM_FILE -> finish()
+
+            PLAYBACK_FROM_FILE -> {
+                decoder?.abortDecodingAndJoinThread()
+                finish()
+            }
         }
     }
 
@@ -412,13 +416,14 @@ class RecordActivity : AppCompatActivity(),
         }
     }
 
+    private var decoder: MP4Decoder? = null
     private fun loadFromSdCard(fileName: String) {
         pcmStorage = PCMStorage(SettingsBundle.sampleRate)
         instrumentFragment?.startRecording()
-        val decoder = MP4Decoder(settings.samplesPerDatapoint)
-        decoder.addBufferListener(pcmStorage!!)
-        decoder.addBufferListener(this)
-        decoder.startDecoding(File(fileName))
+        decoder = MP4Decoder(settings.samplesPerDatapoint)
+        decoder?.addBufferListener(pcmStorage!!)
+        decoder?.addBufferListener(this)
+        decoder?.startDecoding(File(fileName))
     }
 
     override fun isDecoded() {

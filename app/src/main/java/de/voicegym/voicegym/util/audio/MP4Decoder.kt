@@ -75,16 +75,25 @@ class MP4Decoder(private val bufferSizeForCallbacks: Int) {
      */
     fun removeBufferListener(listener: DecoderBufferListener) = subscribers.remove(listener)
 
+    private var decodingThread: Thread? = null
+    private var interrupted = false
+
     /**
      * starts a decoding thread for the given file if we have any subscribers
      */
     fun startDecoding(inputFile: File) {
         if (subscribers.isNotEmpty()) {
-            thread(start = true, priority = Process.THREAD_PRIORITY_AUDIO) {
+            decodingThread = thread(start = true, priority = Process.THREAD_PRIORITY_AUDIO) {
                 decode(inputFile)
             }
         } else throw Error("No callback subscribers, doesn't make sense to decode anything")
     }
+
+    fun abortDecodingAndJoinThread() {
+        interrupted = true
+        decodingThread?.join()
+    }
+
 
     /**
      * in case for API levels 19 and 20 this is used to store the outputBufferArrays of the Codec
@@ -111,7 +120,7 @@ class MP4Decoder(private val bufferSizeForCallbacks: Int) {
 
         while (!endOfOutputStream) {
             var inputBufferFull = false
-            while (!endOfInputFile && !inputBufferFull) {
+            while ((!endOfInputFile && !inputBufferFull)) {
                 val indexOfBuffer = codec.dequeueInputBuffer(1000)
                 when {
                     indexOfBuffer >= 0                               -> {
@@ -135,7 +144,6 @@ class MP4Decoder(private val bufferSizeForCallbacks: Int) {
                     else                                             -> throw Error("could not retrieve buffer")
                 }
             }
-
             val bufferId = codec.dequeueOutputBuffer(bufferInfo, 60)
             when {
                 bufferId >= 0                           -> {
@@ -157,7 +165,9 @@ class MP4Decoder(private val bufferSizeForCallbacks: Int) {
 
                 else                                    -> throw Error("Unknown Key")
             }
-            if (bufferInfo.flags and MediaCodec.BUFFER_FLAG_END_OF_STREAM !== 0) {
+
+            // Either the stream is at the end or we've been interrupted, either way quit decoding
+            if ((bufferInfo.flags and MediaCodec.BUFFER_FLAG_END_OF_STREAM !== 0) || interrupted) {
                 endOfOutputStream = true
                 codec.stop()
                 codec.release()
