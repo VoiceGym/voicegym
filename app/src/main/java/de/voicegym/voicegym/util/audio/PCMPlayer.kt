@@ -59,9 +59,27 @@ class PCMPlayer(val sampleRate: Int, private val buffer: ShortBuffer, val contex
     fun play() {
         if (!playing) {
             playing = true
-            if (currentPosition <= buffer.capacity() && currentPosition >= 0) {
-                buffer.position(currentPosition)
-            } else throw IndexOutOfBoundsException("Cannot seek to position not within range")
+            when {
+                currentPosition <= buffer.capacity() && currentPosition >= 0 -> buffer.position(currentPosition)
+
+                currentPosition < 0 && buffer.capacity() > 0                 -> {
+                    currentPosition = 0
+                    buffer.position(currentPosition)
+                }
+
+                buffer.capacity() in 1..currentPosition                      -> {
+                    // if currentPosition is larger than buffer.capacity but buffer.capacity larger than 0
+                    currentPosition = buffer.capacity() - 1
+                    buffer.position(currentPosition)
+                }
+
+                else                                                         -> {
+                    // buffer.capacity=0
+                    if (buffer.capacity() != 0) throw UnknownError("Unexpected state, logic failure of coder")
+
+                    return
+                }
+            }
 
             if (currentPosition > 0.99 * buffer.capacity()) {
                 // reset
@@ -81,12 +99,14 @@ class PCMPlayer(val sampleRate: Int, private val buffer: ShortBuffer, val contex
                             buffer.get(playBuffer)
                             player.write(playBuffer, 0, playBuffer.size)
                         }
+
                         buffer.position() < buffer.capacity() - 1               -> {
                             playBuffer.fill(0)
                             buffer.get(playBuffer, 0, buffer.capacity() - buffer.position())
                             player.write(playBuffer, 0, playBuffer.size)
                             playing = false
                         }
+
                         else                                                    -> playing = false
                     }
                     currentPosition = buffer.position()
