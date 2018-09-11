@@ -400,6 +400,11 @@ class RecordActivity : AppCompatActivity(),
 
 
     override fun saveToSdCard() {
+        if (pcmStorage == null || pcmStorage?.size == 0) {
+            // abort when nothing was recorded
+            return
+        }
+
         launch(CommonPool) {
             pcmStorage?.let {
                 it.rewind()
