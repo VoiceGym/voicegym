@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="delete">EFFACER</string>
+    <string name="instruments">Spectrogramme</string>
+    <string name="recordings">Enregistrements</string>
+    <string name="settings">Paramètres</string>
+    <string name="fourierSettingsTitleText">Spectrogramme et Fourier Paramètres</string>
+    <string name="instrumentViewSettings">Paramètres d\'affichage du Spectrogramme</string>
+    <string name="fromFrequencyText">Affichage de fréquence</string>
+    <string name="untilFrequencyText">Affichage jusqu\'à la fréquence</string>
+    <string name="numberOfDisplayedBlocksText">Nombre de blocs affichés</string>
+    <string name="logarithmicDisplayText">Affichage logarithmique</string>
+    <string name="displayScaleText">Afficher une échelle</string>
+    <string name="fourierTransformationSettings">Paramètres de transformation de Fourier</string>
+    <string name="fftBlocksizeText">"Taille de FFT bloc "</string>
+    <string name="permission_alert_recordAudioMicrophone_title">Autorisation d\'enregistrement audio</string>
+    <string name="permission_alert_saveReadFiles_title">Autorisation d\'accès au fichier</string>
+    <string name="permission_alert_recordAudioMicrophone_text">Nous voulons analyser votre voix, pour cela, nous avons besoin d\'accéder à votre microphone.</string>
+    <string name="permission_alert_saveReadFiles_text">Nous souhaitons ouvrir et enregistrer vos enregistrements vocaux sur votre appareil, pour cela, nous ne lisons et n\'écrivons aucune autorisation sur vos fichiers.</string>
+    <string name="durationText">Durée</string>
+    <string name="recordedText">Enregistré</string>
+    <string name="rateRecordString">Évaluer avec étoiles</string>
+    <string name="inputDialog_title">Titre</string>
+    <string name="inputDialog_enter_text_here">Entrez le texte..</string>
+</resources>

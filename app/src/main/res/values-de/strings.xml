@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="delete">LÖSCHEN</string>
+    <string name="instruments">Spektrogramm</string>
+    <string name="recordings">Aufnahmen</string>
+    <string name="settings">Einstellungen</string>
+    <string name="fourierSettingsTitleText">Spektrogramm und Fourier Einstellungen</string>
+    <string name="instrumentViewSettings">Spektrogramm Anzeigeeinstellungen</string>
+    <string name="fromFrequencyText">Anzeigen von Frequenz</string>
+    <string name="untilFrequencyText">Anzeigen bis Frequenz</string>
+    <string name="numberOfDisplayedBlocksText">Anzahl der dargestellten Blöcke</string>
+    <string name="logarithmicDisplayText">Logarithmische Anzeige</string>
+    <string name="displayScaleText">Skala einblenden</string>
+    <string name="fourierTransformationSettings">Fouriertransformation Einstellungen</string>
+    <string name="fftBlocksizeText">FFT Blockgröße</string>
+    <string name="permission_alert_recordAudioMicrophone_title">Audio aufnehmen</string>
+    <string name="permission_alert_saveReadFiles_title">Zugriff auf Dateisystem</string>
+    <string name="permission_alert_saveReadFiles_text">Wir möchten deine Aufnahmen speichern und lesen können, brauchen dazu den Zugriff auf dein Dateisystem</string>
+    <string name="permission_alert_recordAudioMicrophone_text">Wir möchten deine Stimme analysieren, und brauchen dazu Zugriff auf dein Mikrofon.</string>
+    <string name="recordedText">Aufgenommen</string>
+    <string name="durationText">Dauer</string>
+    <string name="rateRecordString">Bewerte mit Sternen!</string>
+    <string name="inputDialog_enter_text_here">Text eingeben..</string>
+    <string name="inputDialog_title">Titel</string>
+</resources>

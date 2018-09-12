@@ -11,7 +11,6 @@ import android.graphics.Typeface
 import android.os.Process.THREAD_PRIORITY_URGENT_DISPLAY
 import android.os.Process.setThreadPriority
 import android.util.AttributeSet
-import android.util.Log
 import android.view.MotionEvent
 import android.view.MotionEvent.ACTION_DOWN
 import android.view.MotionEvent.ACTION_MOVE
@@ -29,6 +28,7 @@ import de.voicegym.voicegym.recordActivity.fragments.PlaybackModeControlListener
 import de.voicegym.voicegym.recordActivity.views.util.*
 import de.voicegym.voicegym.util.audio.getDezibelFromAmplitude
 import java.lang.Thread.sleep
+import java.util.Arrays
 import java.util.concurrent.ConcurrentLinkedQueue
 import kotlin.concurrent.thread
 import kotlin.math.absoluteValue
@@ -39,7 +39,8 @@ class SpectrogramView : SurfaceView, InstrumentViewInterface, Runnable {
     /**
      * Which color to pick for the decorations
      */
-    private var decorationColor = Color.GRAY
+    private var decorationColor = resources.getColor(R.color.colorPrimaryText)
+
 
     /**
      * The thickness of drawn lines
@@ -50,7 +51,7 @@ class SpectrogramView : SurfaceView, InstrumentViewInterface, Runnable {
     /**
      * Holds the ColorPicker that is used to select the appropriate color for the spectral intensity
      */
-    var intensityMap: GradientPicker = HotGradientColorPicker
+    private var intensityMap: GradientPicker = HotGradientColorPicker
 
 
     private var settings: FourierInstrumentViewSettings = FourierInstrumentViewSettings(4096, 2, 10.0, 1000.0, 100, false, false)
@@ -146,7 +147,7 @@ class SpectrogramView : SurfaceView, InstrumentViewInterface, Runnable {
     }
 
 
-    var touchedAtXpos: Float = 0f
+    private var touchedAtXpos: Float = 0f
 
     var spectrogramViewState = LIVE_DISPLAY
 
@@ -243,13 +244,13 @@ class SpectrogramView : SurfaceView, InstrumentViewInterface, Runnable {
 
 
     private fun getTicks(): List<Tick> {
-        when (scale) {
+        return when (scale) {
             is LinearScalingFunction      -> {
-                return getLinearTicklist(scale.from.correspondingFrequency, scale.until.correspondingFrequency)
+                getLinearTicklist(scale.from.correspondingFrequency, scale.until.correspondingFrequency)
             }
 
             is ExponentialScalingFunction -> {
-                return getExponentialTicklist(scale.from.correspondingFrequency, scale.until.correspondingFrequency)
+                getExponentialTicklist(scale.from.correspondingFrequency, scale.until.correspondingFrequency)
             }
 
             else                          -> {
@@ -314,7 +315,6 @@ class SpectrogramView : SurfaceView, InstrumentViewInterface, Runnable {
 
         canvas.drawText(text, xPos, yPos, decorationSettings.paint)
     }
-
 
 
     private fun addLeftForBackgroundThread(amplitudes: DoubleArray, immediateDraw: Boolean) {
@@ -418,6 +418,11 @@ class SpectrogramView : SurfaceView, InstrumentViewInterface, Runnable {
      */
     private var rendering: Boolean = false
 
+    fun isReady(): Boolean {
+        return !renderThreadBusy
+    }
+
+    private var renderThreadBusy = false
     /**
      * Our Render Loop
      */
@@ -434,17 +439,19 @@ class SpectrogramView : SurfaceView, InstrumentViewInterface, Runnable {
                         drawForBackgroundThread()
                         needsRendering = false
                     }
+                    renderThreadBusy = false
                     sleep(10)
                 }
 
                 else                         -> {
+                    renderThreadBusy = true
                     val job = renderQueue.poll()
                     // if the last added things didn't needed to be drawn immediately but we now hit a immediateDrawJob
-                    if (needsRendering && job.renderImmediately) {
+                    needsRendering = if (needsRendering && job.renderImmediately) {
                         drawForBackgroundThread()
-                        needsRendering = false
+                        false
                     } else {
-                        needsRendering = !job.renderImmediately
+                        !job.renderImmediately
                     }
 
                     when (job.position) {
@@ -460,7 +467,6 @@ class SpectrogramView : SurfaceView, InstrumentViewInterface, Runnable {
      * If the rendering Thread is not yet running this will start the thread
      */
     fun startRendering() {
-        Log.i("RenderThread", "startRendering() called")
         if (!rendering && renderThread == null) {
             rendering = true
             renderThread = thread(start = true) { this.run() }
@@ -484,7 +490,6 @@ class SpectrogramView : SurfaceView, InstrumentViewInterface, Runnable {
      * This function stops the renderThread and locks the calling thread until renderThread has finished.
      */
     fun stopRendering() {
-        Log.i("RenderThread", "stopRendering() called")
         if (rendering && renderThread != null) {
             rendering = false
             renderThread?.join()
@@ -493,7 +498,27 @@ class SpectrogramView : SurfaceView, InstrumentViewInterface, Runnable {
     }
 }
 
-data class RenderJob(val amplitudes: DoubleArray, val renderImmediately: Boolean, val position: AddPosition)
+data class RenderJob(val amplitudes: DoubleArray, val renderImmediately: Boolean, val position: AddPosition) {
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as RenderJob
+
+        if (!Arrays.equals(amplitudes, other.amplitudes)) return false
+        if (renderImmediately != other.renderImmediately) return false
+        if (position != other.position) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = Arrays.hashCode(amplitudes)
+        result = 31 * result + renderImmediately.hashCode()
+        result = 31 * result + position.hashCode()
+        return result
+    }
+}
 
 enum class AddPosition { LEFT,
     RIGHT

@@ -177,7 +177,7 @@ class SettingsActivity : AppCompatPreferenceActivity() {
                     sharedPreferences.getString(preference.key, "")
                 }
 
-                else                  -> throw Error("Introduced new type of preference ${preference.javaClass.toString()}, needs to be caught here")
+                else                  -> throw Error("Introduced new type of preference ${preference.javaClass}, needs to be caught here")
             }
 
             // call change listener of the preference

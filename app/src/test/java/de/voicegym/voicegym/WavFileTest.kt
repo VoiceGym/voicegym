@@ -11,7 +11,7 @@ class WavFileTest {
 
     @Test
     fun testLoadWavFile() {
-        val file: File = File("src/test/resources/frame1.wav")
+        val file = File("src/test/resources/frame1.wav")
 
         // 1 ms of data
         val expected = arrayOf(

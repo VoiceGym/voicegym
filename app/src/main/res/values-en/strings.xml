@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="delete">DELETE</string>
+    <!-- Menu Strings -->
+
+    <string name="instruments">Spectrogram</string>
+    <string name="recordings">Recordings</string>
+    <string name="settings">Settings</string>
+
+    <!-- Strings related to Settings -->
+    <string name="fourierSettingsTitleText">Spectrogram and Fourier Settings</string>
+
+    <string name="instrumentViewSettings">Spectrogram View Settings</string>
+    <string name="fromFrequencyText">Display from Frequency</string>
+    <string name="untilFrequencyText">Display until Frequency</string>
+    <string name="numberOfDisplayedBlocksText">Number of Displayed Blocks</string>
+    <string name="logarithmicDisplayText">Logarithmic Display</string>
+    <string name="displayScaleText">Display a Scale</string>
+
+    <string name="fourierTransformationSettings">Fourier Transformation Settings</string>
+    <string name="fftBlocksizeText">FFT Blocksize</string>
+
+
+    <!-- Strings related to Permission requests -->
+    <string name="permission_alert_recordAudioMicrophone_title">Record Audio</string>
+    <string name="permission_alert_recordAudioMicrophone_text">We want to analyze your voice, for that we require access to your microphone.</string>
+    <string name="permission_alert_saveReadFiles_title">Access Files</string>
+    <string name="permission_alert_saveReadFiles_text">We want to open and save your recordings to your device, for that we ne read and write permission to your files.</string>
+    <string name="recordedText">Recorded</string>
+    <string name="durationText">Duration</string>
+    <string name="rateRecordString">Rate with Stars!</string>
+    <string name="inputDialog_enter_text_here">Enter text here..</string>
+    <string name="inputDialog_title">Title</string>
+    <!-- invisible strings not sure needed why -->
+</resources>

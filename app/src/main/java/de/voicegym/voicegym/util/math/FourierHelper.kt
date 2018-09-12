@@ -7,7 +7,7 @@ import org.jtransforms.fft.DoubleFFT_1D
  */
 class FourierHelper(
         // binning refers to the number of samples averaged into one block
-        val blockSize: Int,
+        private val blockSize: Int,
         // blockSize is value of the block used together with the FFT
         private val binning: Int, collectedSamples: Int, private val sampleRate: Int
 ) {
@@ -18,7 +18,7 @@ class FourierHelper(
 
     init {
         //he blockSize * binning must be equal to the number of collected samples
-        require(!(collectedSamples / binning != blockSize) && !(collectedSamples % binning != 0)) {
+        require(collectedSamples / binning == blockSize && collectedSamples % binning == 0) {
             "Make sure your number of collected samples fit into the fourier transform block"
         }
         require(isPowerOf2(blockSize)) {
@@ -77,7 +77,7 @@ class FourierHelper(
      *
      * @return The corresponding frequencies (Hz) of the indeces.
      */
-    fun frequencyArray() = DoubleArray(blockSize, { it * sampleRate.toDouble() / (blockSize * binning) })
+    fun frequencyArray() = DoubleArray(blockSize) { it * sampleRate.toDouble() / (blockSize * binning) }
 
     /**
      * @return The frequency spacing as a Double between array cells in Hz.
@@ -121,13 +121,11 @@ class FourierHelper(
          * @param outputArray the averaged data samples will be copied here. Size must be inputArray.size/n_bins
          */
         fun binInputToOutputArray(inputArray: DoubleArray, n_bins: Int, outputArray: DoubleArray) {
-            var targetN = 0
-            for (sourceN in 0 until inputArray.size step n_bins) {
+            for ((targetN, sourceN) in (0 until inputArray.size step n_bins).withIndex()) {
                 for (i in sourceN until sourceN + n_bins) {
                     outputArray[targetN] += inputArray[i]
                 }
                 outputArray[targetN] = outputArray[targetN] / n_bins
-                targetN++
             }
         }
     }

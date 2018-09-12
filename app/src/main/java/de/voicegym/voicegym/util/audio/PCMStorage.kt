@@ -1,17 +1,17 @@
 package de.voicegym.voicegym.util.audio
 
+import de.voicegym.voicegym.util.DecoderBufferListener
 import de.voicegym.voicegym.util.RecordBufferListener
 import java.io.InputStream
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.nio.ShortBuffer
-import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.LinkedBlockingDeque
 
 fun Byte.toPositiveInt() = toInt() and 0xFF
 
-class PCMStorage(val sampleRate: Int) : RecordBufferListener, InputStream() {
-    // TODO refactor class so it uses two deques and can be freely winded forward and back
+class PCMStorage(val sampleRate: Int) : RecordBufferListener, DecoderBufferListener, InputStream() {
+
     override fun read(): Int {
         var ret: Int = -1
         if (buffer == null) {
@@ -29,18 +29,18 @@ class PCMStorage(val sampleRate: Int) : RecordBufferListener, InputStream() {
     }
 
     private fun getNextBuffer(): Boolean {
-        if (inputQueue.isNotEmpty()) {
-            buffer = ByteBuffer.allocate(2 * inputQueue.peek().size).order(ByteOrder.LITTLE_ENDIAN)
-            val array = inputQueue.poll()
-            usedDeque.addLast(array)
+        return if (inputDeque.isNotEmpty()) {
+            buffer = ByteBuffer.allocate(2 * inputDeque.peekFirst().size).order(ByteOrder.LITTLE_ENDIAN)
+            val array = inputDeque.pollFirst()
+            usedDeque.addFirst(array)
             buffer?.asShortBuffer()?.put(array)
-            return true
+            true
         } else {
-            return false
+            false
         }
     }
 
-    private val inputQueue = ConcurrentLinkedQueue<ShortArray>()
+    private val inputDeque = LinkedBlockingDeque<ShortArray>()
 
     private val usedDeque = LinkedBlockingDeque<ShortArray>()
 
@@ -59,11 +59,15 @@ class PCMStorage(val sampleRate: Int) : RecordBufferListener, InputStream() {
         if (data.isEmpty()) throw Error("No empty arrays allowed in storage")
         if (!sealed) {
             size += data.size
-            inputQueue.add(data)
+            inputDeque.addLast(data)
         }
     }
 
     override fun canHandleBufferSize(bufferSize: Int): Boolean = true
+
+    override fun isDecoded() {
+        stopListening()
+    }
 
     fun stopListening() {
         if (!sealed) {
@@ -72,16 +76,9 @@ class PCMStorage(val sampleRate: Int) : RecordBufferListener, InputStream() {
     }
 
     fun rewind() {
+        buffer = null
         if (sealed) {
-            while (inputQueue.isNotEmpty()) usedDeque.addLast(inputQueue.poll())
-            while (usedDeque.isNotEmpty()) inputQueue.add(usedDeque.poll())
-        }
-    }
-
-    fun reverseForBugfix(){
-        if(sealed){
-            while (inputQueue.isNotEmpty()) usedDeque.addFirst(inputQueue.poll())
-            while(usedDeque.isNotEmpty()) inputQueue.add(usedDeque.poll())
+            while (usedDeque.isNotEmpty()) inputDeque.addFirst(usedDeque.pollFirst())
         }
     }
 
@@ -90,17 +87,15 @@ class PCMStorage(val sampleRate: Int) : RecordBufferListener, InputStream() {
             val currentPosition = usedDeque.size
             rewind()
             val returnBuffer = ShortBuffer.allocate(size)
-            while (inputQueue.isNotEmpty()) {
-                val arr = inputQueue.poll()
+            while (inputDeque.isNotEmpty()) {
+                val arr = inputDeque.pollFirst()
                 returnBuffer.put(arr)
-                usedDeque.addLast(arr)
+                usedDeque.addFirst(arr)
             }
             // okay buffer created let's get the deque and queue in the earlier state
-            val tempDeque = LinkedBlockingDeque<ShortArray>()
             while (usedDeque.size > currentPosition) {
-                tempDeque.add(usedDeque.removeLast())
+                inputDeque.addFirst(usedDeque.removeFirst())
             }
-            while (tempDeque.isNotEmpty()) inputQueue.add(tempDeque.poll())
             return returnBuffer
         } else {
             throw Error("Cannot return ShortBuffer from unsealed PCMStorage")

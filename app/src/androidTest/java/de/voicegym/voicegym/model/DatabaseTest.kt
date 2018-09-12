@@ -3,7 +3,6 @@ package de.voicegym.voicegym.model
 import android.support.test.InstrumentationRegistry
 import android.support.test.filters.SmallTest
 import android.support.test.runner.AndroidJUnit4
-import org.assertj.core.api.Assertions.assertThat
 import org.junit.AfterClass
 import org.junit.BeforeClass
 import org.junit.Test
@@ -25,7 +24,7 @@ class DatabaseTest {
             //                    AppDatabase::class.java)
             //                    .build()
 
-            db = AppDatabase.getInstance(InstrumentationRegistry.getTargetContext())!!
+            db = AppDatabase.getInstance(InstrumentationRegistry.getTargetContext())
         }
 
         @AfterClass
@@ -41,6 +40,7 @@ class DatabaseTest {
                 123456789L,
                 "VoiceGym/abc.m4a",
                 1527594386,
+                0,
                 0,
                 0
         )

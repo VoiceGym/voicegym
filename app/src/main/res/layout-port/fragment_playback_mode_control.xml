@@ -7,31 +7,17 @@
     tools:context=".recordActivity.fragments.PlaybackModeControlFragment">
 
     <android.support.design.widget.FloatingActionButton
-        android:id="@+id/rateControlButton"
-        android:layout_width="50dp"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="8dp"
-        android:layout_marginRight="8dp"
-        android:layout_marginTop="8dp"
-        android:clickable="true"
-        android:src="@android:drawable/btn_star_big_on"
-        app:backgroundTint="@android:color/holo_purple"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toEndOf="@id/playPauseControlButton"
-        app:layout_constraintTop_toTopOf="parent" />
-
-    <android.support.design.widget.FloatingActionButton
         android:id="@+id/playPauseControlButton"
         android:layout_width="50dp"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="8dp"
-        android:layout_marginTop="8dp"
+        android:layout_height="50dp"
+        android:layout_marginBottom="1dp"
+        android:layout_marginTop="1dp"
+        android:scaleType="center"
         android:clickable="true"
         android:focusable="true"
-        app:backgroundTint="?android:attr/colorPressedHighlight"
+        app:backgroundTint="@color/colorPrimaryLight"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toStartOf="@id/rateControlButton"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toEndOf="@id/saveControlButton"
         app:layout_constraintTop_toTopOf="parent"
         app:srcCompat="@android:drawable/ic_media_play" />
@@ -39,17 +25,33 @@
     <android.support.design.widget.FloatingActionButton
         android:id="@+id/saveControlButton"
         android:layout_width="50dp"
-        android:layout_height="wrap_content"
-        android:layout_marginLeft="8dp"
-        android:layout_marginBottom="8dp"
-        android:layout_marginTop="8dp"
+        android:layout_height="50dp"
+        android:layout_marginLeft="1dp"
+        android:layout_marginBottom="1dp"
+        android:layout_marginTop="1dp"
+        android:scaleType="center"
         android:clickable="true"
         android:src="@android:drawable/ic_menu_save"
-        app:backgroundTint="@android:color/darker_gray"
+        app:backgroundTint="@color/colorPrimaryLight"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toStartOf="@id/playPauseControlButton"
-        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintStart_toEndOf="@id/playbackModeControl_backButton"
         app:layout_constraintTop_toTopOf="parent" />
 
+
+    <android.support.design.widget.FloatingActionButton
+        android:id="@+id/playbackModeControl_backButton"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:layout_marginLeft="1dp"
+        android:layout_marginBottom="1dp"
+        android:layout_marginTop="1dp"
+        android:scaleType="center"
+        android:clickable="true"
+        app:backgroundTint="@color/colorPrimaryLight"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toStartOf="@id/saveControlButton"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
 </android.support.constraint.ConstraintLayout>

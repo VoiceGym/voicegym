@@ -26,10 +26,10 @@ object SettingsBundle {
         // TODO implement NumberPickerPreference
         val blockSize = sharedPreferences.getString("fft_blocksize", "4096").toInt()
         val binning = sharedPreferences.getString("fft_binning", "2").toInt()
-        val fromFrequency = sharedPreferences.getString("from_frequency", "10").toDouble()
-        val tillFrequency = sharedPreferences.getString("till_frequency", "1000").toDouble()
-        val isLogarithmic = sharedPreferences.getBoolean("display_logarithmic", false)
-        val drawScale = sharedPreferences.getBoolean("display_scale", false)
+        val fromFrequency = sharedPreferences.getString("from_frequency", "50").toDouble()
+        val tillFrequency = sharedPreferences.getString("till_frequency", "8000").toDouble()
+        val isLogarithmic = sharedPreferences.getBoolean("display_logarithmic", true)
+        val drawScale = sharedPreferences.getBoolean("display_scale", true)
         val displayedDatapoints = sharedPreferences.getString("display_sample_numbers", "100").toInt()
 
         return FourierInstrumentViewSettings(blockSize, binning, fromFrequency, tillFrequency, displayedDatapoints, isLogarithmic, drawScale)

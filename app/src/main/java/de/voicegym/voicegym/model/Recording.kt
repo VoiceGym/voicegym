@@ -14,26 +14,33 @@ import java.util.Calendar
 @Entity(tableName = "recordings")
 data class Recording(
         @PrimaryKey(autoGenerate = true)
-          var id: Long?,
+        var id: Long?,
         @ColumnInfo(name = "fileName")
-          var fileName: String,
+        var fileName: String,
         @ColumnInfo(name = "duration")
-          var duration: Int,
+        var duration: Int,
         @ColumnInfo(name = "created_at")
-          var createdAt: Long,
+        var createdAt: Long,
         @ColumnInfo(name = "updated_at")
-          var updatedAt: Long) {
+        var updatedAt: Long,
+        @ColumnInfo(name = "rating")
+        var rating: Int,
+        @ColumnInfo(name = "title")
+        var title: String?) {
 
     constructor() : this(
             null,
             "",
             0,
             Calendar.getInstance().timeInMillis,
-            Calendar.getInstance().timeInMillis)
+            Calendar.getInstance().timeInMillis,
+            0,
+            null)
 }
 
 @Dao
 interface RecordingDao {
+
     @Query("SELECT * from recordings")
     fun getAll(): LiveData<List<Recording>>
 

@@ -1,8 +1,8 @@
 package de.voicegym.voicegym
 
 import de.voicegym.voicegym.util.audio.WavFile
-import de.voicegym.voicegym.util.math.FourierHelper
 import de.voicegym.voicegym.util.audio.getDoubleArrayFromShortArray
+import de.voicegym.voicegym.util.math.FourierHelper
 import junit.framework.Assert.assertEquals
 import junit.framework.Assert.assertFalse
 import junit.framework.Assert.assertTrue
@@ -58,7 +58,7 @@ class FourierHelperTest {
 
     @Rule
     @JvmField
-    val exception = ExpectedException.none()
+    val exception = ExpectedException.none()!!
 
     @Test
     fun fourierHelperInstantiationFails() {
@@ -122,9 +122,9 @@ class FourierHelperTest {
 
     private fun idxOfMax(arr: DoubleArray): Int? {
         val max = arr.max()
-        if (max != null && max != Double.NaN)
-            return arr.indexOf(max)
+        return if (max != null && max != Double.NaN)
+            arr.indexOf(max)
         else
-            return null
+            null
     }
 }

@@ -10,6 +10,8 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import de.voicegym.voicegym.R
+import org.jetbrains.anko.runOnUiThread
+import kotlin.concurrent.thread
 
 
 class RecordModeControlFragment : Fragment() {
@@ -26,16 +28,20 @@ class RecordModeControlFragment : Fragment() {
         }
     }
 
-    var floatingActionButton: FloatingActionButton? = null
+    var recordButton: FloatingActionButton? = null
+    var microphoneButton: FloatingActionButton? = null
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         // Inflate the layout for this fragment
         val view = inflater.inflate(R.layout.fragment_record_mode_control, container, false)
-        floatingActionButton = view.findViewById(R.id.floatingActionButton)
-        floatingActionButton?.let {
-            it.backgroundTintList = ColorStateList.valueOf(Color.GREEN)
-            it.setOnClickListener { recordButtonPressed() }
+        recordButton = view.findViewById(R.id.recordButton)
+        recordButton?.let { button ->
+            button.backgroundTintList = ColorStateList.valueOf(resources.getColor(android.R.color.black))
+            button.setOnClickListener { recordButtonPressed() }
         }
+        microphoneButton = view.findViewById(R.id.microphoneButton)
+        microphoneButton?.setImageResource(R.drawable.ic_mic_off)
+        microphoneButton?.setOnClickListener { microPhoneButtonPressed() }
         return view
     }
 
@@ -47,13 +53,62 @@ class RecordModeControlFragment : Fragment() {
 
         recordActivity?.let {
             if (it.isRecording()) {
-                floatingActionButton?.backgroundTintList = ColorStateList.valueOf(Color.RED)
+                blink()
             } else {
-                floatingActionButton?.backgroundTintList = ColorStateList.valueOf(Color.GREEN)
+                stopBlinking()
+                recordButton?.backgroundTintList = ColorStateList.valueOf(resources.getColor(android.R.color.black))
             }
         }
     }
 
+    private fun microPhoneButtonPressed() {
+        when (recordActivity?.isMicrophoneOn()) {
+            true  -> {
+                recordActivity?.pauseMicrophone()
+                microphoneButton?.backgroundTintList = ColorStateList.valueOf(resources.getColor(R.color.colorPrimaryDark))
+            }
+
+            false -> {
+                recordActivity?.resumeMicrophone()
+                microphoneButton?.backgroundTintList =  ColorStateList.valueOf(resources.getColor(R.color.colorIconText))
+            }
+        }
+
+    }
+
+
+    private var blinkRecording = false
+    private var blinkingThread: Thread? = null
+    private fun blink() {
+        blinkRecording = true
+        blinkingThread = thread {
+            var switch = true
+            while (blinkRecording) {
+                when (switch) {
+                    true  -> {
+                        switch = false
+                        context?.runOnUiThread {
+                            recordButton?.backgroundTintList = ColorStateList.valueOf(Color.parseColor("#df7777"))
+                        }
+                    }
+
+                    false -> {
+                        switch = true
+                        context?.runOnUiThread {
+                            recordButton?.backgroundTintList = ColorStateList.valueOf(resources.getColor(R.color.colorPrimaryDark))
+                        }
+
+                    }
+                }
+                Thread.sleep(750)
+            }
+        }
+    }
+
+    private fun stopBlinking() {
+        blinkRecording = false
+        blinkingThread?.join()
+    }
 
 }
 
@@ -72,4 +127,19 @@ interface RecordModeControlListener {
      * control variable to find out whether the listener is currently recording
      */
     fun isRecording(): Boolean
+
+    /**
+     * pause taking samples from microphone
+     */
+    fun pauseMicrophone()
+
+    /**
+     * resume taking samples from microphone
+     */
+    fun resumeMicrophone()
+
+    /**
+     * check whether activity is listening to microphone or not
+     */
+    fun isMicrophoneOn(): Boolean
 }

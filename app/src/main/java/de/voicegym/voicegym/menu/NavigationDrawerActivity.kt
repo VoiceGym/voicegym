@@ -3,7 +3,6 @@ package de.voicegym.voicegym.menu
 import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.net.Uri
 import android.os.Bundle
 import android.support.design.widget.NavigationView
 import android.support.v4.app.ActivityCompat
@@ -14,27 +13,29 @@ import android.support.v4.view.GravityCompat
 import android.support.v7.app.ActionBarDrawerToggle
 import android.support.v7.app.AlertDialog
 import android.support.v7.app.AppCompatActivity
-import android.util.Log
+import android.view.LayoutInflater
 import android.view.MenuItem
 import android.view.View
+import android.widget.EditText
 import android.widget.Toast
 import de.voicegym.voicegym.R
 import de.voicegym.voicegym.menu.settings.SettingsActivity
-import de.voicegym.voicegym.model.Recording
 import de.voicegym.voicegym.recordActivity.RecordActivity
-import de.voicegym.voicegym.recordings.RecordingsFragment
+import de.voicegym.voicegym.recordings.ListRecordingsFragment
+import de.voicegym.voicegym.recordings.RecordingLibraryFragment
+import de.voicegym.voicegym.util.ISetTextable
 import de.voicegym.voicegym.util.SwitchToRecordingViewListener
 import kotlinx.android.synthetic.main.activity_navigation_drawer.drawer_layout
 import kotlinx.android.synthetic.main.activity_navigation_drawer.nav_view
 import kotlinx.android.synthetic.main.app_bar_navigation_drawer.toolbar
 import org.jetbrains.anko.contentView
 
+
 class NavigationDrawerActivity : AppCompatActivity(),
         NavigationView.OnNavigationItemSelectedListener,
-        RecordingsFragment.OnListFragmentInteractionListener,
-        RecordingsFragment.SwitchToPlaybackFragmentListener,
-        InstrumentsFragment.OnFragmentInteractionListener,
+        ListRecordingsFragment.ListInteractionListener,
         SwitchToRecordingViewListener {
+
 
 
     override fun switchToRecordingView() {
@@ -51,9 +52,6 @@ class NavigationDrawerActivity : AppCompatActivity(),
         startActivity(intent)
     }
 
-    override fun onFragmentInteraction(uri: Uri) {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-    }
 
     private fun requestPermission() {
 
@@ -81,8 +79,8 @@ class NavigationDrawerActivity : AppCompatActivity(),
             // only show dialog, if permission was denied earlier
             if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.RECORD_AUDIO)) {
                 AlertDialog.Builder(this)
-                        .setTitle(R.string.permission_alert_dialog_title)
-                        .setMessage(R.string.permission_alert_dialog_text)
+                        .setTitle(R.string.permission_alert_recordAudioMicrophone_title)
+                        .setMessage(R.string.permission_alert_recordAudioMicrophone_text)
                         .setPositiveButton(android.R.string.ok) { _, _ ->
                             ActivityCompat.requestPermissions(
                                     this,
@@ -114,14 +112,15 @@ class NavigationDrawerActivity : AppCompatActivity(),
         nav_view.setNavigationItemSelectedListener(this)
 
         requestPermission()
-        if (savedInstanceState == null) loadRecordingsFragment()
+        // always load recordingsfragment since, if we are adding more fragments we need a better way to launch the spectrogram
+        loadRecordingsFragment()
     }
 
     override fun onBackPressed() {
         if (drawer_layout.isDrawerOpen(GravityCompat.START)) {
             drawer_layout.closeDrawer(GravityCompat.START)
         } else {
-            super.onBackPressed()
+            finish()
         }
     }
 
@@ -130,7 +129,7 @@ class NavigationDrawerActivity : AppCompatActivity(),
         // Handle navigation view item clicks here.
         when (item.itemId) {
             R.id.nav_instruments -> {
-                loadInstrumentsFragment()
+                switchToRecordingView()
             }
 
             R.id.nav_recordings  -> {
@@ -149,19 +148,14 @@ class NavigationDrawerActivity : AppCompatActivity(),
 
 
     private fun loadRecordingsFragment() {
-        loadFragment(RecordingsFragment(), "RECORDINGS")
+        loadFragment(RecordingLibraryFragment(), "RECORDINGS")
     }
 
-    private fun loadInstrumentsFragment() {
-        loadFragment(InstrumentsFragment(), "INSTRUMENTS")
+    override fun startSpectrogram() {
+        switchToRecordingView()
     }
 
-
-    override fun onListFragmentInteraction(item: Recording) {
-        Log.d("foo", "bar")
-    }
-
-    override fun onClick(fileName: String) {
+    override fun openAudioFileInPlaybackMode(fileName: String) {
         switchToRecordingView(fileName)
     }
 
@@ -175,6 +169,27 @@ class NavigationDrawerActivity : AppCompatActivity(),
             }
         }
     }
+
+    fun showInputDialog(initialText: String, listener: ISetTextable) {
+        // get prompts.xml view
+        val layoutInflater = LayoutInflater.from(this)
+        val promptView = layoutInflater.inflate(R.layout.input_dialog, null)
+        val alertDialogBuilder = AlertDialog.Builder(this)
+        alertDialogBuilder.setView(promptView)
+
+        val editText = promptView.findViewById(R.id.inputDialog_editText) as EditText
+        editText.setText(initialText)
+        // setup a dialog window
+        alertDialogBuilder.setCancelable(false)
+                .setPositiveButton("OK") { _, _ -> listener.setText(editText.text.toString()) }
+                .setNegativeButton("Cancel"
+                ) { dialog, id -> dialog.cancel() }
+
+        // create an alert dialog
+        val alert = alertDialogBuilder.create()
+        alert.show()
+    }
+
 
     companion object {
         const val REQUEST_PERMISSIONS = 100

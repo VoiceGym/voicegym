@@ -1,100 +1,54 @@
 <resources>
-    <string name="app_name">VoiceGym</string>
-    <string name="title_activity_measuring_fourier_transforms">MeasuringFourierTransforms</string>
-
-    <string name="title_activity_record">RecordActivity</string>
-    <string name="dummy_button">Dummy Button</string>
-    <string name="dummy_content">DUMMY\nCONTENT</string>
-
+    <string name="app_name" translatable="false">VoiceGym</string>
+    <string name="delete">DELETE</string>
     <!-- Menu Strings -->
-    <string name="instruments">Instrumente</string>
-    <string name="exercises">Übungen</string>
-    <string name="playback">Player</string>
-    <string name="recordings">Aufnahmen</string>
-    <string name="settings">Einstellungen</string>
 
-    <string name="title_activity_navigation_drawer">VoiceGym</string>
-    <string name="navigation_drawer_open">Open navigation drawer</string>
-    <string name="navigation_drawer_close">Close navigation drawer</string>
-    <string name="nav_header_title">VoiceGym</string>
-    <string name="nav_header_subtitle">sprich_mit_uns@voicegym.de</string>
-    <string name="nav_header_desc">Navigation header</string>
-    <string name="action_settings">Einstellungen</string>
+    <string name="nav_header_subtitle" translatable="false">voicegymmail@gmail.com</string>
 
-    <!-- TODO: Remove or change this placeholder text -->
-    <string name="reports_fragment">I\'m the Reports Fragment</string>
-    <string name="instruments_fragment">I\'m the Instruments Fragment</string>
-    <string name="title_activity_settings">Settings</string>
+    <string name="instruments">Spectrogram</string>
+    <string name="recordings">Recordings</string>
+    <string name="settings">Settings</string>
 
     <!-- Strings related to Settings -->
+    <string name="fourierSettingsTitleText">Spectrogram and Fourier Settings</string>
 
-    <!-- Example General settings -->
-    <string name="pref_header_general">General</string>
+    <string name="instrumentViewSettings">Spectrogram View Settings</string>
+    <string name="fromFrequencyText">Display from Frequency</string>
+    <string name="untilFrequencyText">Display until Frequency</string>
+    <string name="numberOfDisplayedBlocksText">Number of Displayed Blocks</string>
+    <string name="logarithmicDisplayText">Logarithmic Display</string>
+    <string name="displayScaleText">Display a Scale</string>
 
-    <string name="pref_title_social_recommendations">Enable social recommendations</string>
-    <string name="pref_description_social_recommendations">Recommendations for people to contact
-        based on your message history
-    </string>
+    <string name="fourierTransformationSettings">Fourier Transformation Settings</string>
+    <string name="fftBlocksizeText">FFT Blocksize</string>
+    <string name="fftBinningText" translatable="false">FFT Binning</string>
+    <!-- Strings related to the recordings view -->
+    <string name="recordedText">Recorded</string>
+    <string name="durationText">Duration</string>
 
-    <string name="pref_title_display_name">Display name</string>
-    <string name="pref_default_display_name">John Smith</string>
+    <!-- Strings related to Permission requests -->
+    <string name="permission_alert_recordAudioMicrophone_title">Record Audio</string>
+    <string name="permission_alert_recordAudioMicrophone_text">We want to analyze your voice, for that we require access to your microphone.</string>
+    <string name="permission_alert_saveReadFiles_title">Access Files</string>
+    <string name="permission_alert_saveReadFiles_text">We want to open and save your recordings to your device, for that we ne read and write permission to your files.</string>
+    <!-- invisible strings not sure needed why -->
+    <string name="navigation_drawer_open" translatable="false">Open navigation drawer</string>
+    <string name="navigation_drawer_close" translatable="false">Close navigation drawer</string>
+    <string name="rateRecordString">Rate your record!</string>
+    <string name="inputDialog_enter_text_here">Enter text here..</string>
+    <string name="inputDialog_title">Title</string>
 
-    <string name="pref_title_add_friends_to_messages">Add friends to messages</string>
-    <string-array name="pref_example_list_titles">
-        <item>Always</item>
-        <item>When possible</item>
-        <item>Never</item>
-    </string-array>
-    <string-array name="pref_example_list_values">
-        <item>1</item>
-        <item>0</item>
-        <item>-1</item>
-    </string-array>
-
-    <!-- Example settings for Data & Sync -->
-    <string name="pref_header_data_sync">Data &amp; sync</string>
-
-    <string name="pref_title_sync_frequency">Sync frequency</string>
-    <string-array name="pref_sync_frequency_titles">
-        <item>15 minutes</item>
-        <item>30 minutes</item>
-        <item>1 hour</item>
-        <item>3 hours</item>
-        <item>6 hours</item>
-        <item>Never</item>
-    </string-array>
-    <string-array name="pref_sync_frequency_values">
-        <item>15</item>
-        <item>30</item>
-        <item>60</item>
-        <item>180</item>
-        <item>360</item>
-        <item>-1</item>
-    </string-array>
-
-    <string-array name="list_preference_entry_values">
+    <string-array name="list_of_binning_values" translatable="false">
         <item>1</item>
         <item>2</item>
-        <item>3</item>
+        <item>4</item>
+        <item>8</item>
     </string-array>
 
-    <string-array name="multi_select_list_preference_default_value" />
+    <string-array name="list_of_blockSizes" translatable="false">
+        <item>2048</item>
+        <item>4096</item>
+        <item>8192</item>
+    </string-array>
 
-    <string name="pref_title_system_sync_settings">System sync settings</string>
-
-    <!-- Example settings for Notifications -->
-    <string name="pref_header_notifications">Notifications</string>
-    <string name="pref_title_new_message_notifications">New message notifications</string>
-    <string name="pref_title_ringtone">Ringtone</string>
-    <string name="pref_ringtone_silent">Silent</string>
-    <string name="pref_title_vibrate">Vibrate</string>
-
-    <string name="record_with_spectrogram">Record with Spectrogram</string>
-
-    <string name="permission_alert_dialog_title">Record Audio</string>
-    <string name="permission_alert_dialog_text">We want to analyze your voice, and need your permission to record audio for that in the next dialog</string>
-    <string name="delete">DELETE</string>
-
-    <!-- TODO: Remove or change this placeholder text -->
-    <string name="hello_blank_fragment">Hello blank fragment</string>
 </resources>

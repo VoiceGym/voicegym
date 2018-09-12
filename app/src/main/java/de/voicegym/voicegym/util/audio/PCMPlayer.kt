@@ -6,8 +6,8 @@ import android.media.AudioFormat
 import android.media.AudioManager
 import android.media.AudioTrack
 import android.os.Build
-import android.util.Log
 import org.jetbrains.anko.runOnUiThread
+import java.lang.Thread.sleep
 import java.nio.ShortBuffer
 import kotlin.concurrent.thread
 
@@ -59,28 +59,55 @@ class PCMPlayer(val sampleRate: Int, private val buffer: ShortBuffer, val contex
     fun play() {
         if (!playing) {
             playing = true
-            if (currentPosition <= buffer.capacity()) {
-                buffer.position(currentPosition)
-            } else throw IndexOutOfBoundsException("Cannot seek to position not within range")
+            when {
+                currentPosition <= buffer.capacity() && currentPosition >= 0 -> buffer.position(currentPosition)
 
-            if (currentPosition == buffer.capacity()) {
+                currentPosition < 0 && buffer.capacity() > 0                 -> {
+                    currentPosition = 0
+                    buffer.position(currentPosition)
+                }
+
+                buffer.capacity() in 1..currentPosition                      -> {
+                    // if currentPosition is larger than buffer.capacity but buffer.capacity larger than 0
+                    currentPosition = buffer.capacity() - 1
+                    buffer.position(currentPosition)
+                }
+
+                else                                                         -> {
+                    // buffer.capacity=0
+                    if (buffer.capacity() != 0) throw UnknownError("Unexpected state, logic failure of coder")
+
+                    return
+                }
+            }
+
+            if (currentPosition > 0.99 * buffer.capacity()) {
                 // reset
                 buffer.position(0)
                 currentPosition = 0
+                informListeners(0)
             }
+
             playerThread = thread {
+                while (listenersNotReady()) {
+                    sleep(100)
+                }
                 player.play()
                 while (playing) {
-                    if (buffer.position() + playBuffer.size < buffer.capacity()) {
-                        buffer.get(playBuffer)
-                        player.write(playBuffer, 0, playBuffer.size)
-                    } else if (buffer.position() < buffer.capacity() - 1) {
-                        playBuffer.fill(0)
-                        buffer.get(playBuffer, 0, buffer.capacity() - buffer.position())
-                        player.write(playBuffer, 0, playBuffer.size)
-                        playing = false
-                    } else {
-                        playing = false
+                    when {
+                        buffer.position() + playBuffer.size < buffer.capacity() -> {
+                            buffer.get(playBuffer)
+                            player.write(playBuffer, 0, playBuffer.size)
+                        }
+
+                        buffer.position() < buffer.capacity() - 1               -> {
+                            playBuffer.fill(0)
+                            buffer.get(playBuffer, 0, buffer.capacity() - buffer.position())
+                            player.write(playBuffer, 0, playBuffer.size)
+                            playing = false
+                        }
+
+                        else                                                    -> playing = false
                     }
                     currentPosition = buffer.position()
                     informListeners(currentPosition)
@@ -90,7 +117,7 @@ class PCMPlayer(val sampleRate: Int, private val buffer: ShortBuffer, val contex
     }
 
     fun stop() {
-        playing = false;
+        playing = false
         playerThread?.join()
     }
 
@@ -129,6 +156,12 @@ class PCMPlayer(val sampleRate: Int, private val buffer: ShortBuffer, val contex
         context.runOnUiThread { listener.isAtPosition(position) }
     }
 
+    private fun listenersNotReady(): Boolean {
+        var readyOrNot = true
+        subscribers.forEach { if (!it.isReady()) readyOrNot = false }
+        return !readyOrNot
+    }
+
 }
 
 
@@ -138,4 +171,9 @@ interface PCMPlayerListener {
      * @param sampleNumber: the sampleNumber currently played
      */
     fun isAtPosition(sampleNumber: Int)
+
+    /**
+     * PCMPlayer shall only play when all subscribers are in a state to receive new positions
+     */
+    fun isReady(): Boolean
 }

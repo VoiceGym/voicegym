@@ -3,13 +3,10 @@ package de.voicegym.voicegym.recordActivity
 import android.content.Context
 import android.content.pm.ActivityInfo
 import android.graphics.Color
-import android.graphics.drawable.ColorDrawable
 import android.os.Bundle
-import android.support.v4.app.Fragment
+import android.os.Handler
 import android.support.v7.app.AppCompatActivity
-import android.util.Log
 import android.view.Surface
-import android.view.View
 import android.view.ViewTreeObserver.OnGlobalLayoutListener
 import android.view.WindowManager
 import de.voicegym.voicegym.R
@@ -30,8 +27,9 @@ import de.voicegym.voicegym.recordActivity.fragments.PlaybackModeControlListener
 import de.voicegym.voicegym.recordActivity.fragments.RecordModeControlFragment
 import de.voicegym.voicegym.recordActivity.fragments.RecordModeControlListener
 import de.voicegym.voicegym.recordActivity.fragments.SpectrogramFragment
+import de.voicegym.voicegym.util.DecoderBufferListener
 import de.voicegym.voicegym.util.RecordBufferListener
-import de.voicegym.voicegym.util.audio.MP4Helper
+import de.voicegym.voicegym.util.audio.MP4Decoder
 import de.voicegym.voicegym.util.audio.PCMPlayer
 import de.voicegym.voicegym.util.audio.PCMPlayerListener
 import de.voicegym.voicegym.util.audio.PCMStorage
@@ -52,9 +50,16 @@ import java.util.concurrent.ConcurrentLinkedQueue
 
 class RecordActivity : AppCompatActivity(),
         RecordBufferListener,
+        DecoderBufferListener,
         RecordModeControlListener,
         PlaybackModeControlListener,
         PCMPlayerListener {
+
+
+    override fun isReady(): Boolean {
+        return instrumentFragment?.spectrogramView?.isReady() ?: false
+    }
+
 
     /**
      * reset the activity and start over from the beginning
@@ -128,7 +133,6 @@ class RecordActivity : AppCompatActivity(),
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
-        window.decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_FULLSCREEN
         setContentView(R.layout.activity_record)
         window.decorView.setBackgroundColor(Color.BLACK)
 
@@ -163,7 +167,7 @@ class RecordActivity : AppCompatActivity(),
                 filenameForPlaybackFromFile = recordFileName
             }
 
-        // deactivate sleep mode
+            // deactivate sleep mode
         }
 
         // deactivate sleep mode
@@ -199,11 +203,15 @@ class RecordActivity : AppCompatActivity(),
             LIVEVIEW           -> if (pcmStorage == null) finish()
             RECORDING          -> switchToPlayback()
             PLAYBACK           -> restart()
-            PLAYBACK_FROM_FILE -> finish()
+
+            PLAYBACK_FROM_FILE -> {
+                decoder?.abortDecodingAndJoinThread()
+                finish()
+            }
         }
     }
 
-    var wasListeningBeforeStop: Boolean = false
+    private var wasListeningBeforeStop: Boolean = false
 
     override fun onPause() {
         super.onPause()
@@ -224,8 +232,14 @@ class RecordActivity : AppCompatActivity(),
                 if (wasListeningBeforeStop) startListening()
             }
 
+            PLAYBACK            -> {
+                playbackControlFragment.showSaveButton()
+            }
 
             PLAYBACK_FROM_FILE  -> {
+                // saving so far not possible from loaded files
+                playbackControlFragment.hideSaveButton()
+
                 instrumentFragment?.spectrogramView?.viewTreeObserver?.addOnGlobalLayoutListener(object : OnGlobalLayoutListener {
                     override fun onGlobalLayout() {
                         instrumentFragment?.spectrogramView?.viewTreeObserver?.removeOnGlobalLayoutListener(this)
@@ -258,6 +272,19 @@ class RecordActivity : AppCompatActivity(),
             it.start()
         }
     }
+
+    override fun pauseMicrophone() {
+        recorder?.paused = true
+    }
+
+    override fun resumeMicrophone() {
+        recorder?.paused = false
+    }
+
+    override fun isMicrophoneOn(): Boolean {
+        return !(recorder?.paused ?: true)
+    }
+
 
     /**
      * stops the RecordHelper, releases the Microphone and then deletes the RecordHelper
@@ -337,19 +364,6 @@ class RecordActivity : AppCompatActivity(),
         instrumentFragment?.invalidateFromBackground()
     }
 
-    /**
-     * this empties the whole input queue and skips invalidating until every array is added to the instrumentFragment
-     */
-    private fun emptyInputQueueIntoInstrumentFragment() {
-        while (!inputQueue.isEmpty()) {
-            val shortArray = inputQueue.poll()
-            fourierHelper.fft(getDoubleArrayFromShortArray(1.0, shortArray))
-            instrumentFragment?.insertNewAmplitudes(fourierHelper.amplitudeArray())
-        }
-    }
-
-
-    fun getInstrumentFragment(): Fragment? = supportFragmentManager.findFragmentById(R.id.spectrogramFragment)
 
     /*
     The following methods implement the RecordModeControlListener Interface
@@ -384,23 +398,15 @@ class RecordActivity : AppCompatActivity(),
         }
     }
 
-    override fun openRatingDialog() {
-        val ratingDialog = RatingDialog(this)
-        ratingDialog.window.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
-        ratingDialog.playbackModeControlListener = this
-        ratingDialog.show()
-    }
-
-    override fun receiveRating(rating: Int) {
-        //TODO get rating into datamodel
-
-        Log.i("Rated", "Record was rated $rating")
-    }
 
     override fun saveToSdCard() {
+        if (pcmStorage == null || pcmStorage?.size == 0) {
+            // abort when nothing was recorded
+            return
+        }
+
         launch(CommonPool) {
             pcmStorage?.let {
-                it.reverseForBugfix()
                 it.rewind()
                 savePCMInputStreamOnSDCard(dateString, it, it.sampleRate, 128000)
             }
@@ -409,32 +415,30 @@ class RecordActivity : AppCompatActivity(),
             val size = pcmStorage?.size ?: 0
             val sampleRate = pcmStorage?.sampleRate ?: 41000
             recordingDao.insert(Recording().also {
-                it.fileName = getVoiceGymFolder()?.absolutePath + "/${dateString}.m4a"
+                it.fileName = getVoiceGymFolder()?.absolutePath + "/$dateString.m4a"
                 it.duration = size / sampleRate
             })
         }
     }
 
+    private var decoder: MP4Decoder? = null
     private fun loadFromSdCard(fileName: String) {
-        Log.i("RecordActivity", "Load from SDCard called")
-        pcmStorage = MP4Helper.getPCMStorage(File(fileName))
-        pcmStorage?.rewind()
+        pcmStorage = PCMStorage(SettingsBundle.sampleRate)
         instrumentFragment?.startRecording()
-        val buffer = pcmStorage?.asShortBuffer()
-        while (buffer?.hasRemaining() == true) {
-            val array = ShortArray(settings.samplesPerDatapoint)
-            buffer?.get(array)
-            inputQueue.add(array)
-        }
-        // fill input queue from InstrumentFragment
-        emptyInputQueueIntoInstrumentFragment()
-        instrumentFragment?.doneRecordingSwitchToPlayback()
+        decoder = MP4Decoder(settings.samplesPerDatapoint)
+        decoder?.addBufferListener(pcmStorage!!)
+        decoder?.addBufferListener(this)
+        decoder?.startDecoding(File(fileName))
+    }
 
+    override fun isDecoded() {
+        pcmStorage?.isDecoded()
         pcmPlayer = PCMPlayer(pcmStorage!!.sampleRate, pcmStorage!!.asShortBuffer(), this)
         pcmPlayer?.subscribeListener(this)
-
-
+        Handler(mainLooper).post { instrumentFragment?.doneRecordingSwitchToPlayback() }
     }
+
+
     /*
     The following variables and functions handle TouchEvents during PlaybackMode
      */
@@ -485,7 +489,7 @@ class RecordActivity : AppCompatActivity(),
         }
     }
 
-    fun lockScreenPosition() {
+    private fun lockScreenPosition() {
 
         val rotation = (getSystemService(Context.WINDOW_SERVICE) as WindowManager).defaultDisplay.rotation
         requestedOrientation =
@@ -499,12 +503,35 @@ class RecordActivity : AppCompatActivity(),
 
     }
 
-    fun unLockScreenPosition() {
+    private fun unLockScreenPosition() {
         requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
     }
 
 
     companion object {
         const val AUDIO_FILE = "recordAudioFileName"
+
+
+        fun setRatingOfFile(filename: String, rating: Int) {
+            launch(CommonPool) {
+                val recordingDao = AppDatabase.getInstance().recordingDao()
+                val recording = recordingDao.getByFileName(filename)
+                recording?.let {
+                    it.rating = rating
+                    recordingDao.insert(it)
+                } ?: throw Error("Filename not in database")
+            }
+        }
+
+        fun setNameOfFile(fileName: String, name: String) {
+            launch(CommonPool) {
+                val recordingDao = AppDatabase.getInstance().recordingDao()
+                val recording = recordingDao.getByFileName(fileName)
+                recording?.let {
+                    recording.title = name
+                    recordingDao.insert(it)
+                } ?: throw Error("Filename not in database")
+            }
+        }
     }
 }
