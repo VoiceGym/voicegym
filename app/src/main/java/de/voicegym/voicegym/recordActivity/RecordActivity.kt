@@ -39,8 +39,9 @@ import de.voicegym.voicegym.util.audio.getVoiceGymFolder
 import de.voicegym.voicegym.util.audio.savePCMInputStreamOnSDCard
 import de.voicegym.voicegym.util.math.FourierHelper
 import kotlinx.android.synthetic.main.fragment_spectrogram.spectrogramView
-import kotlinx.coroutines.experimental.CommonPool
-import kotlinx.coroutines.experimental.launch
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -104,6 +105,7 @@ class RecordActivity : AppCompatActivity(),
      * PCMPlayer that will play a recorded set of pcmSamples
      */
     private var pcmPlayer: PCMPlayer? = null
+
     /**
      * The RecordActivityState the RecordActivity currently resides in
      */
@@ -157,7 +159,7 @@ class RecordActivity : AppCompatActivity(),
         instrumentFragment?.updateInstrumentViewSettings(settings)
 
         when (recordActivityState) {
-            LIVEVIEW           -> {
+            LIVEVIEW -> {
                 switchToRecordControlFragment()
                 startListening()
             }
@@ -200,9 +202,9 @@ class RecordActivity : AppCompatActivity(),
 
     override fun onBackPressed() {
         when (recordActivityState) {
-            LIVEVIEW           -> if (pcmStorage == null) finish()
-            RECORDING          -> switchToPlayback()
-            PLAYBACK           -> restart()
+            LIVEVIEW -> if (pcmStorage == null) finish()
+            RECORDING -> switchToPlayback()
+            PLAYBACK -> restart()
 
             PLAYBACK_FROM_FILE -> {
                 decoder?.abortDecodingAndJoinThread()
@@ -232,11 +234,11 @@ class RecordActivity : AppCompatActivity(),
                 if (wasListeningBeforeStop) startListening()
             }
 
-            PLAYBACK            -> {
+            PLAYBACK -> {
                 playbackControlFragment.showSaveButton()
             }
 
-            PLAYBACK_FROM_FILE  -> {
+            PLAYBACK_FROM_FILE -> {
                 // saving so far not possible from loaded files
                 playbackControlFragment.hideSaveButton()
 
@@ -378,9 +380,9 @@ class RecordActivity : AppCompatActivity(),
     }
 
     override fun isRecording(): Boolean = when (recordActivityState) {
-        LIVEVIEW           -> false
-        RECORDING          -> true
-        PLAYBACK           -> false
+        LIVEVIEW -> false
+        RECORDING -> true
+        PLAYBACK -> false
         PLAYBACK_FROM_FILE -> false
     }
 
@@ -392,7 +394,7 @@ class RecordActivity : AppCompatActivity(),
     override fun playPause() {
         pcmPlayer?.let {
             when (it.playing) {
-                true  -> it.stop()
+                true -> it.stop()
                 false -> it.play()
             }
         }
@@ -405,7 +407,7 @@ class RecordActivity : AppCompatActivity(),
             return
         }
 
-        launch(CommonPool) {
+        GlobalScope.launch(Dispatchers.Default) {
             pcmStorage?.let {
                 it.rewind()
                 savePCMInputStreamOnSDCard(dateString, it, it.sampleRate, 128000)
@@ -449,7 +451,7 @@ class RecordActivity : AppCompatActivity(),
     override fun playbackTouched() {
         playbackState = when {
             pcmPlayer?.playing == true -> TOUCHED_WHILE_PLAYING
-            else                       -> TOUCHED
+            else -> TOUCHED
         }
 
         if (playbackState == TOUCHED_WHILE_PLAYING) playPause()
@@ -494,11 +496,11 @@ class RecordActivity : AppCompatActivity(),
         val rotation = (getSystemService(Context.WINDOW_SERVICE) as WindowManager).defaultDisplay.rotation
         requestedOrientation =
                 when (rotation) {
-                    Surface.ROTATION_0   -> ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
-                    Surface.ROTATION_90  -> ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
+                    Surface.ROTATION_0 -> ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+                    Surface.ROTATION_90 -> ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
                     Surface.ROTATION_180 -> ActivityInfo.SCREEN_ORIENTATION_REVERSE_PORTRAIT
                     Surface.ROTATION_270 -> ActivityInfo.SCREEN_ORIENTATION_REVERSE_LANDSCAPE
-                    else                 -> ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
+                    else -> ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
                 }
 
     }
@@ -513,7 +515,7 @@ class RecordActivity : AppCompatActivity(),
 
 
         fun setRatingOfFile(filename: String, rating: Int) {
-            launch(CommonPool) {
+            GlobalScope.launch(Dispatchers.Default) {
                 val recordingDao = AppDatabase.getInstance().recordingDao()
                 val recording = recordingDao.getByFileName(filename)
                 recording?.let {
@@ -524,7 +526,7 @@ class RecordActivity : AppCompatActivity(),
         }
 
         fun setNameOfFile(fileName: String, name: String) {
-            launch(CommonPool) {
+            GlobalScope.launch(Dispatchers.Default) {
                 val recordingDao = AppDatabase.getInstance().recordingDao()
                 val recording = recordingDao.getByFileName(fileName)
                 recording?.let {
