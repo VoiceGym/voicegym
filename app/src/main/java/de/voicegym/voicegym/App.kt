@@ -6,9 +6,9 @@ import android.os.Build
 import de.voicegym.voicegym.model.AppDatabase
 import de.voicegym.voicegym.model.Recording
 import de.voicegym.voicegym.util.audio.getVoiceGymFolder
-import kotlinx.coroutines.experimental.CommonPool
-import kotlinx.coroutines.experimental.launch
-
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 
 class App : Application() {
 
@@ -17,7 +17,7 @@ class App : Application() {
         super.onCreate()
         db = AppDatabase.getInstance(baseContext)
         // TODO: We don't really need this, but it's nice for developement
-        launch(CommonPool) {
+        GlobalScope.launch(Dispatchers.Default) {
             // we don't have access permission on first start, since permission are required in the first activity
             if (isStoragePermissionGranted()) {
                 getVoiceGymFolder()?.also {

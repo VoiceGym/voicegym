@@ -39,8 +39,9 @@ import de.voicegym.voicegym.util.audio.getVoiceGymFolder
 import de.voicegym.voicegym.util.audio.savePCMInputStreamOnSDCard
 import de.voicegym.voicegym.util.math.FourierHelper
 import kotlinx.android.synthetic.main.fragment_spectrogram.spectrogramView
-import kotlinx.coroutines.experimental.CommonPool
-import kotlinx.coroutines.experimental.launch
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -405,7 +406,7 @@ class RecordActivity : AppCompatActivity(),
             return
         }
 
-        launch(CommonPool) {
+        GlobalScope.launch(Dispatchers.Default) {
             pcmStorage?.let {
                 it.rewind()
                 savePCMInputStreamOnSDCard(dateString, it, it.sampleRate, 128000)
@@ -513,7 +514,7 @@ class RecordActivity : AppCompatActivity(),
 
 
         fun setRatingOfFile(filename: String, rating: Int) {
-            launch(CommonPool) {
+            GlobalScope.launch(Dispatchers.Default) {
                 val recordingDao = AppDatabase.getInstance().recordingDao()
                 val recording = recordingDao.getByFileName(filename)
                 recording?.let {
@@ -524,7 +525,7 @@ class RecordActivity : AppCompatActivity(),
         }
 
         fun setNameOfFile(fileName: String, name: String) {
-            launch(CommonPool) {
+            GlobalScope.launch(Dispatchers.Default) {
                 val recordingDao = AppDatabase.getInstance().recordingDao()
                 val recording = recordingDao.getByFileName(fileName)
                 recording?.let {
