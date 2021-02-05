@@ -2,8 +2,9 @@ package de.voicegym.voicegym.model
 
 import android.app.Application
 import android.arch.lifecycle.AndroidViewModel
-import kotlinx.coroutines.experimental.CommonPool
-import kotlinx.coroutines.experimental.launch
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 
 /**
  * A ViewModel is responsible for preparing the data for the UI/View. So 'Views', e.g. Activities,
@@ -20,13 +21,13 @@ class RecordingListViewModel(application: Application) : AndroidViewModel(applic
     }
 
     fun deleteRecording(recording: Recording) {
-        launch(CommonPool) {
+        GlobalScope.launch(Dispatchers.Default) {
             database.recordingDao().delete(recording)
         }
     }
 
     fun addRecording(recording: Recording) {
-        launch(CommonPool) {
+        GlobalScope.launch(Dispatchers.Default) {
             database.recordingDao().insert(recording)
         }
     }
