@@ -20,3 +20,10 @@ jobs:
           wrapper-cache-enabled: true
           dependencies-cache-enabled: true
           configuration-cache-enabled: true
+
+      - uses: eskatos/gradle-command-action@v1
+        with:
+          arguments: lint
+          wrapper-cache-enabled: true
+          dependencies-cache-enabled: true
+          configuration-cache-enabled: true
