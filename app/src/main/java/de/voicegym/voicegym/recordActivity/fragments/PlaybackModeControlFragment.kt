@@ -1,5 +1,6 @@
 package de.voicegym.voicegym.recordActivity.fragments
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.os.Bundle
 import android.support.design.widget.FloatingActionButton
@@ -29,6 +30,7 @@ class PlaybackModeControlFragment : Fragment() {
     private var saveButton: FloatingActionButton? = null
     private var backButton: FloatingActionButton? = null
 
+    @SuppressLint("RestrictedApi")
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         // Inflate the layout for this fragment
         val view = inflater.inflate(R.layout.fragment_playback_mode_control, container, false)
