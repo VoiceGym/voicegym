@@ -8,12 +8,11 @@ import kotlinx.android.synthetic.main.fragment_recordings.recordingsForeground
 class RecyclerItemTouchHelper(dragDirs: Int, swipeDirs: Int, private val listener: RecyclerItemTouchHelperListener) :
         ItemTouchHelper.SimpleCallback(dragDirs, swipeDirs) {
 
-    override fun onMove(recyclerView: RecyclerView?, viewHolder: RecyclerView.ViewHolder?, target: RecyclerView.ViewHolder?): Boolean {
+    override fun onMove(recyclerView: RecyclerView, viewHolder: RecyclerView.ViewHolder, target: RecyclerView.ViewHolder): Boolean {
         return true
     }
 
-    override fun onSwiped(viewHolder: RecyclerView.ViewHolder?, direction: Int) {
-        viewHolder!!
+    override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
         listener.onSwiped(viewHolder, direction, viewHolder.adapterPosition)
     }
 
@@ -25,18 +24,18 @@ class RecyclerItemTouchHelper(dragDirs: Int, swipeDirs: Int, private val listene
         }
     }
 
-    override fun onChildDrawOver(c: Canvas?, recyclerView: RecyclerView?, viewHolder: RecyclerView.ViewHolder?, dX: Float, dY: Float, actionState: Int, isCurrentlyActive: Boolean) {
+    override fun onChildDrawOver(c: Canvas, recyclerView: RecyclerView, viewHolder: RecyclerView.ViewHolder, dX: Float, dY: Float, actionState: Int, isCurrentlyActive: Boolean) {
         val foregroundView = (viewHolder as RecordingsAdapter.ViewHolder).recordingsForeground
         getDefaultUIUtil().onDrawOver(c, recyclerView, foregroundView, dX, dY,
                 actionState, isCurrentlyActive)
     }
 
-    override fun clearView(recyclerView: RecyclerView?, viewHolder: RecyclerView.ViewHolder?) {
+    override fun clearView(recyclerView: RecyclerView, viewHolder: RecyclerView.ViewHolder) {
         val foregroundView = (viewHolder as RecordingsAdapter.ViewHolder).recordingsForeground
         getDefaultUIUtil().clearView(foregroundView)
     }
 
-    override fun onChildDraw(c: Canvas?, recyclerView: RecyclerView?, viewHolder: RecyclerView.ViewHolder?, dX: Float, dY: Float, actionState: Int, isCurrentlyActive: Boolean) {
+    override fun onChildDraw(c: Canvas, recyclerView: RecyclerView, viewHolder: RecyclerView.ViewHolder, dX: Float, dY: Float, actionState: Int, isCurrentlyActive: Boolean) {
         val foregroundView = (viewHolder as RecordingsAdapter.ViewHolder).recordingsForeground
         getDefaultUIUtil().onDraw(c, recyclerView, foregroundView, dX, dY,
                 actionState, isCurrentlyActive)

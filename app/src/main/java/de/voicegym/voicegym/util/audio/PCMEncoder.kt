@@ -39,9 +39,9 @@ class PCMEncoder
 
 
     fun prepare() {
-        if (outputPath == null) {
-            throw IllegalStateException("The output path must be set first!")
-        }
+        val outputPath = outputPath
+                ?: throw IllegalStateException("The output path must be set first!")
+
         mediaFormat = MediaFormat.createAudioFormat(COMPRESSED_AUDIO_FILE_MIME_TYPE, sampleRate, channelCount)
         mediaFormat?.setInteger(MediaFormat.KEY_AAC_PROFILE, MediaCodecInfo.CodecProfileLevel.AACObjectLC)
         mediaFormat?.setInteger(MediaFormat.KEY_BIT_RATE, bitrate)

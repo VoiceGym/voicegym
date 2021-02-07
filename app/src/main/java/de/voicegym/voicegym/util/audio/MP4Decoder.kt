@@ -115,8 +115,6 @@ class MP4Decoder(private val bufferSizeForCallbacks: Int) {
         var endOfOutputStream = false
         var endOfInputFile = false
         val bufferInfo = MediaCodec.BufferInfo()
-        var outputFormat: MediaFormat?
-        deprecatedOutputBuffers = if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) codec.outputBuffers else null
 
         while (!endOfOutputStream) {
             var inputBufferFull = false
@@ -124,12 +122,8 @@ class MP4Decoder(private val bufferSizeForCallbacks: Int) {
                 val indexOfBuffer = codec.dequeueInputBuffer(1000)
                 when {
                     indexOfBuffer >= 0                               -> {
-                        val inputBuffer = when {
-                            Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP -> codec.getInputBuffer(indexOfBuffer)
-                            else                                                  -> codec.inputBuffers[indexOfBuffer]
-                        }
-
-                        val sampleSize = extractor.readSampleData(inputBuffer, 0)
+                        val inputBuffer =  codec.getInputBuffer(indexOfBuffer)
+                        val sampleSize = extractor.readSampleData(inputBuffer?: throw IllegalStateException("Couldn't obtain inputbuffer"), 0)
                         val presentationTime = extractor.sampleTime
                         if (sampleSize <= 0 || !extractor.advance()) {
                             endOfInputFile = true
@@ -150,10 +144,6 @@ class MP4Decoder(private val bufferSizeForCallbacks: Int) {
                     internalBufferReady(retrieveSamplesForChannelAndQueuedInputBuffer(codec, trackNumber, bufferInfo, bufferId))
                 }
 
-                bufferId == INFO_OUTPUT_BUFFERS_CHANGED -> {
-                    // can be ignored for api >= 21
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) deprecatedOutputBuffers = codec.outputBuffers
-                }
 
                 bufferId == INFO_OUTPUT_FORMAT_CHANGED  -> {
                     // new format
@@ -167,7 +157,7 @@ class MP4Decoder(private val bufferSizeForCallbacks: Int) {
             }
 
             // Either the stream is at the end or we've been interrupted, either way quit decoding
-            if ((bufferInfo.flags and MediaCodec.BUFFER_FLAG_END_OF_STREAM !== 0) || interrupted) {
+            if ((bufferInfo.flags and MediaCodec.BUFFER_FLAG_END_OF_STREAM != 0) || interrupted) {
                 endOfOutputStream = true
                 codec.stop()
                 codec.release()
@@ -193,15 +183,11 @@ class MP4Decoder(private val bufferSizeForCallbacks: Int) {
         if (bufferId < 0) {
             throw Error("need a bufferId")
         }
-        val outputBuffer = when {
-            Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP -> codec.getOutputBuffer(bufferId)
-            else                                                  -> deprecatedOutputBuffers!![bufferId]
-        }
+        val outputBuffer =  codec.getOutputBuffer(bufferId)
 
-        val format = when {
-            Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP -> codec.getOutputFormat(bufferId)
-            else                                                  -> codec.outputFormat
-        }
+
+
+        val format = codec.getOutputFormat(bufferId)
 
         val samples = outputBuffer!!.order(ByteOrder.nativeOrder()).asShortBuffer()
         samples.rewind()
@@ -222,9 +208,8 @@ class MP4Decoder(private val bufferSizeForCallbacks: Int) {
      * selects the first audio track in a file, returns -1 if there ain't one
      */
     private fun findFirstAudioTrack(mediaExtractor: MediaExtractor): Int {
-        var mime = ""
         for (i in 0..mediaExtractor.trackCount) {
-            mime = mediaExtractor.getTrackFormat(i).getString(MediaFormat.KEY_MIME)
+            val mime = mediaExtractor.getTrackFormat(i).getString(MediaFormat.KEY_MIME)
             if (mime.startsWith("audio/")) {
                 return i
             }
