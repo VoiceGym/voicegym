@@ -77,7 +77,7 @@ class RecordActivity : AppCompatActivity(),
         stopListeningAndFreeRessource()
         // Start up
         recordActivityState = LIVEVIEW
-        startListening()
+        startListening(this.applicationContext)
         switchToRecordControlFragment()
     }
 
@@ -105,6 +105,7 @@ class RecordActivity : AppCompatActivity(),
      * PCMPlayer that will play a recorded set of pcmSamples
      */
     private var pcmPlayer: PCMPlayer? = null
+
     /**
      * The RecordActivityState the RecordActivity currently resides in
      */
@@ -158,9 +159,9 @@ class RecordActivity : AppCompatActivity(),
         instrumentFragment?.updateInstrumentViewSettings(settings)
 
         when (recordActivityState) {
-            LIVEVIEW           -> {
+            LIVEVIEW -> {
                 switchToRecordControlFragment()
-                startListening()
+                startListening(this.applicationContext)
             }
 
             PLAYBACK_FROM_FILE -> {
@@ -201,9 +202,9 @@ class RecordActivity : AppCompatActivity(),
 
     override fun onBackPressed() {
         when (recordActivityState) {
-            LIVEVIEW           -> if (pcmStorage == null) finish()
-            RECORDING          -> switchToPlayback()
-            PLAYBACK           -> restart()
+            LIVEVIEW -> if (pcmStorage == null) finish()
+            RECORDING -> switchToPlayback()
+            PLAYBACK -> restart()
 
             PLAYBACK_FROM_FILE -> {
                 decoder?.abortDecodingAndJoinThread()
@@ -230,14 +231,14 @@ class RecordActivity : AppCompatActivity(),
         instrumentFragment?.startRendering()
         when (recordActivityState) {
             LIVEVIEW, RECORDING -> {
-                if (wasListeningBeforeStop) startListening()
+                if (wasListeningBeforeStop) startListening(this.applicationContext)
             }
 
-            PLAYBACK            -> {
+            PLAYBACK -> {
                 playbackControlFragment.showSaveButton()
             }
 
-            PLAYBACK_FROM_FILE  -> {
+            PLAYBACK_FROM_FILE -> {
                 // saving so far not possible from loaded files
                 playbackControlFragment.hideSaveButton()
 
@@ -265,9 +266,9 @@ class RecordActivity : AppCompatActivity(),
      * Creates a RecordHelper object, that tries to gain access to the microphone and then starts
      * listening to the microphone
      */
-    private fun startListening() {
+    private fun startListening(appContext: Context) {
         // start microphone listening
-        recorder = RecordHelper(settings.samplesPerDatapoint)
+        recorder = RecordHelper(settings.samplesPerDatapoint, appContext)
         recorder?.let {
             it.subscribeListener(this)
             it.start()
@@ -379,9 +380,9 @@ class RecordActivity : AppCompatActivity(),
     }
 
     override fun isRecording(): Boolean = when (recordActivityState) {
-        LIVEVIEW           -> false
-        RECORDING          -> true
-        PLAYBACK           -> false
+        LIVEVIEW -> false
+        RECORDING -> true
+        PLAYBACK -> false
         PLAYBACK_FROM_FILE -> false
     }
 
@@ -393,7 +394,7 @@ class RecordActivity : AppCompatActivity(),
     override fun playPause() {
         pcmPlayer?.let {
             when (it.playing) {
-                true  -> it.stop()
+                true -> it.stop()
                 false -> it.play()
             }
         }
@@ -450,7 +451,7 @@ class RecordActivity : AppCompatActivity(),
     override fun playbackTouched() {
         playbackState = when {
             pcmPlayer?.playing == true -> TOUCHED_WHILE_PLAYING
-            else                       -> TOUCHED
+            else -> TOUCHED
         }
 
         if (playbackState == TOUCHED_WHILE_PLAYING) playPause()
@@ -495,11 +496,11 @@ class RecordActivity : AppCompatActivity(),
         val rotation = (getSystemService(Context.WINDOW_SERVICE) as WindowManager).defaultDisplay.rotation
         requestedOrientation =
                 when (rotation) {
-                    Surface.ROTATION_0   -> ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
-                    Surface.ROTATION_90  -> ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
+                    Surface.ROTATION_0 -> ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+                    Surface.ROTATION_90 -> ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
                     Surface.ROTATION_180 -> ActivityInfo.SCREEN_ORIENTATION_REVERSE_PORTRAIT
                     Surface.ROTATION_270 -> ActivityInfo.SCREEN_ORIENTATION_REVERSE_LANDSCAPE
-                    else                 -> ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
+                    else -> ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
                 }
 
     }
