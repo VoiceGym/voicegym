@@ -1,5 +1,7 @@
 package de.voicegym.voicegym.util.audio
 
+import android.content.Context
+import android.content.pm.PackageManager
 import android.media.AudioFormat.ENCODING_PCM_16BIT
 import android.media.AudioRecord
 import android.media.AudioRecord.STATE_INITIALIZED
@@ -13,12 +15,12 @@ import de.voicegym.voicegym.menu.settings.SettingsBundle.sampleRate
 import de.voicegym.voicegym.util.RecordBufferListener
 import java.lang.Thread.sleep
 
-class RecordHelper(private val preferredBufferSize: Int) {
+class RecordHelper(private val preferredBufferSize: Int, private val appContext: Context) {
 
 
     private val bytesPerBufferSlot = when (audioFormat) {
         ENCODING_PCM_16BIT -> 2
-        else               -> throw Error("Unsupported AudioFormat")
+        else -> throw Error("Unsupported AudioFormat")
     }
 
     // we are using the number of slots as a bufferSize, and recalculate it for the recordObject
@@ -70,6 +72,9 @@ class RecordHelper(private val preferredBufferSize: Int) {
 
     private fun setup() {
         setThreadPriority(THREAD_PRIORITY_AUDIO)
+        if (appContext.checkSelfPermission("android.permission.RECORD_AUDIO") != PackageManager.PERMISSION_GRANTED) {
+            throw RuntimeException("Error receiving permission")
+        }
         recordObject = AudioRecord(MIC, sampleRate, channelConfig, audioFormat, bufferSize * bytesPerBufferSlot)
         if (bufferSize == AudioRecord.ERROR || bufferSize == AudioRecord.ERROR_BAD_VALUE) {
             throw RuntimeException("Error while setting up buffer")
